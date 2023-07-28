@@ -1,0 +1,17 @@
+eth1Endpoint = ""
+eth2Endpoint = ""
+logFilePath = ""
+superNodeAccount = "0xB3488e1Ca0089fA7E0EC370aCB0300664E82E0A2"
+ssvAccount = "0xE6F2A8d12595fBe5D410f6CA0Be13695E61C6c35"
+gasLimit = "3000000"
+keystorePath = "./keys"
+maxGasPrice = "60000000000"                                     #wei
+clusterInitSsvAmount = "20000000000000000000"
+
+operators = [22, 8, 14, 32]
+
+[contracts]
+storageContractAddress = "0x5d3bb8F3BdeFF819709f82Da915Bc97f9969c861"
+ssvNetworkAddress = "0xC3CD9A0aE89Fff83b71b58b6512D43F8a41f363D"
+ssvNetworkViewsAddress = "0xAE2C84c48272F5a1746150ef333D5E5B51F68763"
+ssvTokenAddress = "0x3a9f01091C446bdE031E39ea8354647AFef091E7"
