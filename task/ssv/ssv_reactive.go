@@ -11,6 +11,11 @@ import (
 )
 
 func (task *Task) checkAndReactiveOnSSV() error {
+	logrus.Debug("checkAndReactiveOnSSV start -----------")
+	defer func() {
+		logrus.Debug("checkAndReactiveOnSSV end -----------")
+	}()
+
 	operatorIds := make([]uint64, 0)
 	for _, op := range task.operators {
 		operatorIds = append(operatorIds, uint64(op.Id))

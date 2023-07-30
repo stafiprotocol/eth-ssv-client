@@ -5,11 +5,16 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	ssv_network "github.com/stafiprotocol/eth-ssv-client/bindings/SsvNetwork"
 	"github.com/stafiprotocol/eth-ssv-client/pkg/utils"
 )
 
 func (task *Task) checkAndRemoveOnSSV() error {
+	logrus.Debug("checkAndRemoveOnSSV start -----------")
+	defer func() {
+		logrus.Debug("checkAndRemoveOnSSV end -----------")
+	}()
 
 	for i := 0; i < task.nextKeyIndex; i++ {
 

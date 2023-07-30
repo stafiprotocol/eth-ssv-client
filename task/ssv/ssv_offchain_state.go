@@ -11,10 +11,15 @@ import (
 const (
 	// todo: automatically detect event fetch limit from target rpc
 	fetchEventBlockLimit      = uint64(4900)
-	fetchEth1WaitBlockNumbers = uint64(5)
+	fetchEth1WaitBlockNumbers = uint64(2)
 )
 
-func (task *Task) updateOffchainState() error {
+func (task *Task) updateSsvOffchainState() error {
+	logrus.Debug("updateOffchainState start -----------")
+	defer func() {
+		logrus.Debug("updateOffchainState end -----------")
+	}()
+
 	latestBlockNumber, err := task.connectionOfSuperNodeAccount.Eth1LatestBlock()
 	if err != nil {
 		return err
@@ -25,6 +30,7 @@ func (task *Task) updateOffchainState() error {
 	}
 
 	logrus.Debugf("latestBlockNumber: %d, dealedBlockNumber: %d", latestBlockNumber, task.dealedEth1Block)
+
 	if latestBlockNumber <= uint64(task.dealedEth1Block) {
 		return nil
 	}
@@ -37,12 +43,6 @@ func (task *Task) updateOffchainState() error {
 		task.latestRegistrationNonce++
 	}
 
-	// 'ClusterDeposited',
-	// 'ClusterWithdrawn',
-	// 'ValidatorRemoved',
-	// 'ValidatorAdded',
-	// 'ClusterLiquidated',
-	// 'ClusterReactivated',
 	for i := start; i <= end; i += fetchEventBlockLimit {
 		subStart := i
 		subEnd := i + fetchEventBlockLimit - 1
@@ -50,6 +50,14 @@ func (task *Task) updateOffchainState() error {
 			subEnd = end
 		}
 
+		// ----------- cluster related events
+
+		// 'ClusterDeposited',
+		// 'ClusterWithdrawn',
+		// 'ValidatorRemoved',
+		// 'ValidatorAdded',
+		// 'ClusterLiquidated',
+		// 'ClusterReactivated',
 		clusterDepositedIter, err := task.ssvClustersContract.FilterClusterDeposited(&bind.FilterOpts{
 			Start:   subStart,
 			End:     &subEnd,
@@ -153,6 +161,23 @@ func (task *Task) updateOffchainState() error {
 			}
 		}
 
+		// -------- feeRecipientAddress
+
+		feeRecipientAddressIter, err := task.ssvNetworkContract.FilterFeeRecipientAddressUpdated(&bind.FilterOpts{
+			Start:   subStart,
+			End:     &subEnd,
+			Context: context.Background(),
+		}, []common.Address{task.ssvKeyPair.CommonAddress()})
+		if err != nil {
+			return err
+		}
+
+		for feeRecipientAddressIter.Next() {
+			logrus.Debugf("find event FeeRecipientAddressIter, tx: %s, feeRecipient: %s", feeRecipientAddressIter.Event.Raw.TxHash.String(),
+				feeRecipientAddressIter.Event.RecipientAddress.String())
+			task.feeRecipientAddressOnSsv = feeRecipientAddressIter.Event.RecipientAddress
+		}
+
 		task.dealedEth1Block = subEnd
 
 		logrus.WithFields(logrus.Fields{
@@ -162,8 +187,9 @@ func (task *Task) updateOffchainState() error {
 	}
 
 	logrus.WithFields(logrus.Fields{
-		"latestNonce":   task.latestRegistrationNonce,
-		"latestCluster": task.latestCluster,
+		"feeRecipientAddressOnSsv": task.feeRecipientAddressOnSsv,
+		"latestNonce":              task.latestRegistrationNonce,
+		"latestCluster":            task.latestCluster,
 	}).Debug("offchain-state")
 	return nil
 }

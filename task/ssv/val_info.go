@@ -5,12 +5,17 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/eth-ssv-client/pkg/utils"
 )
 
 func (task *Task) updateValStatus() error {
-	for i := 0; i < task.nextKeyIndex; i++ {
+	logrus.Debug("updateValStatus start -----------")
+	defer func() {
+		logrus.Debug("updateValStatus end -----------")
+	}()
 
+	for i := 0; i < task.nextKeyIndex; i++ {
 		val, exist := task.validators[i]
 		if !exist {
 			return fmt.Errorf("validator at index %d not exist", i)
@@ -60,5 +65,6 @@ func (task *Task) updateValStatus() error {
 
 		task.validators[task.nextKeyIndex] = val
 	}
+
 	return nil
 }

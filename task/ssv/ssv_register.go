@@ -18,6 +18,10 @@ import (
 )
 
 func (task *Task) checkAndRegisterOnSSV() error {
+	logrus.Debug("checkAndRegisterOnSSV start -----------")
+	defer func() {
+		logrus.Debug("checkAndRegisterOnSSV end -----------")
+	}()
 
 	for i := 0; i < task.nextKeyIndex; i++ {
 

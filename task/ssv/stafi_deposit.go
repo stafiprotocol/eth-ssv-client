@@ -11,6 +11,11 @@ import (
 )
 
 func (task *Task) checkAndDeposit() (retErr error) {
+	logrus.Debug("checkAndDeposit start -----------")
+	defer func() {
+		logrus.Debug("checkAndDeposit end -----------")
+	}()
+
 	poolBalance, err := task.userDepositContract.GetBalance(nil)
 	if err != nil {
 		return err

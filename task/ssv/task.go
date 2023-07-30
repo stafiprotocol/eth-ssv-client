@@ -61,29 +61,33 @@ type Task struct {
 	seed                           []byte
 
 	// --- need init on start
-	dev                          bool
-	ssvApiNetwork                string
-	chain                        constants.Chain
+	dev           bool
+	ssvApiNetwork string
+	chain         constants.Chain
+
 	connectionOfSuperNodeAccount *connection.Connection
 	connectionOfSsvAccount       *connection.Connection
-	eth1WithdrawalAdress         common.Address
-	superNodeContract            *super_node.SuperNode
-	userDepositContract          *user_deposit.UserDeposit
-	ssvNetworkContract           *ssv_network.SsvNetwork
-	ssvNetworkViewsContract      *ssv_network_views.SsvNetworkViews
-	ssvClustersContract          *ssv_clusters.SsvClusters
-	ssvTokenContract             *erc20.Erc20
-	nextKeyIndex                 int
-	dealedEth1Block              uint64
-	validators                   map[int]*Validator
+
+	eth1WithdrawalAdress    common.Address
+	superNodeContract       *super_node.SuperNode
+	userDepositContract     *user_deposit.UserDeposit
+	ssvNetworkContract      *ssv_network.SsvNetwork
+	ssvNetworkViewsContract *ssv_network_views.SsvNetworkViews
+	ssvClustersContract     *ssv_clusters.SsvClusters
+	ssvTokenContract        *erc20.Erc20
+	nextKeyIndex            int
+	dealedEth1Block         uint64
+	validators              map[int]*Validator
 
 	operators []*keyshare.Operator
 
 	eth2Config beacon.Eth2Config
 
 	// offchain state
-	latestCluster           *ssv_clusters.ISSVNetworkCoreCluster
-	latestRegistrationNonce uint64
+	latestCluster              *ssv_clusters.ISSVNetworkCoreCluster
+	latestRegistrationNonce    uint64
+	feeRecipientAddressOnSsv   common.Address
+	feeRecipientAddressOnStafi common.Address
 }
 
 type Validator struct {
@@ -317,6 +321,16 @@ func (task *Task) initContract() error {
 	if err != nil {
 		return err
 	}
+
+	superNodeFeePoolAddress, err := utils.GetContractAddress(storageContract, "stafiSuperNodeFeePool")
+	if err != nil {
+		return err
+	}
+	if (common.Address{}) == superNodeFeePoolAddress {
+		return fmt.Errorf("superNodeFeePoolAddress is zero")
+	}
+	task.feeRecipientAddressOnStafi = superNodeFeePoolAddress
+
 	task.ssvNetworkContract, err = ssv_network.NewSsvNetwork(task.ssvNetworkContractAddress, task.connectionOfSuperNodeAccount.Eth1Client())
 	if err != nil {
 		return err
@@ -373,7 +387,7 @@ func (task *Task) handler() {
 			logrus.Info("task has stopped")
 			return
 		case <-ticker.C:
-			logrus.Debug("checkAndRepairValNexKeyIndex start -----------")
+
 			err := task.checkAndRepairValNexKeyIndex()
 			if err != nil {
 				logrus.Warnf("checkAndRepairValNe err %s", err)
@@ -381,9 +395,7 @@ func (task *Task) handler() {
 				retry++
 				continue
 			}
-			logrus.Debug("checkAndRepairValNe end -----------")
 
-			logrus.Debug("updateValStatus start -----------")
 			err = task.updateValStatus()
 			if err != nil {
 				logrus.Warnf("updateValStatus err %s", err)
@@ -391,9 +403,7 @@ func (task *Task) handler() {
 				retry++
 				continue
 			}
-			logrus.Debug("updateValStatus end -----------")
 
-			logrus.Debug("checkAndStake start -----------")
 			err = task.checkAndStake()
 			if err != nil {
 				logrus.Warnf("checkAndStake err %s", err)
@@ -401,9 +411,7 @@ func (task *Task) handler() {
 				retry++
 				continue
 			}
-			logrus.Debug("checkAndStake end -----------")
 
-			logrus.Debug("checkAndDeposit start -----------")
 			err = task.checkAndDeposit()
 			if err != nil {
 				logrus.Warnf("checkAndDeposit err %s", err)
@@ -411,19 +419,23 @@ func (task *Task) handler() {
 				retry++
 				continue
 			}
-			logrus.Debug("checkAndDeposit end -----------")
 
-			logrus.Debug("updateOffchainState start -----------")
-			err = task.updateOffchainState()
+			err = task.updateSsvOffchainState()
 			if err != nil {
 				logrus.Warnf("updateOffchainState err %s", err)
 				time.Sleep(utils.RetryInterval)
 				retry++
 				continue
 			}
-			logrus.Debug("updateOffchainState end -----------")
 
-			logrus.Debug("checkAndReactiveOnSSV start -----------")
+			err = task.checkAndSetFeeRecipient()
+			if err != nil {
+				logrus.Warnf("checkAndSetFeeRecipient err %s", err)
+				time.Sleep(utils.RetryInterval)
+				retry++
+				continue
+			}
+
 			err = task.checkAndReactiveOnSSV()
 			if err != nil {
 				logrus.Warnf("checkAndReactiveOnSSV err %s", err)
@@ -431,19 +443,15 @@ func (task *Task) handler() {
 				retry++
 				continue
 			}
-			logrus.Debug("checkAndReactiveOnSSV end -----------")
 
-			logrus.Debug("updateOffchainState start -----------")
-			err = task.updateOffchainState()
+			err = task.updateSsvOffchainState()
 			if err != nil {
 				logrus.Warnf("updateOffchainState err %s", err)
 				time.Sleep(utils.RetryInterval)
 				retry++
 				continue
 			}
-			logrus.Debug("updateOffchainState end -----------")
 
-			logrus.Debug("checkAndRegisterOnSSV start -----------")
 			err = task.checkAndRegisterOnSSV()
 			if err != nil {
 				logrus.Warnf("checkAndRegisterOnSSV err %s", err)
@@ -451,19 +459,15 @@ func (task *Task) handler() {
 				retry++
 				continue
 			}
-			logrus.Debug("checkAndRegisterOnSSV end -----------")
 
-			logrus.Debug("updateOffchainState start -----------")
-			err = task.updateOffchainState()
+			err = task.updateSsvOffchainState()
 			if err != nil {
 				logrus.Warnf("updateOffchainState err %s", err)
 				time.Sleep(utils.RetryInterval)
 				retry++
 				continue
 			}
-			logrus.Debug("updateOffchainState end -----------")
 
-			logrus.Debug("checkAndRemoveOnSSV start -----------")
 			err = task.checkAndRemoveOnSSV()
 			if err != nil {
 				logrus.Warnf("checkAndRemoveOnSSV err %s", err)
@@ -471,7 +475,7 @@ func (task *Task) handler() {
 				retry++
 				continue
 			}
-			logrus.Debug("checkAndRemoveOnSSV end -----------")
+
 		}
 	}
 }
