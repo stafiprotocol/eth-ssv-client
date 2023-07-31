@@ -17,9 +17,9 @@ func (task *Task) initValNextKeyIndex() error {
 }
 
 func (task *Task) checkAndRepairValNexKeyIndex() error {
-	logrus.Debug("checkAndRepairValNexKeyIndex start -----------")
+	logrus.Debug("checkAndRepairValNextKeyIndex start -----------")
 	defer func() {
-		logrus.Debug("checkAndRepairValNe end -----------")
+		logrus.Debug("checkAndRepairValNextKeyIndex end -----------")
 	}()
 
 	retry := 0
@@ -43,12 +43,13 @@ func (task *Task) checkAndRepairValNexKeyIndex() error {
 		if uint8(pubkeyStatus.Uint64()) == utils.ValidatorStatusUnInitial {
 			break
 		}
-
-		task.validators[task.nextKeyIndex] = &Validator{
+		val := &Validator{
 			privateKey: credential.SigningSk,
 			status:     uint8(pubkeyStatus.Uint64()),
 			keyIndex:   task.nextKeyIndex,
 		}
+		task.validatorsByIndex[task.nextKeyIndex] = val
+		task.validatorsByPubkey[hex.EncodeToString(pubkey)] = val
 
 		logrus.WithFields(logrus.Fields{
 			"keyIndex":              task.nextKeyIndex,

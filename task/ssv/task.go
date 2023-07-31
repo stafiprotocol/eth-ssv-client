@@ -80,7 +80,8 @@ type Task struct {
 	ssvTokenContract        *erc20.Erc20
 	nextKeyIndex            int
 	dealedEth1Block         uint64
-	validators              map[int]*Validator // key index => validator
+	validatorsByIndex       map[int]*Validator    // key index => validator
+	validatorsByPubkey      map[string]*Validator // key index => validator
 
 	eth2Config beacon.Eth2Config
 
@@ -217,7 +218,8 @@ func NewTask(cfg *config.Config, seed []byte, superNodeKeyPair, ssvKeyPair *secp
 		ssvNetworkViewsContractAddress: common.HexToAddress(cfg.Contracts.SsvNetworkViewsAddress),
 		ssvTokenContractAddress:        common.HexToAddress(cfg.Contracts.SsvTokenAddress),
 
-		validators: map[int]*Validator{},
+		validatorsByIndex:  make(map[int]*Validator),
+		validatorsByPubkey: make(map[string]*Validator),
 
 		clusters: clusters,
 	}

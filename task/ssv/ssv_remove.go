@@ -18,7 +18,7 @@ func (task *Task) checkAndRemoveOnSSV() error {
 
 	for i := 0; i < task.nextKeyIndex; i++ {
 
-		val, exist := task.validators[i]
+		val, exist := task.validatorsByIndex[i]
 		if !exist {
 			return fmt.Errorf("validator at index %d not exist", i)
 		}

@@ -16,7 +16,7 @@ func (task *Task) updateValStatus() error {
 	}()
 
 	for i := 0; i < task.nextKeyIndex; i++ {
-		val, exist := task.validators[i]
+		val, exist := task.validatorsByIndex[i]
 		if !exist {
 			return fmt.Errorf("validator at index %d not exist", i)
 		}
@@ -62,8 +62,6 @@ func (task *Task) updateValStatus() error {
 				val.status = valStatusRegistedOnSsv
 			}
 		}
-
-		task.validators[task.nextKeyIndex] = val
 	}
 
 	return nil

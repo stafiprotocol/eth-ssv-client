@@ -45,7 +45,10 @@ func (task *Task) checkAndDeposit() (retErr error) {
 		if retErr != nil {
 			task.nextKeyIndex = oldKeyIndex
 			for i := task.nextKeyIndex; i < task.nextKeyIndex+int(depositLen); i++ {
-				delete(task.validators, i)
+				pubkey := hex.EncodeToString(task.validatorsByIndex[i].privateKey.PublicKey().Marshal())
+
+				delete(task.validatorsByIndex, i)
+				delete(task.validatorsByPubkey, pubkey)
 			}
 		}
 	}()
@@ -84,11 +87,13 @@ func (task *Task) checkAndDeposit() (retErr error) {
 		}
 		dataRoots[i] = [32]byte(dataRootBts)
 
-		task.validators[task.nextKeyIndex] = &Validator{
+		val := &Validator{
 			privateKey: credential.SigningSk,
 			status:     utils.ValidatorStatusUnInitial,
 			keyIndex:   task.nextKeyIndex,
 		}
+		task.validatorsByIndex[task.nextKeyIndex] = val
+		task.validatorsByPubkey[hex.EncodeToString(pubkeyBts)] = val
 
 		logrus.WithFields(logrus.Fields{
 			"keyIndex":            task.nextKeyIndex,

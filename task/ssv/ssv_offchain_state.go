@@ -2,6 +2,8 @@ package task_ssv
 
 import (
 	"context"
+	"encoding/hex"
+	"fmt"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -92,25 +94,6 @@ func (task *Task) updateSsvOffchainState() error {
 			}
 		}
 
-		validatorRemovedIter, err := task.ssvClustersContract.FilterValidatorRemoved(&bind.FilterOpts{
-			Start:   subStart,
-			End:     &subEnd,
-			Context: context.Background(),
-		}, []common.Address{task.ssvKeyPair.CommonAddress()})
-
-		if err != nil {
-			return err
-		}
-		for validatorRemovedIter.Next() {
-			logrus.Debugf("find event validatorRemoved, tx: %s", validatorRemovedIter.Event.Raw.TxHash.String())
-			if validatorRemovedIter.Event.Raw.BlockNumber > maxBlock {
-				cluster := task.clusters[clusterKey(validatorRemovedIter.Event.OperatorIds)]
-				cluster.latestCluster = &validatorRemovedIter.Event.Cluster
-
-				maxBlock = validatorRemovedIter.Event.Raw.BlockNumber
-			}
-		}
-
 		validatorAdddedIter, err := task.ssvClustersContract.FilterValidatorAdded(&bind.FilterOpts{
 			Start:   subStart,
 			End:     &subEnd,
@@ -122,13 +105,54 @@ func (task *Task) updateSsvOffchainState() error {
 		}
 		for validatorAdddedIter.Next() {
 			logrus.Debugf("find event validatorAddded, tx: %s", validatorAdddedIter.Event.Raw.TxHash.String())
-			cluster := task.clusters[clusterKey(validatorAdddedIter.Event.OperatorIds)]
+
+			// set val's cluster key
+			pubkey := hex.EncodeToString(validatorAdddedIter.Event.PublicKey)
+			val, exist := task.validatorsByPubkey[pubkey]
+			if !exist {
+				return fmt.Errorf("val %s not exist in offchain state", pubkey)
+			}
+			cluKey := clusterKey(validatorAdddedIter.Event.OperatorIds)
+			val.clusterKey = cluKey
+
+			// update cluster
+			cluster := task.clusters[cluKey]
 			cluster.latestRegistrationNonce++
+			cluster.vlidators[val.keyIndex] = struct{}{}
 
 			if validatorAdddedIter.Event.Raw.BlockNumber > maxBlock {
 				cluster.latestCluster = &validatorAdddedIter.Event.Cluster
 
 				maxBlock = validatorAdddedIter.Event.Raw.BlockNumber
+			}
+		}
+
+		validatorRemovedIter, err := task.ssvClustersContract.FilterValidatorRemoved(&bind.FilterOpts{
+			Start:   subStart,
+			End:     &subEnd,
+			Context: context.Background(),
+		}, []common.Address{task.ssvKeyPair.CommonAddress()})
+
+		if err != nil {
+			return err
+		}
+		for validatorRemovedIter.Next() {
+			logrus.Debugf("find event validatorRemoved, tx: %s", validatorRemovedIter.Event.Raw.TxHash.String())
+			cluKey := clusterKey(validatorRemovedIter.Event.OperatorIds)
+			pubkey := hex.EncodeToString(validatorRemovedIter.Event.PublicKey)
+			val, exist := task.validatorsByPubkey[pubkey]
+			if !exist {
+				return fmt.Errorf("val %s not exist in offchain state", pubkey)
+			}
+
+			// update cluster
+			cluster := task.clusters[cluKey]
+			delete(cluster.vlidators, val.keyIndex)
+
+			if validatorRemovedIter.Event.Raw.BlockNumber > maxBlock {
+				cluster.latestCluster = &validatorRemovedIter.Event.Cluster
+
+				maxBlock = validatorRemovedIter.Event.Raw.BlockNumber
 			}
 		}
 
