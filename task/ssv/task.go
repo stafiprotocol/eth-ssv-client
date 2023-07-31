@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/big"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -68,7 +69,9 @@ type Task struct {
 	connectionOfSuperNodeAccount *connection.Connection
 	connectionOfSsvAccount       *connection.Connection
 
-	eth1WithdrawalAdress    common.Address
+	eth1WithdrawalAdress       common.Address
+	feeRecipientAddressOnStafi common.Address
+
 	superNodeContract       *super_node.SuperNode
 	userDepositContract     *user_deposit.UserDeposit
 	ssvNetworkContract      *ssv_network.SsvNetwork
@@ -77,23 +80,30 @@ type Task struct {
 	ssvTokenContract        *erc20.Erc20
 	nextKeyIndex            int
 	dealedEth1Block         uint64
-	validators              map[int]*Validator
-
-	operators []*keyshare.Operator
+	validators              map[int]*Validator // key index => validator
 
 	eth2Config beacon.Eth2Config
 
-	// offchain state
-	latestCluster              *ssv_clusters.ISSVNetworkCoreCluster
-	latestRegistrationNonce    uint64
-	feeRecipientAddressOnSsv   common.Address
-	feeRecipientAddressOnStafi common.Address
+	// ssv offchain state
+	clusters                 map[string]*Cluster
+	feeRecipientAddressOnSsv common.Address
 }
 
 type Validator struct {
 	privateKey *bls.PrivateKey
 	keyIndex   int
 	status     uint8 // status: 0 uninitiated 1 deposited 2 staked 3 registed on ssv 4 exited on eth 5 removed on ssv
+
+	clusterKey string
+}
+
+type Cluster struct {
+	operators               []*keyshare.Operator
+	operatorIds             []uint64
+	latestCluster           *ssv_clusters.ISSVNetworkCoreCluster
+	latestRegistrationNonce uint64
+
+	vlidators map[int]struct{} // key index
 }
 
 const (
@@ -110,6 +120,14 @@ const (
 
 	valStatusRemovedOnSsv = uint8(8)
 )
+
+func clusterKey(operators []uint64) string {
+	key := strings.Builder{}
+	for _, operator := range operators {
+		key.WriteString(fmt.Sprintf("%d/", operator))
+	}
+	return key.String()
+}
 
 func NewTask(cfg *config.Config, seed []byte, superNodeKeyPair, ssvKeyPair *secp256k1.Keypair) (*Task, error) {
 	if !common.IsHexAddress(cfg.Contracts.StorageContractAddress) {
@@ -149,17 +167,36 @@ func NewTask(cfg *config.Config, seed []byte, superNodeKeyPair, ssvKeyPair *secp
 		return nil, fmt.Errorf("clusterInitSsvAmount is zero")
 	}
 
-	if len(cfg.Operators) == 1 || len(cfg.Operators)%3 != 1 {
-		return nil, fmt.Errorf("operators length not match")
-	}
+	clusters := make(map[string]*Cluster)
+	for _, operators := range cfg.Clusters {
 
-	sort.Slice(cfg.Operators, func(i, j int) bool {
-		return cfg.Operators[i] < cfg.Operators[j]
-	})
+		if len(operators) == 1 || len(operators)%3 != 1 {
+			return nil, fmt.Errorf("cluster operator length not match")
+		}
 
-	operaters := make([]*keyshare.Operator, len(cfg.Operators))
-	for i := 0; i < len(cfg.Operators); i++ {
-		operaters[i] = &keyshare.Operator{Id: int(cfg.Operators[i])}
+		sort.Slice(operators, func(i, j int) bool {
+			return operators[i] < operators[j]
+		})
+
+		operatorDetails := make([]*keyshare.Operator, len(operators))
+		for i := 0; i < len(operators); i++ {
+			operatorDetails[i] = &keyshare.Operator{Id: int(operators[i])}
+		}
+
+		clusters[clusterKey(operators)] = &Cluster{
+			operators:   operatorDetails,
+			operatorIds: operators,
+			latestCluster: &ssv_clusters.ISSVNetworkCoreCluster{
+				ValidatorCount:  0,
+				NetworkFeeIndex: 0,
+				Index:           0,
+				Active:          true,
+				Balance:         big.NewInt(0),
+			},
+			latestRegistrationNonce: 0,
+			vlidators:               make(map[int]struct{}),
+		}
+
 	}
 
 	s := &Task{
@@ -180,18 +217,9 @@ func NewTask(cfg *config.Config, seed []byte, superNodeKeyPair, ssvKeyPair *secp
 		ssvNetworkViewsContractAddress: common.HexToAddress(cfg.Contracts.SsvNetworkViewsAddress),
 		ssvTokenContractAddress:        common.HexToAddress(cfg.Contracts.SsvTokenAddress),
 
-		operators: operaters,
-
 		validators: map[int]*Validator{},
 
-		latestCluster: &ssv_clusters.ISSVNetworkCoreCluster{
-			ValidatorCount:  0,
-			NetworkFeeIndex: 0,
-			Index:           0,
-			Active:          true,
-			Balance:         big.NewInt(0),
-		},
-		latestRegistrationNonce: 0,
+		clusters: clusters,
 	}
 
 	return s, nil
@@ -199,11 +227,13 @@ func NewTask(cfg *config.Config, seed []byte, superNodeKeyPair, ssvKeyPair *secp
 
 func (task *Task) Start() error {
 	var err error
-	task.connectionOfSuperNodeAccount, err = connection.NewConnection(task.eth1Endpoint, task.eth2Endpoint, task.superNodeKeyPair, task.gasLimit, task.maxGasPrice)
+	task.connectionOfSuperNodeAccount, err = connection.NewConnection(task.eth1Endpoint, task.eth2Endpoint,
+		task.superNodeKeyPair, task.gasLimit, task.maxGasPrice)
 	if err != nil {
 		return err
 	}
-	task.connectionOfSsvAccount, err = connection.NewConnection(task.eth1Endpoint, task.eth2Endpoint, task.ssvKeyPair, task.gasLimit, task.maxGasPrice)
+	task.connectionOfSsvAccount, err = connection.NewConnection(task.eth1Endpoint, task.eth2Endpoint, task.ssvKeyPair,
+		task.gasLimit, task.maxGasPrice)
 	if err != nil {
 		return err
 	}
@@ -263,17 +293,19 @@ func (task *Task) Start() error {
 	logrus.Infof("nextKeyIndex: %d", task.nextKeyIndex)
 
 	// init operators
-	for _, op := range task.operators {
-		operatorDetail, err := utils.GetOperatorDetail(task.ssvApiNetwork, op.Id)
-		if err != nil {
-			return err
+	for _, cluster := range task.clusters {
+		for _, op := range cluster.operators {
+			operatorDetail, err := utils.GetOperatorDetail(task.ssvApiNetwork, op.Id)
+			if err != nil {
+				return err
+			}
+			op.PublicKey = operatorDetail.PublicKey
+			feeDeci, err := decimal.NewFromString(operatorDetail.Fee)
+			if err != nil {
+				return err
+			}
+			op.Fee = feeDeci.String()
 		}
-		op.PublicKey = operatorDetail.PublicKey
-		feeDeci, err := decimal.NewFromString(operatorDetail.Fee)
-		if err != nil {
-			return err
-		}
-		op.Fee = feeDeci.BigInt().Uint64()
 	}
 
 	utils.SafeGo(task.handler)

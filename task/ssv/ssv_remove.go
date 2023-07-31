@@ -42,10 +42,8 @@ func (task *Task) checkAndRemoveOnSSV() error {
 			return fmt.Errorf("validator %s at index %d is not active on ssv", val.privateKey.PublicKey().SerializeToHexStr(), val.keyIndex)
 		}
 
-		operatorIds := make([]uint64, 0)
-		for _, op := range task.operators {
-			operatorIds = append(operatorIds, uint64(op.Id))
-		}
+		cluster := task.clusters[val.clusterKey]
+		operatorIds := cluster.operatorIds
 
 		// send tx
 		err = task.connectionOfSsvAccount.LockAndUpdateTxOpts()
@@ -54,7 +52,8 @@ func (task *Task) checkAndRemoveOnSSV() error {
 		}
 		defer task.connectionOfSsvAccount.UnlockTxOpts()
 
-		removeTx, err := task.ssvNetworkContract.RemoveValidator(task.connectionOfSsvAccount.TxOpts(), val.privateKey.PublicKey().Marshal(), operatorIds, ssv_network.ISSVNetworkCoreCluster(*task.latestCluster))
+		removeTx, err := task.ssvNetworkContract.RemoveValidator(task.connectionOfSsvAccount.TxOpts(),
+			val.privateKey.PublicKey().Marshal(), operatorIds, ssv_network.ISSVNetworkCoreCluster(*cluster.latestCluster))
 		if err != nil {
 			return err
 		}

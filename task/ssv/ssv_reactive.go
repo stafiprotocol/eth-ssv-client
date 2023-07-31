@@ -16,38 +16,40 @@ func (task *Task) checkAndReactiveOnSSV() error {
 		logrus.Debug("checkAndReactiveOnSSV end -----------")
 	}()
 
-	operatorIds := make([]uint64, 0)
-	for _, op := range task.operators {
-		operatorIds = append(operatorIds, uint64(op.Id))
-	}
-	isLiquidated, err := task.ssvNetworkViewsContract.IsLiquidated(nil, task.connectionOfSsvAccount.TxOpts().From, operatorIds, ssv_network_views.ISSVNetworkCoreCluster(*task.latestCluster))
-	if err != nil {
-		return errors.Wrap(err, "ssvNetworkViewsContract.IsLiquidated failed")
-	}
-
-	if isLiquidated {
-		// send tx
-		err = task.connectionOfSsvAccount.LockAndUpdateTxOpts()
-		if err != nil {
-			return fmt.Errorf("LockAndUpdateTxOpts err: %s", err)
+	for _, cluster := range task.clusters {
+		operatorIds := make([]uint64, 0)
+		for _, op := range cluster.operators {
+			operatorIds = append(operatorIds, uint64(op.Id))
 		}
-		defer task.connectionOfSsvAccount.UnlockTxOpts()
-
-		reactiveTx, err := task.ssvNetworkContract.Reactivate(task.connectionOfSsvAccount.TxOpts(), operatorIds, task.clusterInitSsvAmount, ssv_network.ISSVNetworkCoreCluster(*task.latestCluster))
+		isLiquidated, err := task.ssvNetworkViewsContract.IsLiquidated(nil, task.connectionOfSsvAccount.TxOpts().From, operatorIds, ssv_network_views.ISSVNetworkCoreCluster(*cluster.latestCluster))
 		if err != nil {
-			return errors.Wrap(err, "ssvNetworkContract.RegisterValidator failed")
+			return errors.Wrap(err, "ssvNetworkViewsContract.IsLiquidated failed")
 		}
 
-		logrus.WithFields(logrus.Fields{
-			"txHash":      reactiveTx.Hash(),
-			"operaterIds": operatorIds,
-		}).Info("reactive-tx")
+		if isLiquidated {
+			// send tx
+			err = task.connectionOfSsvAccount.LockAndUpdateTxOpts()
+			if err != nil {
+				return fmt.Errorf("LockAndUpdateTxOpts err: %s", err)
+			}
+			defer task.connectionOfSsvAccount.UnlockTxOpts()
 
-		err = utils.WaitTxOkCommon(task.connectionOfSuperNodeAccount.Eth1Client(), reactiveTx.Hash())
-		if err != nil {
-			return err
+			reactiveTx, err := task.ssvNetworkContract.Reactivate(task.connectionOfSsvAccount.TxOpts(), operatorIds, task.clusterInitSsvAmount, ssv_network.ISSVNetworkCoreCluster(*cluster.latestCluster))
+			if err != nil {
+				return errors.Wrap(err, "ssvNetworkContract.RegisterValidator failed")
+			}
+
+			logrus.WithFields(logrus.Fields{
+				"txHash":      reactiveTx.Hash(),
+				"operaterIds": operatorIds,
+			}).Info("reactive-tx")
+
+			err = utils.WaitTxOkCommon(task.connectionOfSuperNodeAccount.Eth1Client(), reactiveTx.Hash())
+			if err != nil {
+				return err
+			}
 		}
-	}
 
+	}
 	return nil
 }

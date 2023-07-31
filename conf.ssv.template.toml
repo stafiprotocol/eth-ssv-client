@@ -8,7 +8,7 @@ keystorePath = "./keys"
 maxGasPrice = "60000000000"                                     #wei
 clusterInitSsvAmount = "20000000000000000000"
 
-operators = [22, 8, 14, 32]
+clusters = [[22, 8, 14, 32]]
 
 [contracts]
 storageContractAddress = "0x5d3bb8F3BdeFF819709f82Da915Bc97f9969c861"

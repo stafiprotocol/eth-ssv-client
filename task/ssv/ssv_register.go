@@ -54,20 +54,22 @@ func (task *Task) checkAndRegisterOnSSV() error {
 			return fmt.Errorf("validator %s at index %d is active on ssv", val.privateKey.PublicKey().SerializeToHexStr(), val.keyIndex)
 		}
 
+		// todo select cluster
+		cluster := &Cluster{}
+
 		// encrypt share
-		encryptShares, err := keyshare.EncryptShares(val.privateKey.Marshal(), task.operators)
+		encryptShares, err := keyshare.EncryptShares(val.privateKey.Marshal(), cluster.operators)
 		if err != nil {
 			return err
 		}
 
 		// build payload
-		operatorIds := make([]uint64, 0)
 		shares := make([]byte, 0)
 		pubkeys := make([]byte, 0)
-		ssvAmount := task.clusterInitSsvAmount
-		for i, op := range task.operators {
-			operatorIds = append(operatorIds, uint64(op.Id))
 
+		// todo cal automically
+		ssvAmount := task.clusterInitSsvAmount
+		for i := range cluster.operators {
 			shareBts, err := base64.StdEncoding.DecodeString(encryptShares[i].EncryptedKey)
 			if err != nil {
 				return errors.Wrap(err, "EncryptedKey decode failed")
@@ -82,7 +84,7 @@ func (task *Task) checkAndRegisterOnSSV() error {
 		}
 
 		// sign with val private key
-		data := fmt.Sprintf("%s:%d", task.connectionOfSsvAccount.TxOpts().From.String(), task.latestRegistrationNonce)
+		data := fmt.Sprintf("%s:%d", task.connectionOfSsvAccount.TxOpts().From.String(), cluster.latestRegistrationNonce)
 		hash := crypto.Keccak256([]byte(data))
 		valPrivateKey, err := bls.PrivateKeyFromBytes(val.privateKey.Marshal())
 		if err != nil {
@@ -95,13 +97,14 @@ func (task *Task) checkAndRegisterOnSSV() error {
 		shareData = append(shareData, shares...)
 
 		// check cluster state
-		isLiquidated, err := task.ssvNetworkViewsContract.IsLiquidated(nil, task.connectionOfSsvAccount.TxOpts().From, operatorIds, ssv_network_views.ISSVNetworkCoreCluster(*task.latestCluster))
+		isLiquidated, err := task.ssvNetworkViewsContract.IsLiquidated(nil, task.connectionOfSsvAccount.TxOpts().From,
+			cluster.operatorIds, ssv_network_views.ISSVNetworkCoreCluster(*cluster.latestCluster))
 		if err != nil {
 			return errors.Wrap(err, "ssvNetworkViewsContract.IsLiquidated failed")
 		}
 		if isLiquidated {
 			logrus.WithFields(logrus.Fields{
-				"operators": operatorIds,
+				"operators": cluster.operatorIds,
 			}).Warn("cluster is liquidated")
 			return nil
 		}
@@ -141,7 +144,8 @@ func (task *Task) checkAndRegisterOnSSV() error {
 			return fmt.Errorf("LockAndUpdateTxOpts err: %s", err)
 		}
 
-		registerTx, err := task.ssvNetworkContract.RegisterValidator(task.connectionOfSsvAccount.TxOpts(), val.privateKey.PublicKey().Marshal(), operatorIds, shareData, ssvAmount, ssv_network.ISSVNetworkCoreCluster(*task.latestCluster))
+		registerTx, err := task.ssvNetworkContract.RegisterValidator(task.connectionOfSsvAccount.TxOpts(),
+			val.privateKey.PublicKey().Marshal(), cluster.operatorIds, shareData, ssvAmount, ssv_network.ISSVNetworkCoreCluster(*cluster.latestCluster))
 		if err != nil {
 			task.connectionOfSsvAccount.UnlockTxOpts()
 			return errors.Wrap(err, "ssvNetworkContract.RegisterValidator failed")
@@ -150,8 +154,8 @@ func (task *Task) checkAndRegisterOnSSV() error {
 
 		logrus.WithFields(logrus.Fields{
 			"txHash":      registerTx.Hash(),
-			"nonce":       task.latestRegistrationNonce,
-			"operaterIds": operatorIds,
+			"nonce":       cluster.latestRegistrationNonce,
+			"operaterIds": cluster.operatorIds,
 			"pubkey":      hex.EncodeToString(val.privateKey.PublicKey().Marshal()),
 			"ssvAmount":   ssvAmount.String(),
 		}).Info("register-tx")

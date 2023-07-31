@@ -33,7 +33,7 @@ type Payload struct {
 type Operator struct {
 	Id        int    `json:"id"`
 	PublicKey string `json:"publicKey"`
-	Fee       uint64 `json:"-"`
+	Fee       string `json:"fee"`
 }
 
 type Shares struct {

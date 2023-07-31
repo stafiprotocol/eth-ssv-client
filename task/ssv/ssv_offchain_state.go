@@ -39,10 +39,6 @@ func (task *Task) updateSsvOffchainState() error {
 	end := latestBlockNumber
 	maxBlock := uint64(0)
 
-	increaseNonce := func() {
-		task.latestRegistrationNonce++
-	}
-
 	for i := start; i <= end; i += fetchEventBlockLimit {
 		subStart := i
 		subEnd := i + fetchEventBlockLimit - 1
@@ -70,7 +66,9 @@ func (task *Task) updateSsvOffchainState() error {
 		for clusterDepositedIter.Next() {
 			logrus.Debugf("find event clusterDeposited, tx: %s", clusterDepositedIter.Event.Raw.TxHash.String())
 			if clusterDepositedIter.Event.Raw.BlockNumber > maxBlock {
-				task.latestCluster = &clusterDepositedIter.Event.Cluster
+				cluster := task.clusters[clusterKey(clusterDepositedIter.Event.OperatorIds)]
+				cluster.latestCluster = &clusterDepositedIter.Event.Cluster
+
 				maxBlock = clusterDepositedIter.Event.Raw.BlockNumber
 			}
 		}
@@ -87,7 +85,9 @@ func (task *Task) updateSsvOffchainState() error {
 		for clusterWithdrawnIter.Next() {
 			logrus.Debugf("find event clusterWithdrawn, tx: %s", clusterWithdrawnIter.Event.Raw.TxHash.String())
 			if clusterWithdrawnIter.Event.Raw.BlockNumber > maxBlock {
-				task.latestCluster = &clusterWithdrawnIter.Event.Cluster
+				cluster := task.clusters[clusterKey(clusterWithdrawnIter.Event.OperatorIds)]
+				cluster.latestCluster = &clusterWithdrawnIter.Event.Cluster
+
 				maxBlock = clusterWithdrawnIter.Event.Raw.BlockNumber
 			}
 		}
@@ -104,7 +104,9 @@ func (task *Task) updateSsvOffchainState() error {
 		for validatorRemovedIter.Next() {
 			logrus.Debugf("find event validatorRemoved, tx: %s", validatorRemovedIter.Event.Raw.TxHash.String())
 			if validatorRemovedIter.Event.Raw.BlockNumber > maxBlock {
-				task.latestCluster = &validatorRemovedIter.Event.Cluster
+				cluster := task.clusters[clusterKey(validatorRemovedIter.Event.OperatorIds)]
+				cluster.latestCluster = &validatorRemovedIter.Event.Cluster
+
 				maxBlock = validatorRemovedIter.Event.Raw.BlockNumber
 			}
 		}
@@ -120,9 +122,12 @@ func (task *Task) updateSsvOffchainState() error {
 		}
 		for validatorAdddedIter.Next() {
 			logrus.Debugf("find event validatorAddded, tx: %s", validatorAdddedIter.Event.Raw.TxHash.String())
-			increaseNonce()
+			cluster := task.clusters[clusterKey(validatorAdddedIter.Event.OperatorIds)]
+			cluster.latestRegistrationNonce++
+
 			if validatorAdddedIter.Event.Raw.BlockNumber > maxBlock {
-				task.latestCluster = &validatorAdddedIter.Event.Cluster
+				cluster.latestCluster = &validatorAdddedIter.Event.Cluster
+
 				maxBlock = validatorAdddedIter.Event.Raw.BlockNumber
 			}
 		}
@@ -139,7 +144,9 @@ func (task *Task) updateSsvOffchainState() error {
 		for clusterLiquidatedIter.Next() {
 			logrus.Debugf("find event clusterLiquidated, tx: %s", clusterLiquidatedIter.Event.Raw.TxHash.String())
 			if clusterLiquidatedIter.Event.Raw.BlockNumber > maxBlock {
-				task.latestCluster = &clusterLiquidatedIter.Event.Cluster
+				cluster := task.clusters[clusterKey(clusterLiquidatedIter.Event.OperatorIds)]
+				cluster.latestCluster = &clusterLiquidatedIter.Event.Cluster
+
 				maxBlock = clusterLiquidatedIter.Event.Raw.BlockNumber
 			}
 		}
@@ -156,7 +163,9 @@ func (task *Task) updateSsvOffchainState() error {
 		for clusterReactivatedIter.Next() {
 			logrus.Debugf("find event clusterReactivated, tx: %s", clusterReactivatedIter.Event.Raw.TxHash.String())
 			if clusterReactivatedIter.Event.Raw.BlockNumber > maxBlock {
-				task.latestCluster = &clusterReactivatedIter.Event.Cluster
+				cluster := task.clusters[clusterKey(clusterReactivatedIter.Event.OperatorIds)]
+				cluster.latestCluster = &clusterReactivatedIter.Event.Cluster
+
 				maxBlock = clusterReactivatedIter.Event.Raw.BlockNumber
 			}
 		}
@@ -185,11 +194,16 @@ func (task *Task) updateSsvOffchainState() error {
 			"end":   subEnd,
 		}).Debug("already dealed blocks")
 	}
-
 	logrus.WithFields(logrus.Fields{
 		"feeRecipientAddressOnSsv": task.feeRecipientAddressOnSsv,
-		"latestNonce":              task.latestRegistrationNonce,
-		"latestCluster":            task.latestCluster,
 	}).Debug("offchain-state")
+
+	for key, cluster := range task.clusters {
+		logrus.WithFields(logrus.Fields{
+			"clusterKey":    key,
+			"latestNonce":   cluster.latestRegistrationNonce,
+			"latestCluster": cluster.latestCluster,
+		}).Debug("offchain-state")
+	}
 	return nil
 }
