@@ -36,25 +36,29 @@ var (
 
 	superNodeDepositAmount = decimal.NewFromBigInt(big.NewInt(1), 18)
 	superNodeStakeAmount   = decimal.NewFromBigInt(big.NewInt(31), 18)
+
+	blocksOfOneYear  = decimal.NewFromInt(2629800)
+	blocksOfHalfYear = decimal.NewFromInt(1314900)
 )
 
-// only support super node account now !!!
+// only support stafi super node account now !!!
 // 0. find next key index and cache validator status on start
-// 1. update validator status periodically
+// 1. update validator status(on execution/ssv/beacon) periodically
 // 2. check stakepool balance periodically, call stake/deposit if match
 // 3. register validator on ssv, if status is staked on eth
-// 3. register validator on ssv, if status is exited on eth
+// 4. register validator on ssv, if status is exited on eth
 type Task struct {
-	taskTicker                     int64
-	stop                           chan struct{}
-	eth1StartHeight                uint64
-	eth1Endpoint                   string
-	eth2Endpoint                   string
-	superNodeKeyPair               *secp256k1.Keypair
-	ssvKeyPair                     *secp256k1.Keypair
+	taskTicker      int64
+	stop            chan struct{}
+	eth1StartHeight uint64
+	eth1Endpoint    string
+	eth2Endpoint    string
+
+	superNodeKeyPair *secp256k1.Keypair
+	ssvKeyPair       *secp256k1.Keypair
+
 	gasLimit                       *big.Int
 	maxGasPrice                    *big.Int
-	clusterInitSsvAmount           *big.Int
 	storageContractAddress         common.Address
 	ssvNetworkContractAddress      common.Address
 	ssvNetworkViewsContractAddress common.Address
@@ -104,7 +108,7 @@ type Cluster struct {
 	latestCluster           *ssv_clusters.ISSVNetworkCoreCluster
 	latestRegistrationNonce uint64
 
-	vlidators map[int]struct{} // key index
+	managingValidators map[int]struct{} // key index
 }
 
 const (
@@ -160,14 +164,6 @@ func NewTask(cfg *config.Config, seed []byte, superNodeKeyPair, ssvKeyPair *secp
 		return nil, fmt.Errorf("max gas price is zero")
 	}
 
-	clusterInitSsvAmount, err := decimal.NewFromString(cfg.ClusterInitSsvAmount)
-	if err != nil {
-		return nil, err
-	}
-	if clusterInitSsvAmount.LessThanOrEqual(decimal.Zero) {
-		return nil, fmt.Errorf("clusterInitSsvAmount is zero")
-	}
-
 	clusters := make(map[string]*Cluster)
 	for _, operators := range cfg.Clusters {
 
@@ -195,22 +191,21 @@ func NewTask(cfg *config.Config, seed []byte, superNodeKeyPair, ssvKeyPair *secp
 				Balance:         big.NewInt(0),
 			},
 			latestRegistrationNonce: 0,
-			vlidators:               make(map[int]struct{}),
+			managingValidators:      make(map[int]struct{}),
 		}
 
 	}
 
 	s := &Task{
-		taskTicker:           15,
-		stop:                 make(chan struct{}),
-		eth1Endpoint:         cfg.Eth1Endpoint,
-		eth2Endpoint:         cfg.Eth2Endpoint,
-		superNodeKeyPair:     superNodeKeyPair,
-		ssvKeyPair:           ssvKeyPair,
-		seed:                 seed,
-		gasLimit:             gasLimitDeci.BigInt(),
-		maxGasPrice:          maxGasPriceDeci.BigInt(),
-		clusterInitSsvAmount: clusterInitSsvAmount.BigInt(),
+		taskTicker:       15,
+		stop:             make(chan struct{}),
+		eth1Endpoint:     cfg.Eth1Endpoint,
+		eth2Endpoint:     cfg.Eth2Endpoint,
+		superNodeKeyPair: superNodeKeyPair,
+		ssvKeyPair:       ssvKeyPair,
+		seed:             seed,
+		gasLimit:         gasLimitDeci.BigInt(),
+		maxGasPrice:      maxGasPriceDeci.BigInt(),
 
 		eth1StartHeight:                utils.TheMergeBlockNumber,
 		storageContractAddress:         common.HexToAddress(cfg.Contracts.StorageContractAddress),
@@ -229,8 +224,8 @@ func NewTask(cfg *config.Config, seed []byte, superNodeKeyPair, ssvKeyPair *secp
 
 func (task *Task) Start() error {
 	var err error
-	task.connectionOfSuperNodeAccount, err = connection.NewConnection(task.eth1Endpoint, task.eth2Endpoint,
-		task.superNodeKeyPair, task.gasLimit, task.maxGasPrice)
+	task.connectionOfSuperNodeAccount, err = connection.NewConnection(task.eth1Endpoint, task.eth2Endpoint, task.superNodeKeyPair,
+		task.gasLimit, task.maxGasPrice)
 	if err != nil {
 		return err
 	}
@@ -306,7 +301,7 @@ func (task *Task) Start() error {
 			if err != nil {
 				return err
 			}
-			op.Fee = feeDeci.String()
+			op.Fee = feeDeci
 		}
 	}
 
@@ -322,6 +317,53 @@ func (task *Task) copySeed() []byte {
 	copyBts := make([]byte, len(task.seed))
 	copy(copyBts, task.seed)
 	return copyBts
+}
+
+func (task *Task) calClusterNeedDepositAmount(cluster *Cluster) (min, max *big.Int, err error) {
+	networkFee, err := task.ssvNetworkViewsContract.GetNetworkFee(nil)
+	if err != nil {
+		return nil, nil, err
+	}
+	networkFeeDeci := decimal.NewFromBigInt(networkFee, 0)
+
+	ltp, err := task.ssvNetworkViewsContract.GetLiquidationThresholdPeriod(nil)
+	if err != nil {
+		return nil, nil, err
+	}
+	ltpDeci := decimal.NewFromInt(int64(ltp))
+
+	balance, err := task.ssvNetworkViewsContract.GetBalance(nil, task.ssvKeyPair.CommonAddress(), cluster.operatorIds, ssv_network_views.ISSVNetworkCoreCluster(*cluster.latestCluster))
+	if err != nil {
+		return nil, nil, err
+	}
+	balanceDeci := decimal.NewFromBigInt(balance, 0)
+
+	totalOpFee := decimal.Zero
+	for _, op := range cluster.operators {
+		totalOpFee = totalOpFee.Add(op.Fee)
+	}
+	totalOpFee = totalOpFee.Add(networkFeeDeci)
+
+	valAmount := decimal.NewFromInt(int64(len(cluster.managingValidators) + 1))
+
+	maxExpected := valAmount.Mul(totalOpFee).Mul(blocksOfOneYear.Add(ltpDeci))
+	minExpected := valAmount.Mul(totalOpFee).Mul(ltpDeci.Mul(decimal.NewFromInt(2)))
+
+	if maxExpected.LessThan(minExpected) {
+		maxExpected = minExpected
+	}
+
+	switch {
+	case balanceDeci.GreaterThanOrEqual(maxExpected):
+		return big.NewInt(0), big.NewInt(0), nil
+	case balanceDeci.GreaterThanOrEqual(minExpected) && balanceDeci.LessThan(maxExpected):
+		return big.NewInt(0), maxExpected.Sub(balanceDeci).BigInt(), nil
+	case balanceDeci.LessThan(minExpected):
+		return maxExpected.Sub(balanceDeci).BigInt(), maxExpected.Sub(balanceDeci).BigInt(), nil
+	default:
+		return nil, nil, fmt.Errorf("unreached balance")
+	}
+
 }
 
 func (task *Task) initContract() error {

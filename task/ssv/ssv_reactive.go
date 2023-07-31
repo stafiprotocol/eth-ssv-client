@@ -2,6 +2,7 @@ package task_ssv
 
 import (
 	"fmt"
+	"math/big"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -17,11 +18,13 @@ func (task *Task) checkAndReactiveOnSSV() error {
 	}()
 
 	for _, cluster := range task.clusters {
-		operatorIds := make([]uint64, 0)
-		for _, op := range cluster.operators {
-			operatorIds = append(operatorIds, uint64(op.Id))
+		if len(cluster.managingValidators) == 0 {
+			continue
 		}
-		isLiquidated, err := task.ssvNetworkViewsContract.IsLiquidated(nil, task.connectionOfSsvAccount.TxOpts().From, operatorIds, ssv_network_views.ISSVNetworkCoreCluster(*cluster.latestCluster))
+
+		// check liquidated
+		isLiquidated, err := task.ssvNetworkViewsContract.IsLiquidated(nil, task.ssvKeyPair.CommonAddress(),
+			cluster.operatorIds, ssv_network_views.ISSVNetworkCoreCluster(*cluster.latestCluster))
 		if err != nil {
 			return errors.Wrap(err, "ssvNetworkViewsContract.IsLiquidated failed")
 		}
@@ -34,20 +37,63 @@ func (task *Task) checkAndReactiveOnSSV() error {
 			}
 			defer task.connectionOfSsvAccount.UnlockTxOpts()
 
-			reactiveTx, err := task.ssvNetworkContract.Reactivate(task.connectionOfSsvAccount.TxOpts(), operatorIds, task.clusterInitSsvAmount, ssv_network.ISSVNetworkCoreCluster(*cluster.latestCluster))
+			needDepositAmount, _, err := task.calClusterNeedDepositAmount(cluster)
+			if err != nil {
+				return err
+			}
+
+			reactiveTx, err := task.ssvNetworkContract.Reactivate(task.connectionOfSsvAccount.TxOpts(),
+				cluster.operatorIds, needDepositAmount, ssv_network.ISSVNetworkCoreCluster(*cluster.latestCluster))
 			if err != nil {
 				return errors.Wrap(err, "ssvNetworkContract.RegisterValidator failed")
 			}
 
 			logrus.WithFields(logrus.Fields{
-				"txHash":      reactiveTx.Hash(),
-				"operaterIds": operatorIds,
+				"txHash":     reactiveTx.Hash(),
+				"clusterKey": clusterKey(cluster.operatorIds),
 			}).Info("reactive-tx")
 
-			err = utils.WaitTxOkCommon(task.connectionOfSuperNodeAccount.Eth1Client(), reactiveTx.Hash())
+			err = utils.WaitTxOkCommon(task.connectionOfSsvAccount.Eth1Client(), reactiveTx.Hash())
 			if err != nil {
 				return err
 			}
+		} else {
+
+			// check balance and deposit
+			needDepositAmount, _, err := task.calClusterNeedDepositAmount(cluster)
+			if err != nil {
+				return err
+			}
+			if needDepositAmount.Cmp(big.NewInt(0)) > 0 {
+				// send tx
+				err = task.connectionOfSsvAccount.LockAndUpdateTxOpts()
+				if err != nil {
+					return fmt.Errorf("LockAndUpdateTxOpts err: %s", err)
+				}
+				defer task.connectionOfSsvAccount.UnlockTxOpts()
+
+				needDepositAmount, _, err := task.calClusterNeedDepositAmount(cluster)
+				if err != nil {
+					return err
+				}
+
+				depositTx, err := task.ssvNetworkContract.Deposit(task.connectionOfSsvAccount.TxOpts(),
+					task.ssvKeyPair.CommonAddress(), cluster.operatorIds, needDepositAmount, ssv_network.ISSVNetworkCoreCluster(*cluster.latestCluster))
+				if err != nil {
+					return errors.Wrap(err, "ssvNetworkContract.Deposit failed")
+				}
+
+				logrus.WithFields(logrus.Fields{
+					"txHash":     depositTx.Hash(),
+					"clusterKey": clusterKey(cluster.operatorIds),
+				}).Info("deposit-tx")
+
+				err = utils.WaitTxOkCommon(task.connectionOfSsvAccount.Eth1Client(), depositTx.Hash())
+				if err != nil {
+					return err
+				}
+			}
+
 		}
 
 	}

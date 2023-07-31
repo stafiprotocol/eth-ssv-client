@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"math/big"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -67,8 +68,10 @@ func (task *Task) checkAndRegisterOnSSV() error {
 		shares := make([]byte, 0)
 		pubkeys := make([]byte, 0)
 
-		// todo cal automically
-		ssvAmount := task.clusterInitSsvAmount
+		_, needDepositAmount, err := task.calClusterNeedDepositAmount(cluster)
+		if err != nil {
+			return err
+		}
 		for i := range cluster.operators {
 			shareBts, err := base64.StdEncoding.DecodeString(encryptShares[i].EncryptedKey)
 			if err != nil {
@@ -84,7 +87,7 @@ func (task *Task) checkAndRegisterOnSSV() error {
 		}
 
 		// sign with val private key
-		data := fmt.Sprintf("%s:%d", task.connectionOfSsvAccount.TxOpts().From.String(), cluster.latestRegistrationNonce)
+		data := fmt.Sprintf("%s:%d", task.ssvKeyPair.Address(), cluster.latestRegistrationNonce)
 		hash := crypto.Keccak256([]byte(data))
 		valPrivateKey, err := bls.PrivateKeyFromBytes(val.privateKey.Marshal())
 		if err != nil {
@@ -97,7 +100,7 @@ func (task *Task) checkAndRegisterOnSSV() error {
 		shareData = append(shareData, shares...)
 
 		// check cluster state
-		isLiquidated, err := task.ssvNetworkViewsContract.IsLiquidated(nil, task.connectionOfSsvAccount.TxOpts().From,
+		isLiquidated, err := task.ssvNetworkViewsContract.IsLiquidated(nil, task.ssvKeyPair.CommonAddress(),
 			cluster.operatorIds, ssv_network_views.ISSVNetworkCoreCluster(*cluster.latestCluster))
 		if err != nil {
 			return errors.Wrap(err, "ssvNetworkViewsContract.IsLiquidated failed")
@@ -110,17 +113,19 @@ func (task *Task) checkAndRegisterOnSSV() error {
 		}
 
 		// check ssv allowance
-		allowance, err := task.ssvTokenContract.Allowance(nil, task.connectionOfSsvAccount.TxOpts().From, task.ssvNetworkViewsContractAddress)
+		allowance, err := task.ssvTokenContract.Allowance(nil, task.ssvKeyPair.CommonAddress(), task.ssvNetworkViewsContractAddress)
 		if err != nil {
 			return err
 		}
 
-		if allowance.Cmp(task.clusterInitSsvAmount) < 0 {
+		if allowance.Cmp(needDepositAmount) < 0 {
 			err = task.connectionOfSsvAccount.LockAndUpdateTxOpts()
 			if err != nil {
 				return fmt.Errorf("LockAndUpdateTxOpts err: %s", err)
 			}
-			approveTx, err := task.ssvTokenContract.Approve(task.connectionOfSsvAccount.TxOpts(), task.ssvNetworkContractAddress, ssvAmount)
+
+			approveAmount := new(big.Int).Mul(needDepositAmount, big.NewInt(10))
+			approveTx, err := task.ssvTokenContract.Approve(task.connectionOfSsvAccount.TxOpts(), task.ssvNetworkContractAddress, approveAmount)
 			if err != nil {
 				task.connectionOfSsvAccount.UnlockTxOpts()
 				return err
@@ -129,7 +134,7 @@ func (task *Task) checkAndRegisterOnSSV() error {
 
 			logrus.WithFields(logrus.Fields{
 				"txHash":        approveTx.Hash(),
-				"approveAmount": ssvAmount.String(),
+				"approveAmount": approveAmount.String(),
 			}).Info("approve-tx")
 
 			err = utils.WaitTxOkCommon(task.connectionOfSuperNodeAccount.Eth1Client(), approveTx.Hash())
@@ -145,7 +150,7 @@ func (task *Task) checkAndRegisterOnSSV() error {
 		}
 
 		registerTx, err := task.ssvNetworkContract.RegisterValidator(task.connectionOfSsvAccount.TxOpts(),
-			val.privateKey.PublicKey().Marshal(), cluster.operatorIds, shareData, ssvAmount, ssv_network.ISSVNetworkCoreCluster(*cluster.latestCluster))
+			val.privateKey.PublicKey().Marshal(), cluster.operatorIds, shareData, needDepositAmount, ssv_network.ISSVNetworkCoreCluster(*cluster.latestCluster))
 		if err != nil {
 			task.connectionOfSsvAccount.UnlockTxOpts()
 			return errors.Wrap(err, "ssvNetworkContract.RegisterValidator failed")
@@ -153,11 +158,11 @@ func (task *Task) checkAndRegisterOnSSV() error {
 		task.connectionOfSsvAccount.UnlockTxOpts()
 
 		logrus.WithFields(logrus.Fields{
-			"txHash":      registerTx.Hash(),
-			"nonce":       cluster.latestRegistrationNonce,
-			"operaterIds": cluster.operatorIds,
-			"pubkey":      hex.EncodeToString(val.privateKey.PublicKey().Marshal()),
-			"ssvAmount":   ssvAmount.String(),
+			"txHash":           registerTx.Hash(),
+			"nonce":            cluster.latestRegistrationNonce,
+			"operaterIds":      cluster.operatorIds,
+			"pubkey":           hex.EncodeToString(val.privateKey.PublicKey().Marshal()),
+			"ssvDepositAmount": needDepositAmount.String(),
 		}).Info("register-tx")
 
 		err = utils.WaitTxOkCommon(task.connectionOfSuperNodeAccount.Eth1Client(), registerTx.Hash())

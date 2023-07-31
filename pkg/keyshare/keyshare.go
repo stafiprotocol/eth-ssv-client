@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/shopspring/decimal"
 	"github.com/stafiprotocol/eth-ssv-client/pkg/crypto/bls"
 	"github.com/stafiprotocol/eth-ssv-client/pkg/crypto/rsa"
 )
@@ -31,9 +32,9 @@ type Payload struct {
 }
 
 type Operator struct {
-	Id        int    `json:"id"`
-	PublicKey string `json:"publicKey"`
-	Fee       string `json:"fee"`
+	Id        int             `json:"id"`
+	PublicKey string          `json:"publicKey"`
+	Fee       decimal.Decimal `json:"fee"`
 }
 
 type Shares struct {

@@ -118,7 +118,7 @@ func (task *Task) updateSsvOffchainState() error {
 			// update cluster
 			cluster := task.clusters[cluKey]
 			cluster.latestRegistrationNonce++
-			cluster.vlidators[val.keyIndex] = struct{}{}
+			cluster.managingValidators[val.keyIndex] = struct{}{}
 
 			if validatorAdddedIter.Event.Raw.BlockNumber > maxBlock {
 				cluster.latestCluster = &validatorAdddedIter.Event.Cluster
@@ -147,7 +147,7 @@ func (task *Task) updateSsvOffchainState() error {
 
 			// update cluster
 			cluster := task.clusters[cluKey]
-			delete(cluster.vlidators, val.keyIndex)
+			delete(cluster.managingValidators, val.keyIndex)
 
 			if validatorRemovedIter.Event.Raw.BlockNumber > maxBlock {
 				cluster.latestCluster = &validatorRemovedIter.Event.Cluster
