@@ -401,6 +401,15 @@ func TestGetOperatorDetail(t *testing.T) {
 
 	t.Logf("detail %+v", detail)
 }
+
+func TestGetOperators(t *testing.T) {
+	detail, err := utils.GetOperators("prater")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Logf("detail %+v", detail)
+}
 func TestGetGas(t *testing.T) {
 	base, err := utils.GetGaspriceFromBeacon()
 	if err != nil {

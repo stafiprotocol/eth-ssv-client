@@ -3,11 +3,6 @@ package keyshare
 import (
 	"encoding/base64"
 	"encoding/hex"
-	"encoding/json"
-	"fmt"
-	"strconv"
-	"strings"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
@@ -15,50 +10,16 @@ import (
 	"github.com/stafiprotocol/eth-ssv-client/pkg/crypto/rsa"
 )
 
-type IShare struct {
+type Share struct {
 	privateKey string
 	publicKey  string
-	id         interface{}
-}
-
-// tx payload
-type Payload struct {
-	ValidatorPublicKey  string   `json:"validatorPublicKey"`
-	OperatorIds         string   `json:"operatorIds"`
-	SharePublicKeys     []string `json:"sharePublicKeys"`
-	encryptedKeys       []string
-	AbiSharePrivateKeys []string `json:"sharePrivateKey"`
-	SsvAmount           string   `json:"ssvAmount"`
+	id         string
 }
 
 type Operator struct {
-	Id        int             `json:"id"`
+	Id        uint64          `json:"id"`
 	PublicKey string          `json:"publicKey"`
 	Fee       decimal.Decimal `json:"fee"`
-}
-
-type Shares struct {
-	PublicKeys    []string `json:"publicKeys"`
-	EncryptedKeys []string `json:"encryptedKeys"`
-}
-
-type KeystoreShareData struct {
-	PublicKey string      `json:"publicKey"`
-	Operators []*Operator `json:"operators"`
-	Shares    *Shares     `json:"shares"`
-}
-
-type KeystoreShareRes struct {
-	Version string `json:"version"`
-
-	Data *KeystoreShareData `json:"data"`
-
-	Payload struct {
-		Readable *Payload `json:"readable"`
-		Raw      string   `json:"raw"`
-	} `json:"payload"`
-
-	CreatedAt time.Time `json:"createdAt"`
 }
 
 type KeystoreShareInfo struct {
@@ -72,7 +33,7 @@ type KeystoreShareInfo struct {
 
 // CreateThreshold receives a bls.SecretKey hex and count.
 // Will split the secret key into count shares
-func CreateThreshold(skBytes []byte, operators []*Operator) (map[uint64]*IShare, error) {
+func CreateThreshold(skBytes []byte, operators []*Operator) (map[uint64]*Share, error) {
 	threshold := uint64(len(operators))
 
 	// master key Polynomial
@@ -100,7 +61,7 @@ func CreateThreshold(skBytes []byte, operators []*Operator) (map[uint64]*IShare,
 	}
 
 	// evaluate shares - starting from 1 because 0 is master key
-	shares := make(map[uint64]*IShare)
+	shares := make(map[uint64]*Share)
 	for i := uint64(1); i <= threshold; i++ {
 		blsID := bls.ID{}
 		// not equal to ts ?
@@ -122,7 +83,7 @@ func CreateThreshold(skBytes []byte, operators []*Operator) (map[uint64]*IShare,
 			return nil, err
 		}
 
-		shares[i] = &IShare{
+		shares[i] = &Share{
 			privateKey: sk.SerializeToHexStr(),
 			publicKey:  pk.SerializeToHexStr(),
 			id:         blsID.GetHexString(),
@@ -171,90 +132,4 @@ func EncryptShares(skBytes []byte, operators []*Operator) ([]*KeystoreShareInfo,
 		keystoreShareInfos = append(keystoreShareInfos, keystoreShareInfo)
 	}
 	return keystoreShareInfos, nil
-}
-
-func buildPayload(validatorPublicKey, ssvAmount string, operators []*Operator, keystoreShareHelpers []*KeystoreShareInfo) *Payload {
-	operatorIds := ""
-	for _, operator := range operators {
-		operatorIds += strconv.Itoa(operator.Id) + ","
-	}
-	operatorIds = strings.TrimRight(operatorIds, ",")
-
-	count := len(keystoreShareHelpers)
-	sharePublicKeys := make([]string, 0, count)
-	abiSharePrivateKeys := make([]string, 0, count)
-	encryptedSharePrivateKeys := make([]string, 0, count)
-
-	for _, helper := range keystoreShareHelpers {
-		sharePublicKeys = append(sharePublicKeys, helper.PublicKey)
-		abiSharePrivateKeys = append(abiSharePrivateKeys, helper.AbiEncryptedKey)
-		encryptedSharePrivateKeys = append(encryptedSharePrivateKeys, helper.EncryptedKey)
-	}
-
-	payload := &Payload{
-		ValidatorPublicKey:  validatorPublicKey,
-		OperatorIds:         operatorIds,
-		SharePublicKeys:     sharePublicKeys,
-		AbiSharePrivateKeys: abiSharePrivateKeys,
-		SsvAmount:           ssvAmount,
-		encryptedKeys:       encryptedSharePrivateKeys,
-	}
-
-	return payload
-}
-
-func buildPayloadRaw(payload *Payload) string {
-	sharePubkeysStr := strings.Replace(strings.Trim(fmt.Sprint(payload.SharePublicKeys), "[]"), " ", ",", -1)
-	abiShareSecretsStr := strings.Replace(strings.Trim(fmt.Sprint(payload.AbiSharePrivateKeys), "[]"), " ", ",", -1)
-
-	raw := fmt.Sprintf("%s,%s,%s,%s,%s", payload.ValidatorPublicKey, payload.OperatorIds, sharePubkeysStr, abiShareSecretsStr, payload.SsvAmount)
-	return raw
-}
-
-func buildKeystoreShareRes(validatorPublicKey, version, ssvAmount string, operators []*Operator, keystoreShareHelpers []*KeystoreShareInfo) *KeystoreShareRes {
-	payload := buildPayload(validatorPublicKey, ssvAmount, operators, keystoreShareHelpers)
-	raw := buildPayloadRaw(payload)
-
-	keystoreShareData := &KeystoreShareData{
-		PublicKey: validatorPublicKey,
-		Operators: operators,
-		Shares: &Shares{
-			PublicKeys:    payload.SharePublicKeys,
-			EncryptedKeys: payload.encryptedKeys,
-		},
-	}
-
-	keystoreShareRes := &KeystoreShareRes{
-		Version:   version,
-		CreatedAt: time.Now(),
-		Data:      keystoreShareData,
-	}
-	keystoreShareRes.Payload.Readable = payload
-	keystoreShareRes.Payload.Raw = raw
-
-	return keystoreShareRes
-}
-
-func KeystoreShare(validatorPublicKey, version, ssvAmount string, skBytes []byte, operators []*Operator) (*KeystoreShareRes, error) {
-	keystoreShareInfos, err := EncryptShares(skBytes, operators)
-	if err != nil {
-		return nil, errors.Unwrap(err)
-	}
-	keystoreSharesRes := buildKeystoreShareRes(validatorPublicKey, version, ssvAmount, operators, keystoreShareInfos)
-
-	return keystoreSharesRes, nil
-}
-
-func KeystoreShareForJson(validatorPublicKey, version, ssvAmount string, skBytes []byte, operators []*Operator) (string, error) {
-	keystoreSharesRes, err := KeystoreShare(validatorPublicKey, version, ssvAmount, skBytes, operators)
-	if err != nil {
-		return "", errors.Unwrap(err)
-	}
-
-	jsonRes, err := json.Marshal(keystoreSharesRes)
-	if err != nil {
-		return "", errors.Wrap(err, "failed to json marshal.")
-	}
-
-	return string(jsonRes), nil
 }

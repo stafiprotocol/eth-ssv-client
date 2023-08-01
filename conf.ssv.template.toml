@@ -6,9 +6,6 @@ ssvAccount = "0xE6F2A8d12595fBe5D410f6CA0Be13695E61C6c35"
 gasLimit = "3000000"
 keystorePath = "./keys"
 maxGasPrice = "60000000000"                                     #wei
-clusterInitSsvAmount = "20000000000000000000"
-
-clusters = [[22, 8, 14, 32]]
 
 [contracts]
 storageContractAddress = "0x5d3bb8F3BdeFF819709f82Da915Bc97f9969c861"

@@ -10,7 +10,7 @@ type ID struct {
 	Id bls.ID
 }
 
-func (id *ID) SetDec(dec int) error {
+func (id *ID) SetDec(dec uint64) error {
 	return id.Id.SetDecString(fmt.Sprintf("%d", dec))
 }
 

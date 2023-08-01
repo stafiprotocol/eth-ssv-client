@@ -1,16 +1,15 @@
 package task_ssv
 
 import (
-	// "bytes"
 	"context"
 	"fmt"
 	"math/big"
-	"sort"
-	"strings"
+	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prysmaticlabs/prysm/v3/encoding/bytesutil"
+
 	// "github.com/prysmaticlabs/prysm/v3/config/params"
 	types "github.com/prysmaticlabs/prysm/v3/consensus-types/primitives"
 	"github.com/shopspring/decimal"
@@ -58,8 +57,8 @@ var (
 // 0. find next key index and cache validator status on start
 // 1. update validator status(on execution/ssv/beacon) periodically
 // 2. check stakepool balance periodically, call stake/deposit if match
-// 3. register validator on ssv, if status is staked on eth
-// 4. register validator on ssv, if status is exited on eth
+// 3. register validator on ssv, if status is staked on stafi contract
+// 4. remove validator on ssv, if status is exited on beacon
 type Task struct {
 	taskTicker      int64
 	stop            chan struct{}
@@ -101,14 +100,15 @@ type Task struct {
 	nextKeyIndex    int
 	dealedEth1Block uint64
 
-	validatorsByKeyIndex map[int]*Validator    // key index => validator, cache all validators by keyIndex
-	validatorsByPubkey   map[string]*Validator // pubkey => validator, cache all validators by pubkey
-	validatorsByValIndex map[uint64]*Validator // val index => validator
+	validatorsByKeyIndex      map[int]*Validator    // key index => validator, cache all validators(active/exist) by keyIndex
+	validatorsByPubkey        map[string]*Validator // pubkey => validator, cache all validators(active/exist) by pubkey
+	validatorsByValIndex      map[uint64]*Validator // val index => validator
+	validatorsByValIndexMutex sync.RWMutex
 
 	eth2Config beacon.Eth2Config
 
 	// ssv offchain state
-	clusters                 map[string]*Cluster
+	clusters                 map[string]*Cluster // cluster key => cluster
 	feeRecipientAddressOnSsv common.Address
 }
 
@@ -117,15 +117,18 @@ type Validator struct {
 	keyIndex       int
 	validatorIndex uint64
 	status         uint8 // status: 0 uninitiated 1 deposited 2 staked 3 registed on ssv 4 exited on eth 5 removed on ssv
+	exitEpoch      uint64
 
 	clusterKey string
 }
 
 type Cluster struct {
-	operators               []*keyshare.Operator
-	operatorIds             []uint64
-	latestCluster           *ssv_clusters.ISSVNetworkCoreCluster
-	latestRegistrationNonce uint64
+	operators                       []*keyshare.Operator
+	operatorIds                     []uint64
+	latestUpdateClusterBlockNumber  uint64
+	latestUpdateRegisterBlockNumber uint64
+	latestCluster                   *ssv_clusters.ISSVNetworkCoreCluster
+	latestRegistrationNonce         uint64
 
 	managingValidators map[int]struct{} // key index
 }
@@ -144,14 +147,6 @@ const (
 
 	valStatusRemovedOnSsv = uint8(8)
 )
-
-func clusterKey(operators []uint64) string {
-	key := strings.Builder{}
-	for _, operator := range operators {
-		key.WriteString(fmt.Sprintf("%d/", operator))
-	}
-	return key.String()
-}
 
 func NewTask(cfg *config.Config, seed []byte, superNodeKeyPair, ssvKeyPair *secp256k1.Keypair) (*Task, error) {
 	if !common.IsHexAddress(cfg.Contracts.StorageContractAddress) {
@@ -183,37 +178,37 @@ func NewTask(cfg *config.Config, seed []byte, superNodeKeyPair, ssvKeyPair *secp
 		return nil, fmt.Errorf("max gas price is zero")
 	}
 
-	clusters := make(map[string]*Cluster)
-	for _, operators := range cfg.Clusters {
+	// clusters := make(map[string]*Cluster)
+	// for _, operators := range cfg.Clusters {
 
-		if len(operators) == 1 || len(operators)%3 != 1 {
-			return nil, fmt.Errorf("cluster operator length not match")
-		}
+	// 	if len(operators) == 1 || len(operators)%3 != 1 {
+	// 		return nil, fmt.Errorf("cluster operator length not match")
+	// 	}
 
-		sort.Slice(operators, func(i, j int) bool {
-			return operators[i] < operators[j]
-		})
+	// 	sort.Slice(operators, func(i, j int) bool {
+	// 		return operators[i] < operators[j]
+	// 	})
 
-		operatorDetails := make([]*keyshare.Operator, len(operators))
-		for i := 0; i < len(operators); i++ {
-			operatorDetails[i] = &keyshare.Operator{Id: int(operators[i])}
-		}
+	// 	operatorDetails := make([]*keyshare.Operator, len(operators))
+	// 	for i := 0; i < len(operators); i++ {
+	// 		operatorDetails[i] = &keyshare.Operator{Id: int(operators[i])}
+	// 	}
 
-		clusters[clusterKey(operators)] = &Cluster{
-			operators:   operatorDetails,
-			operatorIds: operators,
-			latestCluster: &ssv_clusters.ISSVNetworkCoreCluster{
-				ValidatorCount:  0,
-				NetworkFeeIndex: 0,
-				Index:           0,
-				Active:          true,
-				Balance:         big.NewInt(0),
-			},
-			latestRegistrationNonce: 0,
-			managingValidators:      make(map[int]struct{}),
-		}
+	// 	clusters[clusterKey(operators)] = &Cluster{
+	// 		operators:   operatorDetails,
+	// 		operatorIds: operators,
+	// 		latestCluster: &ssv_clusters.ISSVNetworkCoreCluster{
+	// 			ValidatorCount:  0,
+	// 			NetworkFeeIndex: 0,
+	// 			Index:           0,
+	// 			Active:          true,
+	// 			Balance:         big.NewInt(0),
+	// 		},
+	// 		latestRegistrationNonce: 0,
+	// 		managingValidators:      make(map[int]struct{}),
+	// 	}
 
-	}
+	// }
 
 	s := &Task{
 		taskTicker:       15,
@@ -236,7 +231,7 @@ func NewTask(cfg *config.Config, seed []byte, superNodeKeyPair, ssvKeyPair *secp
 		validatorsByPubkey:   make(map[string]*Validator),
 		validatorsByValIndex: make(map[uint64]*Validator),
 
-		clusters: clusters,
+		clusters: make(map[string]*Cluster),
 	}
 
 	return s, nil
@@ -313,24 +308,25 @@ func (task *Task) Start() error {
 	logrus.Infof("nextKeyIndex: %d", task.nextKeyIndex)
 
 	// init operators
-	for _, cluster := range task.clusters {
-		for _, op := range cluster.operators {
-			operatorDetail, err := utils.GetOperatorDetail(task.ssvApiNetwork, op.Id)
-			if err != nil {
-				return err
-			}
-			op.PublicKey = operatorDetail.PublicKey
-			feeDeci, err := decimal.NewFromString(operatorDetail.Fee)
-			if err != nil {
-				return err
-			}
-			op.Fee = feeDeci
-		}
-	}
+	// for _, cluster := range task.clusters {
+	// 	for _, op := range cluster.operators {
+	// 		operatorDetail, err := utils.GetOperatorDetail(task.ssvApiNetwork, op.Id)
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	// 		op.PublicKey = operatorDetail.PublicKey
+	// 		feeDeci, err := decimal.NewFromString(operatorDetail.Fee)
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	// 		op.Fee = feeDeci
+	// 	}
+	// }
 
-	utils.SafeGo(task.handler)
+	utils.SafeGo(task.ssvHandler)
 	utils.SafeGo(task.monitorHandler)
 	utils.SafeGo(task.uptimeHandler)
+
 	return nil
 }
 
@@ -357,7 +353,8 @@ func (task *Task) calClusterNeedDepositAmount(cluster *Cluster) (min, max *big.I
 	}
 	ltpDeci := decimal.NewFromInt(int64(ltp))
 
-	balance, err := task.ssvNetworkViewsContract.GetBalance(nil, task.ssvKeyPair.CommonAddress(), cluster.operatorIds, ssv_network_views.ISSVNetworkCoreCluster(*cluster.latestCluster))
+	balance, err := task.ssvNetworkViewsContract.GetBalance(nil, task.ssvKeyPair.CommonAddress(), cluster.operatorIds,
+		ssv_network_views.ISSVNetworkCoreCluster(*cluster.latestCluster))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -475,7 +472,7 @@ func (task *Task) mustGetSuperNodePubkeyStatus(pubkey []byte) (uint8, error) {
 	return uint8(pubkeyStatus.Uint64()), nil
 }
 
-func (task *Task) handler() {
+func (task *Task) ssvHandler() {
 	logrus.Info("start handler")
 	ticker := time.NewTicker(time.Duration(task.taskTicker) * time.Second)
 	defer ticker.Stop()
@@ -508,6 +505,16 @@ func (task *Task) handler() {
 				continue
 			}
 
+			err = task.updateSsvOffchainState()
+			if err != nil {
+				logrus.Warnf("updateOffchainState err %s", err)
+				time.Sleep(utils.RetryInterval)
+				retry++
+				continue
+			}
+
+			// -------- stafi
+
 			err = task.checkAndStake()
 			if err != nil {
 				logrus.Warnf("checkAndStake err %s", err)
@@ -524,13 +531,7 @@ func (task *Task) handler() {
 				continue
 			}
 
-			err = task.updateSsvOffchainState()
-			if err != nil {
-				logrus.Warnf("updateOffchainState err %s", err)
-				time.Sleep(utils.RetryInterval)
-				retry++
-				continue
-			}
+			// -------- ssv
 
 			err = task.checkAndSetFeeRecipient()
 			if err != nil {
@@ -548,25 +549,9 @@ func (task *Task) handler() {
 				continue
 			}
 
-			err = task.updateSsvOffchainState()
-			if err != nil {
-				logrus.Warnf("updateOffchainState err %s", err)
-				time.Sleep(utils.RetryInterval)
-				retry++
-				continue
-			}
-
 			err = task.checkAndRegisterOnSSV()
 			if err != nil {
 				logrus.Warnf("checkAndRegisterOnSSV err %s", err)
-				time.Sleep(utils.RetryInterval)
-				retry++
-				continue
-			}
-
-			err = task.updateSsvOffchainState()
-			if err != nil {
-				logrus.Warnf("updateOffchainState err %s", err)
 				time.Sleep(utils.RetryInterval)
 				retry++
 				continue

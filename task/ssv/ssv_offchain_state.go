@@ -4,10 +4,15 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"sort"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
+	ssv_clusters "github.com/stafiprotocol/eth-ssv-client/bindings/SsvClusters"
+	"github.com/stafiprotocol/eth-ssv-client/pkg/keyshare"
+	"github.com/stafiprotocol/eth-ssv-client/pkg/utils"
 )
 
 const (
@@ -16,7 +21,7 @@ const (
 	fetchEth1WaitBlockNumbers = uint64(2)
 )
 
-func (task *Task) updateSsvOffchainState() error {
+func (task *Task) updateSsvOffchainState() (retErr error) {
 	logrus.Debug("updateOffchainState start -----------")
 	defer func() {
 		logrus.Debug("updateOffchainState end -----------")
@@ -39,7 +44,6 @@ func (task *Task) updateSsvOffchainState() error {
 
 	start := uint64(task.dealedEth1Block + 1)
 	end := latestBlockNumber
-	maxBlock := uint64(0)
 
 	for i := start; i <= end; i += fetchEventBlockLimit {
 		subStart := i
@@ -67,12 +71,11 @@ func (task *Task) updateSsvOffchainState() error {
 		}
 		for clusterDepositedIter.Next() {
 			logrus.Debugf("find event clusterDeposited, tx: %s", clusterDepositedIter.Event.Raw.TxHash.String())
-			if clusterDepositedIter.Event.Raw.BlockNumber > maxBlock {
-				cluster := task.clusters[clusterKey(clusterDepositedIter.Event.OperatorIds)]
-				cluster.latestCluster = &clusterDepositedIter.Event.Cluster
-
-				maxBlock = clusterDepositedIter.Event.Raw.BlockNumber
+			err := task.updateCluster(clusterDepositedIter.Event.OperatorIds, &clusterDepositedIter.Event.Cluster, clusterDepositedIter.Event.Raw.BlockNumber, false)
+			if err != nil {
+				return err
 			}
+
 		}
 
 		clusterWithdrawnIter, err := task.ssvClustersContract.FilterClusterWithdrawn(&bind.FilterOpts{
@@ -86,11 +89,9 @@ func (task *Task) updateSsvOffchainState() error {
 		}
 		for clusterWithdrawnIter.Next() {
 			logrus.Debugf("find event clusterWithdrawn, tx: %s", clusterWithdrawnIter.Event.Raw.TxHash.String())
-			if clusterWithdrawnIter.Event.Raw.BlockNumber > maxBlock {
-				cluster := task.clusters[clusterKey(clusterWithdrawnIter.Event.OperatorIds)]
-				cluster.latestCluster = &clusterWithdrawnIter.Event.Cluster
-
-				maxBlock = clusterWithdrawnIter.Event.Raw.BlockNumber
+			err := task.updateCluster(clusterWithdrawnIter.Event.OperatorIds, &clusterWithdrawnIter.Event.Cluster, clusterWithdrawnIter.Event.Raw.BlockNumber, false)
+			if err != nil {
+				return err
 			}
 		}
 
@@ -112,19 +113,17 @@ func (task *Task) updateSsvOffchainState() error {
 			if !exist {
 				return fmt.Errorf("val %s not exist in offchain state", pubkey)
 			}
-			cluKey := clusterKey(validatorAdddedIter.Event.OperatorIds)
-			val.clusterKey = cluKey
+			cltKey := clusterKey(validatorAdddedIter.Event.OperatorIds)
+			val.clusterKey = cltKey
 
 			// update cluster
-			cluster := task.clusters[cluKey]
-			cluster.latestRegistrationNonce++
-			cluster.managingValidators[val.keyIndex] = struct{}{}
-
-			if validatorAdddedIter.Event.Raw.BlockNumber > maxBlock {
-				cluster.latestCluster = &validatorAdddedIter.Event.Cluster
-
-				maxBlock = validatorAdddedIter.Event.Raw.BlockNumber
+			err := task.updateCluster(validatorAdddedIter.Event.OperatorIds, &validatorAdddedIter.Event.Cluster, validatorAdddedIter.Event.Raw.BlockNumber, true)
+			if err != nil {
+				return err
 			}
+
+			cluster := task.clusters[cltKey]
+			cluster.managingValidators[val.keyIndex] = struct{}{}
 		}
 
 		validatorRemovedIter, err := task.ssvClustersContract.FilterValidatorRemoved(&bind.FilterOpts{
@@ -146,14 +145,13 @@ func (task *Task) updateSsvOffchainState() error {
 			}
 
 			// update cluster
+			err := task.updateCluster(validatorRemovedIter.Event.OperatorIds, &validatorRemovedIter.Event.Cluster, validatorRemovedIter.Event.Raw.BlockNumber, false)
+			if err != nil {
+				return err
+			}
+
 			cluster := task.clusters[cluKey]
 			delete(cluster.managingValidators, val.keyIndex)
-
-			if validatorRemovedIter.Event.Raw.BlockNumber > maxBlock {
-				cluster.latestCluster = &validatorRemovedIter.Event.Cluster
-
-				maxBlock = validatorRemovedIter.Event.Raw.BlockNumber
-			}
 		}
 
 		clusterLiquidatedIter, err := task.ssvClustersContract.FilterClusterLiquidated(&bind.FilterOpts{
@@ -167,11 +165,9 @@ func (task *Task) updateSsvOffchainState() error {
 		}
 		for clusterLiquidatedIter.Next() {
 			logrus.Debugf("find event clusterLiquidated, tx: %s", clusterLiquidatedIter.Event.Raw.TxHash.String())
-			if clusterLiquidatedIter.Event.Raw.BlockNumber > maxBlock {
-				cluster := task.clusters[clusterKey(clusterLiquidatedIter.Event.OperatorIds)]
-				cluster.latestCluster = &clusterLiquidatedIter.Event.Cluster
-
-				maxBlock = clusterLiquidatedIter.Event.Raw.BlockNumber
+			err := task.updateCluster(clusterLiquidatedIter.Event.OperatorIds, &clusterLiquidatedIter.Event.Cluster, clusterLiquidatedIter.Event.Raw.BlockNumber, false)
+			if err != nil {
+				return err
 			}
 		}
 
@@ -186,11 +182,9 @@ func (task *Task) updateSsvOffchainState() error {
 		}
 		for clusterReactivatedIter.Next() {
 			logrus.Debugf("find event clusterReactivated, tx: %s", clusterReactivatedIter.Event.Raw.TxHash.String())
-			if clusterReactivatedIter.Event.Raw.BlockNumber > maxBlock {
-				cluster := task.clusters[clusterKey(clusterReactivatedIter.Event.OperatorIds)]
-				cluster.latestCluster = &clusterReactivatedIter.Event.Cluster
-
-				maxBlock = clusterReactivatedIter.Event.Raw.BlockNumber
+			err := task.updateCluster(clusterReactivatedIter.Event.OperatorIds, &clusterReactivatedIter.Event.Cluster, clusterReactivatedIter.Event.Raw.BlockNumber, false)
+			if err != nil {
+				return err
 			}
 		}
 
@@ -229,5 +223,56 @@ func (task *Task) updateSsvOffchainState() error {
 			"latestCluster": cluster.latestCluster,
 		}).Debug("offchain-state")
 	}
+	return nil
+}
+
+func (task *Task) updateCluster(operatorIds []uint64, newCluster *ssv_clusters.ISSVNetworkCoreCluster, blockNumber uint64, isValidatorAddedEvent bool) error {
+	sort.Slice(operatorIds, func(i, j int) bool {
+		return operatorIds[i] < operatorIds[j]
+	})
+
+	cltKey := clusterKey(operatorIds)
+	cluster, exist := task.clusters[cltKey]
+	if !exist {
+		operatorDetails := make([]*keyshare.Operator, len(operatorIds))
+		for i, opId := range operatorIds {
+			operatorDetail, err := utils.GetOperatorDetail(task.ssvApiNetwork, opId)
+			if err != nil {
+				return err
+			}
+			feeDeci, err := decimal.NewFromString(operatorDetail.Fee)
+			if err != nil {
+				return err
+			}
+			operatorDetails[i] = &keyshare.Operator{
+				Id:        opId,
+				PublicKey: operatorDetail.PublicKey,
+				Fee:       feeDeci,
+			}
+		}
+		cluster = &Cluster{
+			operators:                      operatorDetails,
+			operatorIds:                    operatorIds,
+			latestUpdateClusterBlockNumber: blockNumber,
+			latestCluster:                  newCluster,
+			latestRegistrationNonce:        0,
+			managingValidators:             make(map[int]struct{}),
+		}
+
+		task.clusters[cltKey] = cluster
+	} else {
+		if cluster.latestUpdateClusterBlockNumber < blockNumber {
+			cluster.latestUpdateClusterBlockNumber = blockNumber
+			cluster.latestCluster = newCluster
+		}
+	}
+
+	if isValidatorAddedEvent {
+		if cluster.latestUpdateRegisterBlockNumber < blockNumber {
+			cluster.latestUpdateRegisterBlockNumber = blockNumber
+			cluster.latestRegistrationNonce++
+		}
+	}
+
 	return nil
 }
