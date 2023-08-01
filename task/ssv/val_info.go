@@ -5,7 +5,10 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	ethpb "github.com/prysmaticlabs/prysm/v3/proto/eth/v1"
 	"github.com/sirupsen/logrus"
+	"github.com/stafiprotocol/eth-ssv-client/pkg/connection/beacon"
+	"github.com/stafiprotocol/eth-ssv-client/pkg/connection/types"
 	"github.com/stafiprotocol/eth-ssv-client/pkg/utils"
 )
 
@@ -16,7 +19,7 @@ func (task *Task) updateValStatus() error {
 	}()
 
 	for i := 0; i < task.nextKeyIndex; i++ {
-		val, exist := task.validatorsByIndex[i]
+		val, exist := task.validatorsByKeyIndex[i]
 		if !exist {
 			return fmt.Errorf("validator at index %d not exist", i)
 		}
@@ -58,8 +61,40 @@ func (task *Task) updateValStatus() error {
 					return errors.Wrap(err, "ssvNetworkViewsContract.GetValidator failed")
 				}
 			}
+
 			if active {
 				val.status = valStatusRegistedOnSsv
+			}
+		}
+
+		// status on beacon
+		if val.status == valStatusRegistedOnSsv {
+			beaconHead, err := task.connectionOfSuperNodeAccount.Eth2BeaconHead()
+			if err != nil {
+				return errors.Wrap(err, "connectionOfSuperNodeAccount.Eth2BeaconHead failed")
+			}
+
+			valStatus, err := task.connectionOfSuperNodeAccount.GetValidatorStatus(types.BytesToValidatorPubkey(val.privateKey.PublicKey().Marshal()), &beacon.ValidatorStatusOptions{
+				Epoch: &beaconHead.Epoch,
+			})
+			if err != nil {
+				return err
+			}
+
+			switch valStatus.Status {
+
+			case ethpb.ValidatorStatus_PENDING_INITIALIZED, ethpb.ValidatorStatus_PENDING_QUEUED: // pending
+			case ethpb.ValidatorStatus_ACTIVE_ONGOING, ethpb.ValidatorStatus_ACTIVE_EXITING, ethpb.ValidatorStatus_ACTIVE_SLASHED: // active
+				val.status = valStatusActiveOnBeacon
+
+			case ethpb.ValidatorStatus_EXITED_UNSLASHED, ethpb.ValidatorStatus_EXITED_SLASHED: // exited
+				val.status = valStatusExitedOnBeacon
+			case ethpb.ValidatorStatus_WITHDRAWAL_POSSIBLE: // withdrawable
+				val.status = valStatusExitedOnBeacon
+			case ethpb.ValidatorStatus_WITHDRAWAL_DONE: // withdrawdone
+				val.status = valStatusExitedOnBeacon
+			default:
+				return fmt.Errorf("unsupported validator status %d", valStatus.Status)
 			}
 		}
 	}

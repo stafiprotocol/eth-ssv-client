@@ -10,7 +10,9 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/prysmaticlabs/prysm/v3/encoding/bytesutil"
 	// "github.com/prysmaticlabs/prysm/v3/config/params"
+	types "github.com/prysmaticlabs/prysm/v3/consensus-types/primitives"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/chainbridge/utils/crypto/secp256k1"
@@ -21,6 +23,7 @@ import (
 	storage "github.com/stafiprotocol/eth-ssv-client/bindings/Storage"
 	super_node "github.com/stafiprotocol/eth-ssv-client/bindings/SuperNode"
 	user_deposit "github.com/stafiprotocol/eth-ssv-client/bindings/UserDeposit"
+	withdraw "github.com/stafiprotocol/eth-ssv-client/bindings/Withdraw"
 	"github.com/stafiprotocol/eth-ssv-client/pkg/config"
 	"github.com/stafiprotocol/eth-ssv-client/pkg/connection"
 	"github.com/stafiprotocol/eth-ssv-client/pkg/connection/beacon"
@@ -39,6 +42,16 @@ var (
 
 	blocksOfOneYear  = decimal.NewFromInt(2629800)
 	blocksOfHalfYear = decimal.NewFromInt(1314900)
+)
+
+var (
+	devPostUptimeUrl     = "https://test-drop-api.stafi.io/reth/v1/uploadEjectorUptime"
+	mainnetPostUptimeUrl = "https://drop-api.stafi.io/reth/v1/uploadEjectorUptime"
+)
+
+var (
+	domainVoluntaryExit  = bytesutil.Uint32ToBytes4(0x04000000)
+	shardCommitteePeriod = types.Epoch(256) // ShardCommitteePeriod is the minimum amount of epochs a validator must participate before exiting.
 )
 
 // only support stafi super node account now !!!
@@ -64,6 +77,7 @@ type Task struct {
 	ssvNetworkViewsContractAddress common.Address
 	ssvTokenContractAddress        common.Address
 	seed                           []byte
+	postUptimeUrl                  string
 
 	// --- need init on start
 	dev           bool
@@ -82,10 +96,14 @@ type Task struct {
 	ssvNetworkViewsContract *ssv_network_views.SsvNetworkViews
 	ssvClustersContract     *ssv_clusters.SsvClusters
 	ssvTokenContract        *erc20.Erc20
-	nextKeyIndex            int
-	dealedEth1Block         uint64
-	validatorsByIndex       map[int]*Validator    // key index => validator
-	validatorsByPubkey      map[string]*Validator // key index => validator
+	withdrawContract        *withdraw.Withdraw
+
+	nextKeyIndex    int
+	dealedEth1Block uint64
+
+	validatorsByKeyIndex map[int]*Validator    // key index => validator, cache all validators by keyIndex
+	validatorsByPubkey   map[string]*Validator // pubkey => validator, cache all validators by pubkey
+	validatorsByValIndex map[uint64]*Validator // val index => validator
 
 	eth2Config beacon.Eth2Config
 
@@ -95,9 +113,10 @@ type Task struct {
 }
 
 type Validator struct {
-	privateKey *bls.PrivateKey
-	keyIndex   int
-	status     uint8 // status: 0 uninitiated 1 deposited 2 staked 3 registed on ssv 4 exited on eth 5 removed on ssv
+	privateKey     *bls.PrivateKey
+	keyIndex       int
+	validatorIndex uint64
+	status         uint8 // status: 0 uninitiated 1 deposited 2 staked 3 registed on ssv 4 exited on eth 5 removed on ssv
 
 	clusterKey string
 }
@@ -213,8 +232,9 @@ func NewTask(cfg *config.Config, seed []byte, superNodeKeyPair, ssvKeyPair *secp
 		ssvNetworkViewsContractAddress: common.HexToAddress(cfg.Contracts.SsvNetworkViewsAddress),
 		ssvTokenContractAddress:        common.HexToAddress(cfg.Contracts.SsvTokenAddress),
 
-		validatorsByIndex:  make(map[int]*Validator),
-		validatorsByPubkey: make(map[string]*Validator),
+		validatorsByKeyIndex: make(map[int]*Validator),
+		validatorsByPubkey:   make(map[string]*Validator),
+		validatorsByValIndex: make(map[uint64]*Validator),
 
 		clusters: clusters,
 	}
@@ -253,6 +273,7 @@ func (task *Task) Start() error {
 		// }
 		task.dealedEth1Block = 17705353
 		task.ssvApiNetwork = "mainnet"
+		task.postUptimeUrl = mainnetPostUptimeUrl
 
 	case 11155111: // sepolia
 		task.dev = true
@@ -262,6 +283,7 @@ func (task *Task) Start() error {
 		// }
 		task.dealedEth1Block = 9354882
 		task.ssvApiNetwork = "prater"
+		task.postUptimeUrl = devPostUptimeUrl
 	case 5: // goerli
 		task.dev = true
 		task.chain = constants.GetChain(constants.ChainGOERLI)
@@ -270,6 +292,7 @@ func (task *Task) Start() error {
 		// }
 		task.dealedEth1Block = 9403883
 		task.ssvApiNetwork = "prater"
+		task.postUptimeUrl = devPostUptimeUrl
 
 	default:
 		return fmt.Errorf("unsupport chainId: %d", chainId.Int64())
@@ -306,6 +329,8 @@ func (task *Task) Start() error {
 	}
 
 	utils.SafeGo(task.handler)
+	utils.SafeGo(task.monitorHandler)
+	utils.SafeGo(task.uptimeHandler)
 	return nil
 }
 
@@ -375,10 +400,13 @@ func (task *Task) initContract() error {
 	if err != nil {
 		return err
 	}
-
 	task.eth1WithdrawalAdress = stafiWithdrawAddress
-
 	logrus.Debugf("stafiWithdraw address: %s", task.eth1WithdrawalAdress.String())
+
+	task.withdrawContract, err = withdraw.NewWithdraw(stafiWithdrawAddress, task.connectionOfSuperNodeAccount.Eth1Client())
+	if err != nil {
+		return err
+	}
 
 	superNodeAddress, err := utils.GetContractAddress(storageContract, "stafiSuperNode")
 	if err != nil {

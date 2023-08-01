@@ -32,8 +32,8 @@ func (task *Task) checkAndStake() error {
 
 	// select validators need stake
 	validatorsNeedStake := make([]*Validator, 0)
-	for i := 0; i < len(task.validatorsByIndex); i++ {
-		val := task.validatorsByIndex[i]
+	for i := 0; i < len(task.validatorsByKeyIndex); i++ {
+		val := task.validatorsByKeyIndex[i]
 		if val.status != utils.ValidatorStatusWithdrawMatch {
 			continue
 		}

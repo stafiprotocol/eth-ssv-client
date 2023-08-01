@@ -43,11 +43,12 @@ func (task *Task) checkAndDeposit() (retErr error) {
 
 	defer func() {
 		if retErr != nil {
+			// got err, should reset validator info
 			task.nextKeyIndex = oldKeyIndex
 			for i := task.nextKeyIndex; i < task.nextKeyIndex+int(depositLen); i++ {
-				pubkey := hex.EncodeToString(task.validatorsByIndex[i].privateKey.PublicKey().Marshal())
+				pubkey := hex.EncodeToString(task.validatorsByKeyIndex[i].privateKey.PublicKey().Marshal())
 
-				delete(task.validatorsByIndex, i)
+				delete(task.validatorsByKeyIndex, i)
 				delete(task.validatorsByPubkey, pubkey)
 			}
 		}
@@ -92,7 +93,7 @@ func (task *Task) checkAndDeposit() (retErr error) {
 			status:     utils.ValidatorStatusUnInitial,
 			keyIndex:   task.nextKeyIndex,
 		}
-		task.validatorsByIndex[task.nextKeyIndex] = val
+		task.validatorsByKeyIndex[task.nextKeyIndex] = val
 		task.validatorsByPubkey[hex.EncodeToString(pubkeyBts)] = val
 
 		logrus.WithFields(logrus.Fields{

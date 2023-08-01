@@ -48,7 +48,7 @@ func (task *Task) checkAndRepairValNexKeyIndex() error {
 			status:     uint8(pubkeyStatus.Uint64()),
 			keyIndex:   task.nextKeyIndex,
 		}
-		task.validatorsByIndex[task.nextKeyIndex] = val
+		task.validatorsByKeyIndex[task.nextKeyIndex] = val
 		task.validatorsByPubkey[hex.EncodeToString(pubkey)] = val
 
 		logrus.WithFields(logrus.Fields{
