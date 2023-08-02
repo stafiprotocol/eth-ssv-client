@@ -24,12 +24,13 @@ func (task *Task) updateValStatus() error {
 		if !exist {
 			return fmt.Errorf("validator at index %d not exist", i)
 		}
-		if val.status == valStatusRemovedOnSsv {
+		// skip update if life end
+		if val.statusOnBeacon == valStatusExitedOnBeacon && val.statusOnSsv == valStatusRemovedOnSsv {
 			continue
 		}
 
 		// status on stafi contract
-		if val.status < valStatusStaked {
+		if val.statusOnStafi < valStatusStaked {
 			pubkeyStatus, err := task.mustGetSuperNodePubkeyStatus(val.privateKey.PublicKey().Marshal())
 			if err != nil {
 				return fmt.Errorf("mustGetSuperNodePubkeyStatus err: %s", err.Error())
@@ -39,20 +40,20 @@ func (task *Task) updateValStatus() error {
 			case utils.ValidatorStatusUnInitial:
 				return fmt.Errorf("validator %s at index %d not exist on chain", val.privateKey.PublicKey().SerializeToHexStr(), i)
 			case utils.ValidatorStatusDeposited:
-				val.status = valStatusDeposited
+				val.statusOnStafi = valStatusDeposited
 			case utils.ValidatorStatusWithdrawMatch:
-				val.status = valStatusMatch
+				val.statusOnStafi = valStatusMatch
 			case utils.ValidatorStatusWithdrawUnmatch:
-				val.status = valStatusUnmatch
+				val.statusOnStafi = valStatusUnmatch
 			case utils.ValidatorStatusStaked:
-				val.status = valStatusStaked
+				val.statusOnStafi = valStatusStaked
 			default:
 				return fmt.Errorf("validator %s at index %d unknown status %d", val.privateKey.PublicKey().SerializeToHexStr(), i, pubkeyStatus)
 			}
 		}
 
 		// status on ssv contract
-		if val.status == valStatusStaked {
+		if val.statusOnStafi == valStatusStaked {
 			active, err := task.ssvNetworkViewsContract.GetValidator(nil, task.ssvKeyPair.CommonAddress(), val.privateKey.PublicKey().Marshal())
 			if err != nil {
 				// remove when new SSVViews contract is deployed
@@ -64,13 +65,23 @@ func (task *Task) updateValStatus() error {
 			}
 
 			if active {
-				val.status = valStatusRegistedOnSsv
+				val.statusOnSsv = valStatusRegistedOnSsv
+			} else {
+				val.statusOnSsv = valStatusRemovedOnSsv
 			}
 		}
 
+		logrus.WithFields(logrus.Fields{
+			"keyIndex":       i,
+			"pubkey":         hex.EncodeToString(val.privateKey.PublicKey().Marshal()),
+			"statusOnStafi":  val.statusOnStafi,
+			"statusOnSsv":    val.statusOnSsv,
+			"statusOnBeacon": val.statusOnBeacon,
+		}).Debug("valInfo")
+
 		// status on beacon
 		continue
-		if val.status == valStatusRegistedOnSsv || val.status == valStatusActiveOnBeacon {
+		if val.statusOnStafi == valStatusStaked {
 			beaconHead, err := task.connectionOfSuperNodeAccount.Eth2BeaconHead()
 			if err != nil {
 				return errors.Wrap(err, "connectionOfSuperNodeAccount.Eth2BeaconHead failed")
@@ -108,13 +119,13 @@ func (task *Task) updateValStatus() error {
 			case ethpb.ValidatorStatus_PENDING_INITIALIZED, ethpb.ValidatorStatus_PENDING_QUEUED: // pending
 			case ethpb.ValidatorStatus_ACTIVE_ONGOING, ethpb.ValidatorStatus_ACTIVE_EXITING, ethpb.ValidatorStatus_ACTIVE_SLASHED: // active
 
-				val.status = valStatusActiveOnBeacon
+				val.statusOnBeacon = valStatusActiveOnBeacon
 
 			case ethpb.ValidatorStatus_EXITED_UNSLASHED, ethpb.ValidatorStatus_EXITED_SLASHED, // exited
 				ethpb.ValidatorStatus_WITHDRAWAL_POSSIBLE, // withdrawable
 				ethpb.ValidatorStatus_WITHDRAWAL_DONE:     // withdrawdone
 
-				val.status = valStatusExitedOnBeacon
+				val.statusOnBeacon = valStatusExitedOnBeacon
 
 			default:
 				return fmt.Errorf("unsupported validator status %d", valStatus.Status)

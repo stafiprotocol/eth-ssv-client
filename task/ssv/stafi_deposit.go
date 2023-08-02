@@ -32,7 +32,7 @@ func (task *Task) checkAndDeposit() (retErr error) {
 	// wait if some validators wait stake
 	for i := 0; i < len(task.validatorsByKeyIndex); i++ {
 		val := task.validatorsByKeyIndex[i]
-		if val.status == valStatusDeposited || val.status == valStatusMatch {
+		if val.statusOnStafi == valStatusDeposited || val.statusOnStafi == valStatusMatch {
 			return nil
 		}
 	}
@@ -97,9 +97,9 @@ func (task *Task) checkAndDeposit() (retErr error) {
 		dataRoots[i] = [32]byte(dataRootBts)
 
 		val := &Validator{
-			privateKey: credential.SigningSk,
-			status:     valStatusUnInitiated,
-			keyIndex:   task.nextKeyIndex,
+			privateKey:    credential.SigningSk,
+			statusOnStafi: valStatusUnInitiated,
+			keyIndex:      task.nextKeyIndex,
 		}
 		task.validatorsByKeyIndex[task.nextKeyIndex] = val
 		task.validatorsByPubkey[hex.EncodeToString(pubkeyBts)] = val

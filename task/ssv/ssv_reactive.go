@@ -18,6 +18,7 @@ func (task *Task) checkAndReactiveOnSSV() error {
 	}()
 
 	for _, cluster := range task.clusters {
+		// skip clusters with zero validators
 		if len(cluster.managingValidators) == 0 {
 			continue
 		}

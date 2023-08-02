@@ -20,6 +20,9 @@ type Operator struct {
 	Id        uint64          `json:"id"`
 	PublicKey string          `json:"publicKey"`
 	Fee       decimal.Decimal `json:"fee"`
+
+	Active         bool
+	ValidatorCount uint64
 }
 
 type KeystoreShareInfo struct {
@@ -112,11 +115,11 @@ func EncryptShares(skBytes []byte, operators []*Operator) ([]*KeystoreShareInfo,
 		shareSk := "0x" + share.privateKey
 		sharePk := "0x" + share.publicKey
 
-		decryptShareSecret, err := rsa.PublicEncrypt(shareSk, string(opk))
+		shareSecret, err := rsa.PublicEncrypt(shareSk, string(opk))
 		if err != nil {
 			return nil, err
 		}
-		abiShareSecret, err := AbiCoder([]string{"string"}, []interface{}{decryptShareSecret})
+		abiShareSecret, err := AbiCoder([]string{"string"}, []interface{}{shareSecret})
 		if err != nil {
 			return nil, err
 		}
@@ -125,7 +128,7 @@ func EncryptShares(skBytes []byte, operators []*Operator) ([]*KeystoreShareInfo,
 			ID:              uint64(i),
 			PublicKey:       sharePk,
 			secretKey:       shareSk,
-			EncryptedKey:    decryptShareSecret,
+			EncryptedKey:    shareSecret,
 			AbiEncryptedKey: "0x" + hex.EncodeToString(abiShareSecret),
 			Operator:        operator,
 		}

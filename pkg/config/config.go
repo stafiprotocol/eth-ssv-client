@@ -24,11 +24,10 @@ type Config struct {
 }
 
 type Contracts struct {
-	StorageContractAddress         string
-	ArbitrumStakePortalRateAddress string
-	SsvNetworkAddress              string
-	SsvNetworkViewsAddress         string
-	SsvTokenAddress                string
+	StorageContractAddress string
+	SsvNetworkAddress      string
+	SsvNetworkViewsAddress string
+	SsvTokenAddress        string
 }
 
 func Load(configFilePath string) (*Config, error) {

@@ -5,13 +5,11 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/big"
-	"sort"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
-	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	ssv_network "github.com/stafiprotocol/eth-ssv-client/bindings/SsvNetwork"
 	ssv_network_views "github.com/stafiprotocol/eth-ssv-client/bindings/SsvNetworkViews"
@@ -20,10 +18,14 @@ import (
 	"github.com/stafiprotocol/eth-ssv-client/pkg/utils"
 )
 
-func (task *Task) checkAndRegisterOnSSV() error {
-	logrus.Debug("checkAndRegisterOnSSV start -----------")
+// onboard validator if:
+// 0 staked on stafi and uninitial not onboard
+// OR
+// 1 staked on stafi and active and not onboard
+func (task *Task) checkAndOnboardOnSSV() error {
+	logrus.Debug("checkAndOnboardOnSSV start -----------")
 	defer func() {
-		logrus.Debug("checkAndRegisterOnSSV end -----------")
+		logrus.Debug("checkAndOnboardOnSSV end -----------")
 	}()
 
 	for i := 0; i < task.nextKeyIndex; i++ {
@@ -33,28 +35,27 @@ func (task *Task) checkAndRegisterOnSSV() error {
 			return fmt.Errorf("validator at index %d not exist", i)
 		}
 
-		logrus.WithFields(logrus.Fields{
-			"keyIndex": i,
-			"pubkey":   hex.EncodeToString(val.privateKey.PublicKey().Marshal()),
-			"status":   val.status,
-		}).Debug("register-val")
-
-		if val.status != valStatusStaked {
+		if !((val.statusOnStafi == valStatusStaked &&
+			val.statusOnBeacon == valStatusUnInitiated &&
+			val.statusOnSsv != valStatusRegistedOnSsv) ||
+			(val.statusOnStafi == valStatusStaked &&
+				val.statusOnBeacon == valStatusActiveOnBeacon &&
+				val.statusOnSsv != valStatusRegistedOnSsv)) {
 			continue
 		}
 
 		// check status on ssv
-		active, err := task.ssvNetworkViewsContract.GetValidator(nil, task.ssvKeyPair.CommonAddress(), val.privateKey.PublicKey().Marshal())
+		onboard, err := task.ssvNetworkViewsContract.GetValidator(nil, task.ssvKeyPair.CommonAddress(), val.privateKey.PublicKey().Marshal())
 		if err != nil {
 			// remove when new SSVViews contract is deployed
 			if strings.Contains(err.Error(), "execution reverted") {
-				active = false
+				onboard = false
 			} else {
 				return errors.Wrap(err, "ssvNetworkViewsContract.GetValidator failed")
 			}
 		}
-		if active {
-			return fmt.Errorf("validator %s at index %d is active on ssv", val.privateKey.PublicKey().SerializeToHexStr(), val.keyIndex)
+		if onboard {
+			return fmt.Errorf("validator %s at index %d is onboard on ssv", val.privateKey.PublicKey().SerializeToHexStr(), val.keyIndex)
 		}
 
 		cluster, err := task.selectClusterForRegister()
@@ -167,7 +168,7 @@ func (task *Task) checkAndRegisterOnSSV() error {
 			"operaterIds":      cluster.operatorIds,
 			"pubkey":           hex.EncodeToString(val.privateKey.PublicKey().Marshal()),
 			"ssvDepositAmount": needDepositAmount.String(),
-		}).Info("register-tx")
+		}).Info("onboard-tx")
 
 		err = utils.WaitTxOkCommon(task.connectionOfSuperNodeAccount.Eth1Client(), registerTx.Hash())
 		if err != nil {
@@ -176,82 +177,4 @@ func (task *Task) checkAndRegisterOnSSV() error {
 	}
 
 	return nil
-}
-
-func (task *Task) selectClusterForRegister() (*Cluster, error) {
-	if len(task.clusters) == 0 {
-		err := task.fetchNewCluster()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	valAmountLimit, err := task.ssvNetworkViewsContract.GetValidatorsPerOperatorLimit(nil)
-	if err != nil {
-		return nil, err
-	}
-	clusterSlice := make([]*Cluster, 0)
-
-cluster:
-	for _, c := range task.clusters {
-		// check val amount limit per operator
-		for _, op := range c.operators {
-			operatorDetail, err := utils.GetOperatorDetail(task.ssvApiNetwork, op.Id)
-			if err != nil {
-				return nil, err
-			}
-			if operatorDetail.ValidatorsCount > int(valAmountLimit)-valAmountThreshold {
-				continue cluster
-			}
-
-			// update fee
-			feeDeci, err := decimal.NewFromString(operatorDetail.Fee)
-			if err != nil {
-				return nil, err
-			}
-			op.Fee = feeDeci
-		}
-
-		clusterSlice = append(clusterSlice, c)
-	}
-
-	if len(clusterSlice) == 0 {
-		err := task.fetchNewCluster()
-		if err != nil {
-			return nil, err
-		}
-
-	clusterSub:
-		for _, c := range task.clusters {
-			// check val amount limit per operator
-			for _, op := range c.operators {
-				operatorDetail, err := utils.GetOperatorDetail(task.ssvApiNetwork, op.Id)
-				if err != nil {
-					return nil, err
-				}
-				if operatorDetail.ValidatorsCount > int(valAmountLimit)-valAmountThreshold {
-					continue clusterSub
-				}
-
-				// update fee
-				feeDeci, err := decimal.NewFromString(operatorDetail.Fee)
-				if err != nil {
-					return nil, err
-				}
-				op.Fee = feeDeci
-			}
-
-			clusterSlice = append(clusterSlice, c)
-		}
-
-		if len(clusterSlice) == 0 {
-			return nil, fmt.Errorf("selectCluster failed")
-		}
-	}
-
-	sort.Slice(clusterSlice, func(i, j int) bool {
-		return len(clusterSlice[i].managingValidators) < len(clusterSlice[j].managingValidators)
-	})
-
-	return clusterSlice[0], nil
 }

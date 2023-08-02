@@ -109,7 +109,7 @@ func (task *Task) uptimeHandler() {
 			err := task.postUptime()
 			if err != nil {
 				logrus.Warnf("postUptime err: %s", err)
-				time.Sleep(6 * time.Second)
+				time.Sleep(24 * time.Second)
 				continue
 			}
 

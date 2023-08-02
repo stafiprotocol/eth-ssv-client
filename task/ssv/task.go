@@ -60,7 +60,6 @@ var (
 // 3. register validator on ssv, if status is staked on stafi contract
 // 4. remove validator on ssv, if status is exited on beacon
 type Task struct {
-	taskTicker      int64
 	stop            chan struct{}
 	eth1StartHeight uint64
 	eth1Endpoint    string
@@ -97,11 +96,12 @@ type Task struct {
 	ssvTokenContract        *erc20.Erc20
 	withdrawContract        *withdraw.Withdraw
 
-	nextKeyIndex    int
-	dealedEth1Block uint64
+	nextKeyIndex               int
+	dealedEth1Block            uint64 // for offchain state
+	validatorsPerOperatorLimit uint64
 
-	validatorsByKeyIndex      map[int]*Validator    // key index => validator, cache all validators(active/exist) by keyIndex
-	validatorsByPubkey        map[string]*Validator // pubkey => validator, cache all validators(active/exist) by pubkey
+	validatorsByKeyIndex      map[int]*Validator    // key index => validator, cache all validators(pending/active/exist) by keyIndex
+	validatorsByPubkey        map[string]*Validator // pubkey => validator, cache all validators(pending/active/exist) by pubkey
 	validatorsByValIndex      map[uint64]*Validator // val index => validator
 	validatorsByValIndexMutex sync.RWMutex
 
@@ -112,16 +112,6 @@ type Task struct {
 	feeRecipientAddressOnSsv common.Address
 }
 
-type Validator struct {
-	privateKey     *bls.PrivateKey
-	keyIndex       int
-	validatorIndex uint64
-	status         uint8 // status: 0 uninitiated 1 deposited 2 staked 3 registed on ssv 4 exited on eth 5 removed on ssv
-	exitEpoch      uint64
-
-	clusterKey string
-}
-
 type Cluster struct {
 	operators                       []*keyshare.Operator
 	operatorIds                     []uint64
@@ -130,22 +120,41 @@ type Cluster struct {
 	latestCluster                   *ssv_clusters.ISSVNetworkCoreCluster
 	latestRegistrationNonce         uint64
 
+	balance decimal.Decimal
+
 	managingValidators map[int]struct{} // key index
+}
+
+type Validator struct {
+	privateKey *bls.PrivateKey
+	keyIndex   int
+
+	statusOnStafi  uint8
+	statusOnSsv    uint8
+	statusOnBeacon uint8
+
+	validatorIndex uint64
+	exitEpoch      uint64
+
+	clusterKey string
 }
 
 const (
 	valStatusUnInitiated = uint8(0)
-	valStatusDeposited   = uint8(1)
-	valStatusMatch       = uint8(2)
-	valStatusUnmatch     = uint8(3)
-	valStatusStaked      = uint8(4)
 
-	valStatusRegistedOnSsv = uint8(5)
+	// on stafi
+	valStatusDeposited = uint8(1)
+	valStatusMatch     = uint8(2)
+	valStatusUnmatch   = uint8(3)
+	valStatusStaked    = uint8(4)
 
-	valStatusActiveOnBeacon = uint8(6)
-	valStatusExitedOnBeacon = uint8(7)
+	// on ssv
+	valStatusRegistedOnSsv = uint8(1)
+	valStatusRemovedOnSsv  = uint8(2)
 
-	valStatusRemovedOnSsv = uint8(8)
+	// on beacon
+	valStatusActiveOnBeacon = uint8(1)
+	valStatusExitedOnBeacon = uint8(2)
 )
 
 func NewTask(cfg *config.Config, seed []byte, superNodeKeyPair, ssvKeyPair *secp256k1.Keypair) (*Task, error) {
@@ -178,40 +187,7 @@ func NewTask(cfg *config.Config, seed []byte, superNodeKeyPair, ssvKeyPair *secp
 		return nil, fmt.Errorf("max gas price is zero")
 	}
 
-	// clusters := make(map[string]*Cluster)
-	// for _, operators := range cfg.Clusters {
-
-	// 	if len(operators) == 1 || len(operators)%3 != 1 {
-	// 		return nil, fmt.Errorf("cluster operator length not match")
-	// 	}
-
-	// 	sort.Slice(operators, func(i, j int) bool {
-	// 		return operators[i] < operators[j]
-	// 	})
-
-	// 	operatorDetails := make([]*keyshare.Operator, len(operators))
-	// 	for i := 0; i < len(operators); i++ {
-	// 		operatorDetails[i] = &keyshare.Operator{Id: int(operators[i])}
-	// 	}
-
-	// 	clusters[clusterKey(operators)] = &Cluster{
-	// 		operators:   operatorDetails,
-	// 		operatorIds: operators,
-	// 		latestCluster: &ssv_clusters.ISSVNetworkCoreCluster{
-	// 			ValidatorCount:  0,
-	// 			NetworkFeeIndex: 0,
-	// 			Index:           0,
-	// 			Active:          true,
-	// 			Balance:         big.NewInt(0),
-	// 		},
-	// 		latestRegistrationNonce: 0,
-	// 		managingValidators:      make(map[int]struct{}),
-	// 	}
-
-	// }
-
 	s := &Task{
-		taskTicker:       15,
 		stop:             make(chan struct{}),
 		eth1Endpoint:     cfg.Eth1Endpoint,
 		eth2Endpoint:     cfg.Eth2Endpoint,
@@ -306,22 +282,6 @@ func (task *Task) Start() error {
 		return err
 	}
 	logrus.Infof("nextKeyIndex: %d", task.nextKeyIndex)
-
-	// init operators
-	// for _, cluster := range task.clusters {
-	// 	for _, op := range cluster.operators {
-	// 		operatorDetail, err := utils.GetOperatorDetail(task.ssvApiNetwork, op.Id)
-	// 		if err != nil {
-	// 			return err
-	// 		}
-	// 		op.PublicKey = operatorDetail.PublicKey
-	// 		feeDeci, err := decimal.NewFromString(operatorDetail.Fee)
-	// 		if err != nil {
-	// 			return err
-	// 		}
-	// 		op.Fee = feeDeci
-	// 	}
-	// }
 
 	utils.SafeGo(task.ssvHandler)
 	utils.SafeGo(task.monitorHandler)
@@ -474,8 +434,6 @@ func (task *Task) mustGetSuperNodePubkeyStatus(pubkey []byte) (uint8, error) {
 
 func (task *Task) ssvHandler() {
 	logrus.Info("start handler")
-	ticker := time.NewTicker(time.Duration(task.taskTicker) * time.Second)
-	defer ticker.Stop()
 	retry := 0
 	for {
 		if retry > utils.RetryLimit {
@@ -487,7 +445,7 @@ func (task *Task) ssvHandler() {
 		case <-task.stop:
 			logrus.Info("task has stopped")
 			return
-		case <-ticker.C:
+		default:
 
 			err := task.checkAndRepairValNexKeyIndex()
 			if err != nil {
@@ -508,6 +466,14 @@ func (task *Task) ssvHandler() {
 			err = task.updateSsvOffchainState()
 			if err != nil {
 				logrus.Warnf("updateOffchainState err %s", err)
+				time.Sleep(utils.RetryInterval)
+				retry++
+				continue
+			}
+
+			err = task.updateOperatorStatus()
+			if err != nil {
+				logrus.Warnf("updateOperatorStatus err %s", err)
 				time.Sleep(utils.RetryInterval)
 				retry++
 				continue
@@ -549,22 +515,25 @@ func (task *Task) ssvHandler() {
 				continue
 			}
 
-			err = task.checkAndRegisterOnSSV()
+			err = task.checkAndOnboardOnSSV()
 			if err != nil {
-				logrus.Warnf("checkAndRegisterOnSSV err %s", err)
+				logrus.Warnf("checkAndOnboardOnSSV err %s", err)
 				time.Sleep(utils.RetryInterval)
 				retry++
 				continue
 			}
 
-			err = task.checkAndRemoveOnSSV()
+			err = task.checkAndOffboardOnSSV()
 			if err != nil {
-				logrus.Warnf("checkAndRemoveOnSSV err %s", err)
+				logrus.Warnf("checkAndOffboardOnSSV err %s", err)
 				time.Sleep(utils.RetryInterval)
 				retry++
 				continue
 			}
 
+			retry = 0
 		}
+
+		time.Sleep(24 * time.Second) // 2 blocks
 	}
 }

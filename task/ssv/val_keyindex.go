@@ -32,7 +32,8 @@ func (task *Task) checkAndRepairValNexKeyIndex() error {
 			return err
 		}
 		pubkey := credential.SigningPK().Marshal()
-		pubkeyStatus, err := task.superNodeContract.GetSuperNodePubkeyStatus(nil, pubkey)
+
+		pubkeyStatus, err := task.mustGetSuperNodePubkeyStatus(pubkey)
 		if err != nil {
 			logrus.Warnf("GetSuperNodePubkeyStatus err: %s", err.Error())
 			time.Sleep(utils.RetryInterval)
@@ -40,21 +41,38 @@ func (task *Task) checkAndRepairValNexKeyIndex() error {
 			continue
 		}
 
-		if uint8(pubkeyStatus.Uint64()) == utils.ValidatorStatusUnInitial {
+		if pubkeyStatus == utils.ValidatorStatusUnInitial {
 			break
 		}
+
+		valStatus := valStatusUnInitiated
+		switch pubkeyStatus {
+		case utils.ValidatorStatusUnInitial:
+			return fmt.Errorf("should not happen here")
+		case utils.ValidatorStatusDeposited:
+			valStatus = valStatusDeposited
+		case utils.ValidatorStatusWithdrawMatch:
+			valStatus = valStatusMatch
+		case utils.ValidatorStatusWithdrawUnmatch:
+			valStatus = valStatusUnmatch
+		case utils.ValidatorStatusStaked:
+			valStatus = valStatusStaked
+		default:
+			return fmt.Errorf("validator %s at index %d unknown status %d", hex.EncodeToString(pubkey), task.nextKeyIndex, pubkeyStatus)
+		}
+
 		val := &Validator{
-			privateKey: credential.SigningSk,
-			status:     uint8(pubkeyStatus.Uint64()),
-			keyIndex:   task.nextKeyIndex,
+			privateKey:    credential.SigningSk,
+			statusOnStafi: valStatus,
+			keyIndex:      task.nextKeyIndex,
 		}
 		task.validatorsByKeyIndex[task.nextKeyIndex] = val
 		task.validatorsByPubkey[hex.EncodeToString(pubkey)] = val
 
 		logrus.WithFields(logrus.Fields{
-			"keyIndex":              task.nextKeyIndex,
-			"pubkey":                hex.EncodeToString(pubkey),
-			"statusOnStafiContract": pubkeyStatus.Uint64(),
+			"keyIndex":      task.nextKeyIndex,
+			"pubkey":        hex.EncodeToString(pubkey),
+			"statusOnStafi": pubkeyStatus,
 		}).Debug("validator key info")
 
 		task.nextKeyIndex++

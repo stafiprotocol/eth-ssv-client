@@ -11,6 +11,7 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	ssv_clusters "github.com/stafiprotocol/eth-ssv-client/bindings/SsvClusters"
+	ssv_network_views "github.com/stafiprotocol/eth-ssv-client/bindings/SsvNetworkViews"
 	"github.com/stafiprotocol/eth-ssv-client/pkg/keyshare"
 	"github.com/stafiprotocol/eth-ssv-client/pkg/utils"
 )
@@ -212,16 +213,29 @@ func (task *Task) updateSsvOffchainState() (retErr error) {
 			"end":   subEnd,
 		}).Debug("already dealed blocks")
 	}
+
 	logrus.WithFields(logrus.Fields{
 		"feeRecipientAddressOnSsv": task.feeRecipientAddressOnSsv,
 	}).Debug("offchain-state")
 
-	for key, cluster := range task.clusters {
+	for key, c := range task.clusters {
+		balance, err := task.ssvNetworkViewsContract.GetBalance(nil, task.ssvKeyPair.CommonAddress(), c.operatorIds, ssv_network_views.ISSVNetworkCoreCluster(*c.latestCluster))
+		if err != nil {
+			return err
+		}
+		c.balance = decimal.NewFromBigInt(balance, 0)
+
 		logrus.WithFields(logrus.Fields{
-			"clusterKey":    key,
-			"latestNonce":   cluster.latestRegistrationNonce,
-			"latestCluster": cluster.latestCluster,
-		}).Debug("offchain-state")
+			"clusterKey":                      key,
+			"operators":                       c.operatorIds,
+			"latestState":                     c.latestCluster,
+			"nonce":                           c.latestRegistrationNonce,
+			"managingValidators":              c.managingValidators,
+			"latestUpdateClusterBlockNumber":  c.latestUpdateClusterBlockNumber,
+			"latestUpdateRegisterBlockNumber": c.latestUpdateRegisterBlockNumber,
+			"balance":                         c.balance.String(),
+		}).Debug("clusterInfo")
+
 	}
 	return nil
 }
