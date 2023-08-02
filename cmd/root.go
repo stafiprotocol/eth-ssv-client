@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	appName = "reth"
+	appName = "ssv-client"
 )
 
 const (
@@ -25,7 +25,7 @@ func NewRootCmd() *cobra.Command {
 	// RootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
 		Use:   appName,
-		Short: "reth service",
+		Short: "ssv-client",
 	}
 
 	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, _ []string) error {

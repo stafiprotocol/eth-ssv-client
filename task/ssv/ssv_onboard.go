@@ -174,6 +174,8 @@ func (task *Task) checkAndOnboardOnSSV() error {
 		if err != nil {
 			return err
 		}
+
+		//todo check validator status on ssv api
 	}
 
 	return nil

@@ -18,7 +18,7 @@ func importMnemonicCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "import-val-mnemonic",
 		Args:  cobra.ExactArgs(0),
-		Short: "Import mnemonic for ssv",
+		Short: "Import mnemonic of validators",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			keystorePath, err := cmd.Flags().GetString(flagKeystorePath)
 			if err != nil {
