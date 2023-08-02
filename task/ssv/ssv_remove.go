@@ -23,7 +23,7 @@ func (task *Task) checkAndRemoveOnSSV() error {
 			return fmt.Errorf("validator at index %d not exist", i)
 		}
 
-		if val.status != utils.ValidatorStatusExited {
+		if val.status != valStatusExitedOnBeacon {
 			continue
 		}
 

@@ -34,7 +34,7 @@ func (task *Task) checkAndStake() error {
 	validatorsNeedStake := make([]*Validator, 0)
 	for i := 0; i < len(task.validatorsByKeyIndex); i++ {
 		val := task.validatorsByKeyIndex[i]
-		if val.status != utils.ValidatorStatusWithdrawMatch {
+		if val.status != valStatusMatch {
 			continue
 		}
 

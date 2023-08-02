@@ -29,7 +29,15 @@ func (task *Task) checkAndDeposit() (retErr error) {
 		return nil
 	}
 
-	// validators need stake
+	// wait if some validators wait stake
+	for i := 0; i < len(task.validatorsByKeyIndex); i++ {
+		val := task.validatorsByKeyIndex[i]
+		if val.status == valStatusDeposited || val.status == valStatusMatch {
+			return nil
+		}
+	}
+
+	// validators need deposit
 	depositLen := poolBalanceDeci.Div(minAmountNeedDeposit).IntPart()
 	validatorPubkeys := make([][]byte, depositLen)
 	sigs := make([][]byte, depositLen)
@@ -90,7 +98,7 @@ func (task *Task) checkAndDeposit() (retErr error) {
 
 		val := &Validator{
 			privateKey: credential.SigningSk,
-			status:     utils.ValidatorStatusUnInitial,
+			status:     valStatusUnInitiated,
 			keyIndex:   task.nextKeyIndex,
 		}
 		task.validatorsByKeyIndex[task.nextKeyIndex] = val
