@@ -1,9 +1,23 @@
 # eth-ssv-client
 
-client for StaFi staking pool and SSV
+Client for StaFi staking pool and SSV
 
 ## Build
-*[Go](https://go.dev/doc/install) needs to be installed and a proper Go environment needs to be configured*
+
+* [Go 1.20+](https://golang.org/dl/), for example:
+
+```bash
+cd $HOME
+wget -O go1.20.3.linux-amd64.tar.gz https://go.dev/dl/go1.20.3.linux-amd64.tar.gz
+rm -rf /usr/local/go && tar -C /usr/local -xzf go1.20.3.linux-amd64.tar.gz && rm go1.20.3.linux-amd64.tar.gz
+echo 'export GOROOT=/usr/local/go' >> $HOME/.bashrc
+echo 'export GOPATH=$HOME/go' >> $HOME/.bashrc
+echo 'export GO111MODULE=on' >> $HOME/.bashrc
+echo 'export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin' >> $HOME/.bashrc && . $HOME/.bashrc
+go version
+```
+
+* make 
 
 ```base
  git clone https://github.com/stafiprotocol/eth-ssv-client.git
