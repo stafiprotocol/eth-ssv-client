@@ -4,10 +4,13 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"strings"
 	"sync"
 	"time"
 
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/prysmaticlabs/prysm/v3/encoding/bytesutil"
 
 	// "github.com/prysmaticlabs/prysm/v3/config/params"
@@ -16,7 +19,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/chainbridge/utils/crypto/secp256k1"
 	erc20 "github.com/stafiprotocol/eth-ssv-client/bindings/Erc20"
-	ssv_clusters "github.com/stafiprotocol/eth-ssv-client/bindings/SsvClusters"
 	ssv_network "github.com/stafiprotocol/eth-ssv-client/bindings/SsvNetwork"
 	ssv_network_views "github.com/stafiprotocol/eth-ssv-client/bindings/SsvNetworkViews"
 	storage "github.com/stafiprotocol/eth-ssv-client/bindings/Storage"
@@ -88,13 +90,16 @@ type Task struct {
 	eth1WithdrawalAdress       common.Address
 	feeRecipientAddressOnStafi common.Address
 
+	eth1Client *ethclient.Client
+
 	superNodeContract       *super_node.SuperNode
 	userDepositContract     *user_deposit.UserDeposit
 	ssvNetworkContract      *ssv_network.SsvNetwork
 	ssvNetworkViewsContract *ssv_network_views.SsvNetworkViews
-	ssvClustersContract     *ssv_clusters.SsvClusters
 	ssvTokenContract        *erc20.Erc20
 	withdrawContract        *withdraw.Withdraw
+
+	ssvNetworkAbi abi.ABI
 
 	nextKeyIndex               int
 	dealedEth1Block            uint64 // for offchain state
@@ -113,16 +118,18 @@ type Task struct {
 }
 
 type Cluster struct {
-	operators                       []*keyshare.Operator
-	operatorIds                     []uint64
-	latestUpdateClusterBlockNumber  uint64
-	latestUpdateRegisterBlockNumber uint64
-	latestCluster                   *ssv_clusters.ISSVNetworkCoreCluster
-	latestRegistrationNonce         uint64
+	operators               []*keyshare.Operator
+	operatorIds             []uint64
+	latestCluster           *ssv_network.ISSVNetworkCoreCluster
+	latestRegistrationNonce uint64
 
 	balance decimal.Decimal
 
 	managingValidators map[int]struct{} // key index
+
+	latestUpdateClusterBlockNumber    uint64
+	latestValidatorAddedBlockNumber   uint64
+	latestValidatorRemovedBlockNumber uint64
 }
 
 type Validator struct {
@@ -187,10 +194,15 @@ func NewTask(cfg *config.Config, seed []byte, superNodeKeyPair, ssvKeyPair *secp
 		return nil, fmt.Errorf("max gas price is zero")
 	}
 
+	eth1client, err := ethclient.Dial(cfg.Eth1Endpoint)
+	if err != nil {
+		return nil, err
+	}
 	s := &Task{
 		stop:             make(chan struct{}),
 		eth1Endpoint:     cfg.Eth1Endpoint,
 		eth2Endpoint:     cfg.Eth2Endpoint,
+		eth1Client:       eth1client,
 		superNodeKeyPair: superNodeKeyPair,
 		ssvKeyPair:       ssvKeyPair,
 		seed:             seed,
@@ -225,7 +237,7 @@ func (task *Task) Start() error {
 	if err != nil {
 		return err
 	}
-	chainId, err := task.connectionOfSuperNodeAccount.Eth1Client().ChainID(context.Background())
+	chainId, err := task.eth1Client.ChainID(context.Background())
 	if err != nil {
 		return err
 	}
@@ -268,6 +280,11 @@ func (task *Task) Start() error {
 	default:
 		return fmt.Errorf("unsupport chainId: %d", chainId.Int64())
 	}
+	if err != nil {
+		return err
+	}
+
+	task.ssvNetworkAbi, err = abi.JSON(strings.NewReader(ssv_network.SsvNetworkABI))
 	if err != nil {
 		return err
 	}
@@ -349,7 +366,7 @@ func (task *Task) calClusterNeedDepositAmount(cluster *Cluster) (min, max *big.I
 }
 
 func (task *Task) initContract() error {
-	storageContract, err := storage.NewStorage(task.storageContractAddress, task.connectionOfSuperNodeAccount.Eth1Client())
+	storageContract, err := storage.NewStorage(task.storageContractAddress, task.eth1Client)
 	if err != nil {
 		return err
 	}
@@ -360,7 +377,7 @@ func (task *Task) initContract() error {
 	task.eth1WithdrawalAdress = stafiWithdrawAddress
 	logrus.Debugf("stafiWithdraw address: %s", task.eth1WithdrawalAdress.String())
 
-	task.withdrawContract, err = withdraw.NewWithdraw(stafiWithdrawAddress, task.connectionOfSuperNodeAccount.Eth1Client())
+	task.withdrawContract, err = withdraw.NewWithdraw(stafiWithdrawAddress, task.eth1Client)
 	if err != nil {
 		return err
 	}
@@ -369,7 +386,7 @@ func (task *Task) initContract() error {
 	if err != nil {
 		return err
 	}
-	task.superNodeContract, err = super_node.NewSuperNode(superNodeAddress, task.connectionOfSuperNodeAccount.Eth1Client())
+	task.superNodeContract, err = super_node.NewSuperNode(superNodeAddress, task.eth1Client)
 	if err != nil {
 		return err
 	}
@@ -378,7 +395,7 @@ func (task *Task) initContract() error {
 	if err != nil {
 		return err
 	}
-	task.userDepositContract, err = user_deposit.NewUserDeposit(userDepositAddress, task.connectionOfSuperNodeAccount.Eth1Client())
+	task.userDepositContract, err = user_deposit.NewUserDeposit(userDepositAddress, task.eth1Client)
 	if err != nil {
 		return err
 	}
@@ -392,19 +409,16 @@ func (task *Task) initContract() error {
 	}
 	task.feeRecipientAddressOnStafi = superNodeFeePoolAddress
 
-	task.ssvNetworkContract, err = ssv_network.NewSsvNetwork(task.ssvNetworkContractAddress, task.connectionOfSuperNodeAccount.Eth1Client())
+	task.ssvNetworkContract, err = ssv_network.NewSsvNetwork(task.ssvNetworkContractAddress, task.eth1Client)
 	if err != nil {
 		return err
 	}
-	task.ssvNetworkViewsContract, err = ssv_network_views.NewSsvNetworkViews(task.ssvNetworkViewsContractAddress, task.connectionOfSuperNodeAccount.Eth1Client())
+	task.ssvNetworkViewsContract, err = ssv_network_views.NewSsvNetworkViews(task.ssvNetworkViewsContractAddress, task.eth1Client)
 	if err != nil {
 		return err
 	}
-	task.ssvClustersContract, err = ssv_clusters.NewSsvClusters(task.ssvNetworkContractAddress, task.connectionOfSuperNodeAccount.Eth1Client())
-	if err != nil {
-		return err
-	}
-	task.ssvTokenContract, err = erc20.NewErc20(task.ssvTokenContractAddress, task.connectionOfSuperNodeAccount.Eth1Client())
+
+	task.ssvTokenContract, err = erc20.NewErc20(task.ssvTokenContractAddress, task.eth1Client)
 	if err != nil {
 		return err
 	}
@@ -455,14 +469,6 @@ func (task *Task) ssvHandler() {
 				continue
 			}
 
-			err = task.updateValStatus()
-			if err != nil {
-				logrus.Warnf("updateValStatus err %s", err)
-				time.Sleep(utils.RetryInterval)
-				retry++
-				continue
-			}
-
 			err = task.updateSsvOffchainState()
 			if err != nil {
 				logrus.Warnf("updateOffchainState err %s", err)
@@ -471,6 +477,13 @@ func (task *Task) ssvHandler() {
 				continue
 			}
 
+			err = task.updateValStatus()
+			if err != nil {
+				logrus.Warnf("updateValStatus err %s", err)
+				time.Sleep(utils.RetryInterval)
+				retry++
+				continue
+			}
 			err = task.updateOperatorStatus()
 			if err != nil {
 				logrus.Warnf("updateOperatorStatus err %s", err)

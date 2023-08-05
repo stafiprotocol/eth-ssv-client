@@ -104,7 +104,7 @@ func (task *Task) checkAndStake() error {
 		"dataRoots":        dataRoots,
 	}).Info("stake-tx")
 
-	err = utils.WaitTxOkCommon(task.connectionOfSuperNodeAccount.Eth1Client(), stakeTx.Hash())
+	err = utils.WaitTxOkCommon(task.eth1Client, stakeTx.Hash())
 	if err != nil {
 		return err
 	}

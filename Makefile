@@ -44,7 +44,6 @@ abi:
 	abigen --abi ./bindings/StakePortalRate/stakeportalrate_abi.json --pkg stake_portal_rate --type StakePortalRate --out ./bindings/StakePortalRate/StakePortalRate.go
 	abigen --abi ./bindings/SsvNetwork/ssvnetwork_abi.json --pkg ssv_network --type SsvNetwork --out ./bindings/SsvNetwork/SsvNetwork.go
 	abigen --abi ./bindings/SsvNetworkViews/ssvnetworkviews_abi.json --pkg ssv_network_views --type SsvNetworkViews --out ./bindings/SsvNetworkViews/SsvNetworkViews.go
-	abigen --abi ./bindings/SsvClusters/ssvclusters_abi.json --pkg ssv_clusters --type SsvClusters --out ./bindings/SsvClusters/SsvClusters.go
 	abigen --abi ./bindings/Erc20/erc20_abi.json --pkg erc20 --type Erc20 --out ./bindings/Erc20/Erc20.go
 
 

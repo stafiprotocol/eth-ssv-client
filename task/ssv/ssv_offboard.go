@@ -86,7 +86,7 @@ func (task *Task) checkAndOffboardOnSSV() error {
 			"pubkey":      hex.EncodeToString(val.privateKey.PublicKey().Marshal()),
 		}).Info("offboard-tx")
 
-		err = utils.WaitTxOkCommon(task.connectionOfSuperNodeAccount.Eth1Client(), removeTx.Hash())
+		err = utils.WaitTxOkCommon(task.eth1Client, removeTx.Hash())
 		if err != nil {
 			return err
 		}

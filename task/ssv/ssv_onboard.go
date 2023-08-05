@@ -142,7 +142,7 @@ func (task *Task) checkAndOnboardOnSSV() error {
 				"approveAmount": approveAmount.String(),
 			}).Info("approve-tx")
 
-			err = utils.WaitTxOkCommon(task.connectionOfSuperNodeAccount.Eth1Client(), approveTx.Hash())
+			err = utils.WaitTxOkCommon(task.eth1Client, approveTx.Hash())
 			if err != nil {
 				return err
 			}
@@ -170,7 +170,7 @@ func (task *Task) checkAndOnboardOnSSV() error {
 			"ssvDepositAmount": needDepositAmount.String(),
 		}).Info("onboard-tx")
 
-		err = utils.WaitTxOkCommon(task.connectionOfSuperNodeAccount.Eth1Client(), registerTx.Hash())
+		err = utils.WaitTxOkCommon(task.eth1Client, registerTx.Hash())
 		if err != nil {
 			return err
 		}

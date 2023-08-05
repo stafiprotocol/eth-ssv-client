@@ -63,7 +63,8 @@ func (task *Task) checkAndDeposit() (retErr error) {
 	}()
 
 	for i := 0; i < int(depositLen); i++ {
-		credential, err := credential.NewCredential(task.seed, task.nextKeyIndex, superNodeDepositAmount.Div(utils.GweiDeci).BigInt(), task.chain, task.eth1WithdrawalAdress)
+		credential, err := credential.NewCredential(task.seed, task.nextKeyIndex,
+			superNodeDepositAmount.Div(utils.GweiDeci).BigInt(), task.chain, task.eth1WithdrawalAdress)
 		if err != nil {
 			return err
 		}
@@ -139,7 +140,7 @@ func (task *Task) checkAndDeposit() (retErr error) {
 		"dataRoots":        dataRoots,
 	}).Info("deposit-tx")
 
-	err = utils.WaitTxOkCommon(task.connectionOfSuperNodeAccount.Eth1Client(), depositTx.Hash())
+	err = utils.WaitTxOkCommon(task.eth1Client, depositTx.Hash())
 	if err != nil {
 		return err
 	}

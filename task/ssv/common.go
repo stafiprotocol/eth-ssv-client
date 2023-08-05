@@ -8,7 +8,7 @@ import (
 
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
-	ssv_clusters "github.com/stafiprotocol/eth-ssv-client/bindings/SsvClusters"
+	ssv_network "github.com/stafiprotocol/eth-ssv-client/bindings/SsvNetwork"
 	"github.com/stafiprotocol/eth-ssv-client/pkg/keyshare"
 	"github.com/stafiprotocol/eth-ssv-client/pkg/utils"
 )
@@ -79,11 +79,12 @@ func (task *Task) fetchNewCluster() error {
 
 	cltKey := clusterKey(operatorIds)
 	task.clusters[cltKey] = &Cluster{
-		operators:                       selectedOperator,
-		operatorIds:                     operatorIds,
-		latestUpdateClusterBlockNumber:  0,
-		latestUpdateRegisterBlockNumber: 0,
-		latestCluster: &ssv_clusters.ISSVNetworkCoreCluster{
+		operators:                         selectedOperator,
+		operatorIds:                       operatorIds,
+		latestUpdateClusterBlockNumber:    0,
+		latestValidatorAddedBlockNumber:   0,
+		latestValidatorRemovedBlockNumber: 0,
+		latestCluster: &ssv_network.ISSVNetworkCoreCluster{
 			ValidatorCount:  0,
 			NetworkFeeIndex: 0,
 			Index:           0,

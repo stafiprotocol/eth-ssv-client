@@ -19,7 +19,7 @@ func (task *Task) updateOperatorStatus() error {
 
 	task.validatorsPerOperatorLimit = uint64(valAmountLimit)
 
-	logrus.Debug("validatorsPerOperatorLimit %d", task.validatorsPerOperatorLimit)
+	logrus.Debugf("validatorsPerOperatorLimit %d", task.validatorsPerOperatorLimit)
 
 	for _, c := range task.clusters {
 

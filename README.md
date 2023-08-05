@@ -55,4 +55,4 @@ Automatically:
 * Deposit/Stake on StaFi staking pool
 * Select/Monitor operators from SSV api
 * Onboard/Offboard validators on SSV
-* Hold stafi ejector service
+* Hold StaFi ejector service
