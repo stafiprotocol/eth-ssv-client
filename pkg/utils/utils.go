@@ -14,6 +14,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
@@ -251,3 +253,21 @@ func ReadLastLine(filePath string) (string, error) {
 }
 
 var OneWeekSeconds = 7 * 24 * 60 * 60
+
+func UnpackEvent(a abi.ABI, v interface{}, name string, data []byte, topics []common.Hash) error {
+	err := a.UnpackIntoInterface(v, name, data)
+	if err != nil {
+		return err
+	}
+	var indexed abi.Arguments
+	for _, arg := range a.Events[name].Inputs {
+		if arg.Indexed {
+			indexed = append(indexed, arg)
+		}
+	}
+	err = abi.ParseTopics(v, indexed, topics[1:])
+	if err != nil {
+		return err
+	}
+	return nil
+}

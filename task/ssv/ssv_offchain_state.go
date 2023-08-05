@@ -8,7 +8,6 @@ import (
 	"sort"
 
 	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
@@ -113,17 +112,7 @@ func (task *Task) updateSsvOffchainState() (retErr error) {
 			switch log.Topics[0] {
 			case eventValidatorAdded.ID:
 				event := &ssv_network.SsvNetworkValidatorAdded{Raw: log}
-				err := task.ssvNetworkAbi.UnpackIntoInterface(event, eventNameValidatorAdded, log.Data)
-				if err != nil {
-					return err
-				}
-				var indexed abi.Arguments
-				for _, arg := range task.ssvNetworkAbi.Events[eventNameValidatorAdded].Inputs {
-					if arg.Indexed {
-						indexed = append(indexed, arg)
-					}
-				}
-				err = abi.ParseTopics(event, indexed, log.Topics[1:])
+				err := utils.UnpackEvent(task.ssvNetworkAbi, event, eventNameValidatorAdded, log.Data, log.Topics)
 				if err != nil {
 					return err
 				}
@@ -146,22 +135,9 @@ func (task *Task) updateSsvOffchainState() (retErr error) {
 					return err
 				}
 
-				cluster := task.clusters[cltKey]
-				cluster.managingValidators[val.keyIndex] = struct{}{}
-
 			case eventValidatorRemoved.ID:
 				event := &ssv_network.SsvNetworkValidatorRemoved{Raw: log}
-				err := task.ssvNetworkAbi.UnpackIntoInterface(event, eventNameValidatorRemoved, log.Data)
-				if err != nil {
-					return err
-				}
-				var indexed abi.Arguments
-				for _, arg := range task.ssvNetworkAbi.Events[eventNameValidatorRemoved].Inputs {
-					if arg.Indexed {
-						indexed = append(indexed, arg)
-					}
-				}
-				err = abi.ParseTopics(event, indexed, log.Topics[1:])
+				err := utils.UnpackEvent(task.ssvNetworkAbi, event, eventNameValidatorRemoved, log.Data, log.Topics)
 				if err != nil {
 					return err
 				}
@@ -170,7 +146,6 @@ func (task *Task) updateSsvOffchainState() (retErr error) {
 
 				logrus.Debugf("find event validatorRemoved, block %d, val: %s tx: %s", event.Raw.BlockNumber, pubkey, event.Raw.TxHash.String())
 
-				cluKey := clusterKey(event.OperatorIds)
 				val, exist := task.validatorsByPubkey[pubkey]
 				if !exist {
 					return fmt.Errorf("val %s not exist in offchain state", pubkey)
@@ -182,21 +157,9 @@ func (task *Task) updateSsvOffchainState() (retErr error) {
 					return err
 				}
 
-				cluster := task.clusters[cluKey]
-				delete(cluster.managingValidators, val.keyIndex)
 			case eventClusterDeposited.ID:
 				event := &ssv_network.SsvNetworkClusterDeposited{Raw: log}
-				err := task.ssvNetworkAbi.UnpackIntoInterface(event, eventNameClusterDeposited, log.Data)
-				if err != nil {
-					return err
-				}
-				var indexed abi.Arguments
-				for _, arg := range task.ssvNetworkAbi.Events[eventNameClusterDeposited].Inputs {
-					if arg.Indexed {
-						indexed = append(indexed, arg)
-					}
-				}
-				err = abi.ParseTopics(event, indexed, log.Topics[1:])
+				err := utils.UnpackEvent(task.ssvNetworkAbi, event, eventNameClusterDeposited, log.Data, log.Topics)
 				if err != nil {
 					return err
 				}
@@ -208,17 +171,7 @@ func (task *Task) updateSsvOffchainState() (retErr error) {
 				}
 			case eventClusterWithdrawn.ID:
 				event := &ssv_network.SsvNetworkClusterWithdrawn{Raw: log}
-				err := task.ssvNetworkAbi.UnpackIntoInterface(event, eventNameClusterWithdrawn, log.Data)
-				if err != nil {
-					return err
-				}
-				var indexed abi.Arguments
-				for _, arg := range task.ssvNetworkAbi.Events[eventNameClusterWithdrawn].Inputs {
-					if arg.Indexed {
-						indexed = append(indexed, arg)
-					}
-				}
-				err = abi.ParseTopics(event, indexed, log.Topics[1:])
+				err := utils.UnpackEvent(task.ssvNetworkAbi, event, eventNameClusterWithdrawn, log.Data, log.Topics)
 				if err != nil {
 					return err
 				}
@@ -230,17 +183,7 @@ func (task *Task) updateSsvOffchainState() (retErr error) {
 				}
 			case eventClusterLiquidated.ID:
 				event := &ssv_network.SsvNetworkClusterLiquidated{Raw: log}
-				err := task.ssvNetworkAbi.UnpackIntoInterface(event, eventNameClusterLiquidated, log.Data)
-				if err != nil {
-					return err
-				}
-				var indexed abi.Arguments
-				for _, arg := range task.ssvNetworkAbi.Events[eventNameClusterLiquidated].Inputs {
-					if arg.Indexed {
-						indexed = append(indexed, arg)
-					}
-				}
-				err = abi.ParseTopics(event, indexed, log.Topics[1:])
+				err := utils.UnpackEvent(task.ssvNetworkAbi, event, eventNameClusterLiquidated, log.Data, log.Topics)
 				if err != nil {
 					return err
 				}
@@ -252,17 +195,7 @@ func (task *Task) updateSsvOffchainState() (retErr error) {
 				}
 			case eventClusterReactivated.ID:
 				event := &ssv_network.SsvNetworkClusterReactivated{Raw: log}
-				err := task.ssvNetworkAbi.UnpackIntoInterface(event, eventNameClusterReactivated, log.Data)
-				if err != nil {
-					return err
-				}
-				var indexed abi.Arguments
-				for _, arg := range task.ssvNetworkAbi.Events[eventNameClusterReactivated].Inputs {
-					if arg.Indexed {
-						indexed = append(indexed, arg)
-					}
-				}
-				err = abi.ParseTopics(event, indexed, log.Topics[1:])
+				err := utils.UnpackEvent(task.ssvNetworkAbi, event, eventNameClusterReactivated, log.Data, log.Topics)
 				if err != nil {
 					return err
 				}
@@ -274,17 +207,7 @@ func (task *Task) updateSsvOffchainState() (retErr error) {
 				}
 			case eventFeeRecipientAddressUpdated.ID:
 				event := &ssv_network.SsvNetworkFeeRecipientAddressUpdated{Raw: log}
-				err := task.ssvNetworkAbi.UnpackIntoInterface(event, eventNameFeeRecipientAddressUpdated, log.Data)
-				if err != nil {
-					return err
-				}
-				var indexed abi.Arguments
-				for _, arg := range task.ssvNetworkAbi.Events[eventNameFeeRecipientAddressUpdated].Inputs {
-					if arg.Indexed {
-						indexed = append(indexed, arg)
-					}
-				}
-				err = abi.ParseTopics(event, indexed, log.Topics[1:])
+				err := utils.UnpackEvent(task.ssvNetworkAbi, event, eventNameFeeRecipientAddressUpdated, log.Data, log.Topics)
 				if err != nil {
 					return err
 				}
