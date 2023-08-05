@@ -78,6 +78,7 @@ type Task struct {
 	ssvTokenContractAddress        common.Address
 	seed                           []byte
 	postUptimeUrl                  string
+	isViewMode                     bool
 
 	// --- need init on start
 	dev           bool
@@ -164,7 +165,7 @@ const (
 	valStatusExitedOnBeacon = uint8(2)
 )
 
-func NewTask(cfg *config.Config, seed []byte, superNodeKeyPair, ssvKeyPair *secp256k1.Keypair) (*Task, error) {
+func NewTask(cfg *config.Config, seed []byte, isViewMode bool, superNodeKeyPair, ssvKeyPair *secp256k1.Keypair) (*Task, error) {
 	if !common.IsHexAddress(cfg.Contracts.StorageContractAddress) {
 		return nil, fmt.Errorf("storage contract address fmt err")
 	}
@@ -206,6 +207,7 @@ func NewTask(cfg *config.Config, seed []byte, superNodeKeyPair, ssvKeyPair *secp
 		superNodeKeyPair: superNodeKeyPair,
 		ssvKeyPair:       ssvKeyPair,
 		seed:             seed,
+		isViewMode:       isViewMode,
 		gasLimit:         gasLimitDeci.BigInt(),
 		maxGasPrice:      maxGasPriceDeci.BigInt(),
 
@@ -301,6 +303,10 @@ func (task *Task) Start() error {
 	logrus.Infof("nextKeyIndex: %d", task.nextKeyIndex)
 
 	utils.SafeGo(task.ssvHandler)
+	if task.isViewMode {
+		return nil
+	}
+
 	utils.SafeGo(task.monitorHandler)
 	utils.SafeGo(task.uptimeHandler)
 
@@ -489,6 +495,10 @@ func (task *Task) ssvHandler() {
 				logrus.Warnf("updateOperatorStatus err %s", err)
 				time.Sleep(utils.RetryInterval)
 				retry++
+				continue
+			}
+
+			if task.isViewMode {
 				continue
 			}
 

@@ -27,6 +27,11 @@ func startSsvCmd() *cobra.Command {
 			}
 			fmt.Printf("config path: %s\n", configPath)
 
+			viewMode, err := cmd.Flags().GetBool(flagViewMode)
+			if err != nil {
+				return err
+			}
+
 			logLevelStr, err := cmd.Flags().GetString(flagLogLevel)
 			if err != nil {
 				return err
@@ -47,11 +52,13 @@ func startSsvCmd() *cobra.Command {
   logLevel: %s
   eth1Endpoint: %s
   eth2Endpoint: %s
-  storageAddress:%s
-  ssvNetworkAddress:%s
-  ssvNetworkViewsAddress:%s`,
+  storageAddress: %s
+  ssvNetworkAddress: %s
+  ssvNetworkViewsAddress: %s
+  viewMode: %t`,
 				cfg.LogFilePath, logLevelStr, cfg.Eth1Endpoint, cfg.Eth2Endpoint,
-				cfg.Contracts.StorageContractAddress, cfg.Contracts.SsvNetworkAddress, cfg.Contracts.SsvNetworkViewsAddress)
+				cfg.Contracts.StorageContractAddress, cfg.Contracts.SsvNetworkAddress,
+				cfg.Contracts.SsvNetworkViewsAddress, viewMode)
 
 			err = log.InitLogFile(cfg.LogFilePath + "/ssv")
 			if err != nil {
@@ -87,7 +94,7 @@ func startSsvCmd() *cobra.Command {
 				return err
 			}
 
-			t, err := task_ssv.NewTask(cfg, seed, kp, ssvkp)
+			t, err := task_ssv.NewTask(cfg, seed, viewMode, kp, ssvkp)
 			if err != nil {
 				return err
 			}
@@ -109,6 +116,7 @@ func startSsvCmd() *cobra.Command {
 
 	cmd.Flags().String(flagConfigPath, defaultConfigPath, "Config file path")
 	cmd.Flags().String(flagLogLevel, logrus.InfoLevel.String(), "The logging level (trace|debug|info|warn|error|fatal|panic)")
+	cmd.Flags().Bool(flagViewMode, false, "Start with view mode")
 
 	return cmd
 }

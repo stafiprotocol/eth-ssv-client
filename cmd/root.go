@@ -15,6 +15,7 @@ const (
 	flagKeystorePath = "keystore_path"
 	flagLogLevel     = "log_level"
 	flagConfigPath   = "config"
+	flagViewMode     = "view_mode"
 
 	defaultKeystorePath = "./keys"
 	defaultConfigPath   = "./config.toml"

@@ -271,3 +271,15 @@ func UnpackEvent(a abi.ABI, v interface{}, name string, data []byte, topics []co
 	}
 	return nil
 }
+
+func EventTopics(a abi.ABI, names ...string) ([]common.Hash, error) {
+	topics := make([]common.Hash, len(names))
+	for i, name := range names {
+		if event, exist := a.Events[name]; !exist {
+			return nil, fmt.Errorf("event %s not exist in abi", name)
+		} else {
+			topics[i] = event.ID
+		}
+	}
+	return topics, nil
+}

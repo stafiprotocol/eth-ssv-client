@@ -63,33 +63,10 @@ func (task *Task) updateSsvOffchainState() (retErr error) {
 			subEnd = end
 		}
 
-		eventValidatorAdded, exist := task.ssvNetworkAbi.Events[eventNameValidatorAdded]
-		if !exist {
-			return fmt.Errorf("eventValidatorAdded not exist")
-		}
-		eventValidatorRemoved, exist := task.ssvNetworkAbi.Events[eventNameValidatorRemoved]
-		if !exist {
-			return fmt.Errorf("eventValidatorRemoved not exist")
-		}
-		eventClusterDeposited, exist := task.ssvNetworkAbi.Events[eventNameClusterDeposited]
-		if !exist {
-			return fmt.Errorf("eventClusterDeposited not exist")
-		}
-		eventClusterWithdrawn, exist := task.ssvNetworkAbi.Events[eventNameClusterWithdrawn]
-		if !exist {
-			return fmt.Errorf("eventClusterWithdrawn not exist")
-		}
-		eventClusterLiquidated, exist := task.ssvNetworkAbi.Events[eventNameClusterLiquidated]
-		if !exist {
-			return fmt.Errorf("eventClusterLiquidated not exist")
-		}
-		eventClusterReactivated, exist := task.ssvNetworkAbi.Events[eventNameClusterReactivated]
-		if !exist {
-			return fmt.Errorf("eventClusterReactivated not exist")
-		}
-		eventFeeRecipientAddressUpdated, exist := task.ssvNetworkAbi.Events[eventNameFeeRecipientAddressUpdated]
-		if !exist {
-			return fmt.Errorf("eventFeeRecipientAddressUpdated not exist")
+		topics, err := utils.EventTopics(task.ssvNetworkAbi, eventNameValidatorAdded, eventNameValidatorRemoved, eventNameClusterDeposited,
+			eventNameClusterWithdrawn, eventNameClusterLiquidated, eventNameClusterReactivated, eventNameFeeRecipientAddressUpdated)
+		if err != nil {
+			return err
 		}
 
 		ssvAddress := task.ssvKeyPair.CommonAddress()
@@ -100,17 +77,25 @@ func (task *Task) updateSsvOffchainState() (retErr error) {
 			FromBlock: new(big.Int).SetUint64(subStart),
 			ToBlock:   new(big.Int).SetUint64(subEnd),
 			Addresses: []common.Address{task.ssvNetworkContractAddress},
-			Topics: [][]common.Hash{{eventValidatorAdded.ID, eventValidatorRemoved.ID, eventClusterDeposited.ID,
-				eventClusterWithdrawn.ID, eventClusterLiquidated.ID, eventClusterReactivated.ID, eventFeeRecipientAddressUpdated.ID},
-				{ssvAddressTopic}},
+			Topics:    [][]common.Hash{topics, {ssvAddressTopic}},
 		})
 		if err != nil {
 			return err
 		}
 
 		for _, log := range logs {
-			switch log.Topics[0] {
-			case eventValidatorAdded.ID:
+			if log.Removed {
+				logrus.Warnf("log %s was removed, will skip", log.TxHash.String())
+				continue
+			}
+
+			event, err := task.ssvNetworkAbi.EventByID(log.Topics[0])
+			if err != nil {
+				return err
+			}
+
+			switch event.RawName {
+			case eventNameValidatorAdded:
 				event := &ssv_network.SsvNetworkValidatorAdded{Raw: log}
 				err := utils.UnpackEvent(task.ssvNetworkAbi, event, eventNameValidatorAdded, log.Data, log.Topics)
 				if err != nil {
@@ -135,7 +120,7 @@ func (task *Task) updateSsvOffchainState() (retErr error) {
 					return err
 				}
 
-			case eventValidatorRemoved.ID:
+			case eventNameValidatorRemoved:
 				event := &ssv_network.SsvNetworkValidatorRemoved{Raw: log}
 				err := utils.UnpackEvent(task.ssvNetworkAbi, event, eventNameValidatorRemoved, log.Data, log.Topics)
 				if err != nil {
@@ -157,7 +142,7 @@ func (task *Task) updateSsvOffchainState() (retErr error) {
 					return err
 				}
 
-			case eventClusterDeposited.ID:
+			case eventNameClusterDeposited:
 				event := &ssv_network.SsvNetworkClusterDeposited{Raw: log}
 				err := utils.UnpackEvent(task.ssvNetworkAbi, event, eventNameClusterDeposited, log.Data, log.Topics)
 				if err != nil {
@@ -169,7 +154,7 @@ func (task *Task) updateSsvOffchainState() (retErr error) {
 				if err != nil {
 					return err
 				}
-			case eventClusterWithdrawn.ID:
+			case eventNameClusterWithdrawn:
 				event := &ssv_network.SsvNetworkClusterWithdrawn{Raw: log}
 				err := utils.UnpackEvent(task.ssvNetworkAbi, event, eventNameClusterWithdrawn, log.Data, log.Topics)
 				if err != nil {
@@ -181,7 +166,7 @@ func (task *Task) updateSsvOffchainState() (retErr error) {
 				if err != nil {
 					return err
 				}
-			case eventClusterLiquidated.ID:
+			case eventNameClusterLiquidated:
 				event := &ssv_network.SsvNetworkClusterLiquidated{Raw: log}
 				err := utils.UnpackEvent(task.ssvNetworkAbi, event, eventNameClusterLiquidated, log.Data, log.Topics)
 				if err != nil {
@@ -193,7 +178,7 @@ func (task *Task) updateSsvOffchainState() (retErr error) {
 				if err != nil {
 					return err
 				}
-			case eventClusterReactivated.ID:
+			case eventNameClusterReactivated:
 				event := &ssv_network.SsvNetworkClusterReactivated{Raw: log}
 				err := utils.UnpackEvent(task.ssvNetworkAbi, event, eventNameClusterReactivated, log.Data, log.Topics)
 				if err != nil {
@@ -205,7 +190,7 @@ func (task *Task) updateSsvOffchainState() (retErr error) {
 				if err != nil {
 					return err
 				}
-			case eventFeeRecipientAddressUpdated.ID:
+			case eventNameFeeRecipientAddressUpdated:
 				event := &ssv_network.SsvNetworkFeeRecipientAddressUpdated{Raw: log}
 				err := utils.UnpackEvent(task.ssvNetworkAbi, event, eventNameFeeRecipientAddressUpdated, log.Data, log.Topics)
 				if err != nil {
