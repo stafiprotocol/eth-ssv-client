@@ -218,9 +218,15 @@ func (task *Task) postUptime() error {
 	}
 	task.validatorsByValIndexMutex.RUnlock()
 
+	if len(valIndexList) == 0 {
+		return nil
+	}
+
 	req := ReqEjectorUptime{
 		ValidatorIndexList: valIndexList,
 	}
+
+	logrus.Debug("postUptime", valIndexList)
 
 	jsonValue, err := json.Marshal(req)
 	if err != nil {
