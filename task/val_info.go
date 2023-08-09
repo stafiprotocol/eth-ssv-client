@@ -1,4 +1,4 @@
-package task_ssv
+package task
 
 import (
 	"encoding/hex"
@@ -80,7 +80,6 @@ func (task *Task) updateValStatus() error {
 		}).Debug("valInfo")
 
 		// status on beacon
-		continue
 		if val.statusOnStafi == valStatusStaked {
 			beaconHead, err := task.connectionOfSuperNodeAccount.Eth2BeaconHead()
 			if err != nil {

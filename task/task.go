@@ -1,6 +1,7 @@
-package task_ssv
+package task
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"math/big"
@@ -13,7 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/prysmaticlabs/prysm/v3/encoding/bytesutil"
 
-	// "github.com/prysmaticlabs/prysm/v3/config/params"
+	"github.com/prysmaticlabs/prysm/v3/config/params"
 	types "github.com/prysmaticlabs/prysm/v3/consensus-types/primitives"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
@@ -244,18 +245,18 @@ func (task *Task) Start() error {
 		return err
 	}
 
-	// task.eth2Config, err = task.connectionOfSuperNodeAccount.Eth2Client().GetEth2Config()
-	// if err != nil {
-	// 	return err
-	// }
+	task.eth2Config, err = task.connectionOfSuperNodeAccount.Eth2Client().GetEth2Config()
+	if err != nil {
+		return err
+	}
 
 	switch chainId.Uint64() {
 	case 1: //mainnet
 		task.dev = false
 		task.chain = constants.GetChain(constants.ChainMAINNET)
-		// if !bytes.Equal(task.eth2Config.GenesisForkVersion, params.MainnetConfig().GenesisForkVersion) {
-		// 	return fmt.Errorf("endpoint network not match")
-		// }
+		if !bytes.Equal(task.eth2Config.GenesisForkVersion, params.MainnetConfig().GenesisForkVersion) {
+			return fmt.Errorf("endpoint network not match")
+		}
 		task.dealedEth1Block = 17705353
 		task.ssvApiNetwork = "mainnet"
 		task.postUptimeUrl = mainnetPostUptimeUrl
@@ -263,18 +264,18 @@ func (task *Task) Start() error {
 	case 11155111: // sepolia
 		task.dev = true
 		task.chain = constants.GetChain(constants.ChainSEPOLIA)
-		// if !bytes.Equal(task.eth2Config.GenesisForkVersion, params.SepoliaConfig().GenesisForkVersion) {
-		// 	return fmt.Errorf("endpoint network not match")
-		// }
+		if !bytes.Equal(task.eth2Config.GenesisForkVersion, params.SepoliaConfig().GenesisForkVersion) {
+			return fmt.Errorf("endpoint network not match")
+		}
 		task.dealedEth1Block = 9354882
 		task.ssvApiNetwork = "prater"
 		task.postUptimeUrl = devPostUptimeUrl
 	case 5: // goerli
 		task.dev = true
 		task.chain = constants.GetChain(constants.ChainGOERLI)
-		// if !bytes.Equal(task.eth2Config.GenesisForkVersion, params.PraterConfig().GenesisForkVersion) {
-		// 	return fmt.Errorf("endpoint network not match")
-		// }
+		if !bytes.Equal(task.eth2Config.GenesisForkVersion, params.PraterConfig().GenesisForkVersion) {
+			return fmt.Errorf("endpoint network not match")
+		}
 		task.dealedEth1Block = 9403883
 		task.ssvApiNetwork = "prater"
 		task.postUptimeUrl = devPostUptimeUrl

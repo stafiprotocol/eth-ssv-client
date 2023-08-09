@@ -13,7 +13,7 @@ import (
 	"github.com/stafiprotocol/eth-ssv-client/pkg/config"
 	"github.com/stafiprotocol/eth-ssv-client/pkg/log"
 	"github.com/stafiprotocol/eth-ssv-client/pkg/utils"
-	task_ssv "github.com/stafiprotocol/eth-ssv-client/task/ssv"
+	"github.com/stafiprotocol/eth-ssv-client/task"
 )
 
 func startSsvCmd() *cobra.Command {
@@ -94,7 +94,7 @@ func startSsvCmd() *cobra.Command {
 				return err
 			}
 
-			t, err := task_ssv.NewTask(cfg, seed, viewMode, kp, ssvkp)
+			t, err := task.NewTask(cfg, seed, viewMode, kp, ssvkp)
 			if err != nil {
 				return err
 			}

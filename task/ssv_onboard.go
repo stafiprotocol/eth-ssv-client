@@ -1,4 +1,4 @@
-package task_ssv
+package task
 
 import (
 	"encoding/base64"

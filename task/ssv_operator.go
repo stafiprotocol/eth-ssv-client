@@ -1,4 +1,4 @@
-package task_ssv
+package task
 
 import (
 	"github.com/shopspring/decimal"
