@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/pkg/errors"
 	"github.com/prysmaticlabs/prysm/v3/encoding/bytesutil"
 
 	"github.com/prysmaticlabs/prysm/v3/config/params"
@@ -42,8 +43,7 @@ var (
 	superNodeDepositAmount = decimal.NewFromBigInt(big.NewInt(1), 18)
 	superNodeStakeAmount   = decimal.NewFromBigInt(big.NewInt(31), 18)
 
-	blocksOfOneYear  = decimal.NewFromInt(2629800)
-	blocksOfHalfYear = decimal.NewFromInt(1314900)
+	blocksOfOneYear = decimal.NewFromInt(2629800)
 )
 
 var (
@@ -55,100 +55,6 @@ var (
 	domainVoluntaryExit  = bytesutil.Uint32ToBytes4(0x04000000)
 	shardCommitteePeriod = types.Epoch(256) // ShardCommitteePeriod is the minimum amount of epochs a validator must participate before exiting.
 )
-
-// only support stafi super node account now !!!
-// 0. find next key index and cache validator status on start
-// 1. update validator status(on execution/ssv/beacon) periodically
-// 2. check stakepool balance periodically, call stake/deposit if match
-// 3. register validator on ssv, if status is staked on stafi contract
-// 4. remove validator on ssv, if status is exited on beacon
-type Task struct {
-	stop            chan struct{}
-	eth1StartHeight uint64
-	eth1Endpoint    string
-	eth2Endpoint    string
-
-	superNodeKeyPair *secp256k1.Keypair
-	ssvKeyPair       *secp256k1.Keypair
-
-	gasLimit                       *big.Int
-	maxGasPrice                    *big.Int
-	storageContractAddress         common.Address
-	ssvNetworkContractAddress      common.Address
-	ssvNetworkViewsContractAddress common.Address
-	ssvTokenContractAddress        common.Address
-	seed                           []byte
-	postUptimeUrl                  string
-	isViewMode                     bool
-
-	// --- need init on start
-	dev           bool
-	ssvApiNetwork string
-	chain         constants.Chain
-
-	connectionOfSuperNodeAccount *connection.Connection
-	connectionOfSsvAccount       *connection.Connection
-
-	eth1WithdrawalAdress       common.Address
-	feeRecipientAddressOnStafi common.Address
-	latestRegistrationNonce    uint64
-
-	eth1Client *ethclient.Client
-
-	superNodeContract       *super_node.SuperNode
-	userDepositContract     *user_deposit.UserDeposit
-	ssvNetworkContract      *ssv_network.SsvNetwork
-	ssvNetworkViewsContract *ssv_network_views.SsvNetworkViews
-	ssvTokenContract        *erc20.Erc20
-	withdrawContract        *withdraw.Withdraw
-
-	ssvNetworkAbi abi.ABI
-
-	nextKeyIndex               int
-	dealedEth1Block            uint64 // for offchain state
-	validatorsPerOperatorLimit uint64
-
-	validatorsByKeyIndex      map[int]*Validator    // key index => validator, cache all validators(pending/active/exist) by keyIndex
-	validatorsByPubkey        map[string]*Validator // pubkey => validator, cache all validators(pending/active/exist) by pubkey
-	validatorsByValIndex      map[uint64]*Validator // val index => validator
-	validatorsByValIndexMutex sync.RWMutex
-
-	eth2Config beacon.Eth2Config
-
-	// ssv offchain state
-	clusters                 map[string]*Cluster // cluster key => cluster
-	feeRecipientAddressOnSsv common.Address
-}
-
-type Cluster struct {
-	operators     []*keyshare.Operator
-	operatorIds   []uint64
-	latestCluster *ssv_network.ISSVNetworkCoreCluster
-
-	balance decimal.Decimal
-
-	managingValidators map[int]struct{} // key index
-
-	latestUpdateClusterBlockNumber    uint64
-	latestValidatorAddedBlockNumber   uint64
-	latestValidatorRemovedBlockNumber uint64
-}
-
-type Validator struct {
-	privateKey *bls.PrivateKey
-	keyIndex   int
-
-	statusOnStafi  uint8
-	statusOnSsv    uint8
-	statusOnBeacon uint8
-
-	validatorIndex uint64
-	exitEpoch      uint64
-
-	clusterKey string
-
-	removedFromSsvOnBlock uint64
-}
 
 const (
 	valStatusUnInitiated = uint8(0)
@@ -168,6 +74,104 @@ const (
 	valStatusActiveOnBeacon = uint8(1)
 	valStatusExitedOnBeacon = uint8(2)
 )
+
+// only support stafi super node account now !!!
+// 0. find next key index and cache validator status on start
+// 1. update validator status(on execution/ssv/beacon) periodically
+// 2. check stakepool balance periodically, call stake/deposit if match
+// 3. register validator on ssv, if status is staked on stafi contract
+// 4. remove validator on ssv, if status is exited on beacon
+type Task struct {
+	stop            chan struct{}
+	eth1StartHeight uint64
+	eth1Endpoint    string
+	eth2Endpoint    string
+
+	superNodeKeyPair *secp256k1.Keypair
+	ssvKeyPair       *secp256k1.Keypair
+
+	gasLimit            *big.Int
+	maxGasPrice         *big.Int
+	poolReservedBalance *big.Int
+	seed                []byte
+	postUptimeUrl       string
+	isViewMode          bool
+	targetOperatorIds   []uint64
+
+	storageContractAddress         common.Address
+	ssvNetworkContractAddress      common.Address
+	ssvNetworkViewsContractAddress common.Address
+	ssvTokenContractAddress        common.Address
+
+	// --- need init on start
+	dev           bool
+	ssvApiNetwork string
+	chain         constants.Chain
+
+	connectionOfSuperNodeAccount *connection.Connection
+	connectionOfSsvAccount       *connection.Connection
+
+	eth1WithdrawalAdress       common.Address
+	feeRecipientAddressOnStafi common.Address
+	latestRegistrationNonce    uint64
+
+	eth1Client *ethclient.Client
+	eth2Config beacon.Eth2Config
+
+	superNodeContract       *super_node.SuperNode
+	userDepositContract     *user_deposit.UserDeposit
+	ssvNetworkContract      *ssv_network.SsvNetwork
+	ssvNetworkViewsContract *ssv_network_views.SsvNetworkViews
+	ssvTokenContract        *erc20.Erc20
+	withdrawContract        *withdraw.Withdraw
+
+	ssvNetworkAbi abi.ABI
+
+	nextKeyIndex               int
+	dealedEth1Block            uint64 // for offchain state
+	validatorsPerOperatorLimit uint64
+
+	validatorsByKeyIndex      map[int]*Validator    // key index => validator, cache all validators(pending/active/exist) by keyIndex
+	validatorsByPubkey        map[string]*Validator // pubkey => validator, cache all validators(pending/active/exist) by pubkey
+	validatorsByValIndex      map[uint64]*Validator // val index => validator
+	validatorsByValIndexMutex sync.RWMutex
+
+	// ssv offchain state
+	clusters                 map[string]*Cluster // cluster key => cluster
+	feeRecipientAddressOnSsv common.Address
+}
+
+type Cluster struct {
+	operators     []*keyshare.Operator
+	operatorIds   []uint64
+	latestCluster *ssv_network.ISSVNetworkCoreCluster
+
+	balance decimal.Decimal
+
+	managingValidators map[int]struct{} // key index
+
+	latestUpdateClusterBlockNumber    uint64
+	latestValidatorAddedBlockNumber   uint64
+	latestValidatorRemovedBlockNumber uint64
+
+	hasTargetOperators bool
+}
+
+type Validator struct {
+	privateKey *bls.PrivateKey
+	keyIndex   int
+
+	statusOnStafi  uint8
+	statusOnSsv    uint8
+	statusOnBeacon uint8
+
+	validatorIndex uint64
+	exitEpoch      uint64
+
+	clusterKey string
+
+	removedFromSsvOnBlock uint64
+}
 
 func NewTask(cfg *config.Config, seed []byte, isViewMode bool, superNodeKeyPair, ssvKeyPair *secp256k1.Keypair) (*Task, error) {
 	if !common.IsHexAddress(cfg.Contracts.StorageContractAddress) {
@@ -199,23 +203,37 @@ func NewTask(cfg *config.Config, seed []byte, isViewMode bool, superNodeKeyPair,
 		return nil, fmt.Errorf("max gas price is zero")
 	}
 
+	poolReservedBalance := big.NewInt(0)
+	if len(cfg.PoolReservedBalance) > 0 {
+		reservedBalance, err := decimal.NewFromString(cfg.PoolReservedBalance)
+		if err != nil {
+			return nil, err
+		}
+		if maxGasPriceDeci.IsNegative() {
+			return nil, fmt.Errorf("PoolReservedBalance is negative")
+		}
+		poolReservedBalance = reservedBalance.BigInt()
+	}
+
 	eth1client, err := ethclient.Dial(cfg.Eth1Endpoint)
 	if err != nil {
 		return nil, err
 	}
 	s := &Task{
-		stop:             make(chan struct{}),
-		eth1Endpoint:     cfg.Eth1Endpoint,
-		eth2Endpoint:     cfg.Eth2Endpoint,
-		eth1Client:       eth1client,
-		superNodeKeyPair: superNodeKeyPair,
-		ssvKeyPair:       ssvKeyPair,
-		seed:             seed,
-		isViewMode:       isViewMode,
-		gasLimit:         gasLimitDeci.BigInt(),
-		maxGasPrice:      maxGasPriceDeci.BigInt(),
+		stop:                make(chan struct{}),
+		eth1Endpoint:        cfg.Eth1Endpoint,
+		eth2Endpoint:        cfg.Eth2Endpoint,
+		eth1Client:          eth1client,
+		superNodeKeyPair:    superNodeKeyPair,
+		ssvKeyPair:          ssvKeyPair,
+		seed:                seed,
+		isViewMode:          isViewMode,
+		gasLimit:            gasLimitDeci.BigInt(),
+		maxGasPrice:         maxGasPriceDeci.BigInt(),
+		poolReservedBalance: poolReservedBalance,
+		eth1StartHeight:     utils.TheMergeBlockNumber,
+		targetOperatorIds:   cfg.TargetOperators,
 
-		eth1StartHeight:                utils.TheMergeBlockNumber,
 		storageContractAddress:         common.HexToAddress(cfg.Contracts.StorageContractAddress),
 		ssvNetworkContractAddress:      common.HexToAddress(cfg.Contracts.SsvNetworkAddress),
 		ssvNetworkViewsContractAddress: common.HexToAddress(cfg.Contracts.SsvNetworkViewsAddress),
@@ -300,6 +318,20 @@ func (task *Task) Start() error {
 		return err
 	}
 
+	// check target operator id
+	for _, opId := range task.targetOperatorIds {
+		_, _, _, _, isPrivate, isActive, err := task.ssvNetworkViewsContract.GetOperatorById(nil, opId)
+		if err != nil {
+			return errors.Wrap(err, "ssvNetworkViewsContract.GetOperatorById failed")
+		}
+		if isPrivate {
+			return fmt.Errorf("target operator %d is private", opId)
+		}
+		if !isActive {
+			return fmt.Errorf("target operator %d is not active", opId)
+		}
+	}
+
 	err = task.initValNextKeyIndex()
 	if err != nil {
 		return err
@@ -307,6 +339,7 @@ func (task *Task) Start() error {
 	logrus.Infof("nextKeyIndex: %d", task.nextKeyIndex)
 
 	utils.SafeGo(task.ssvHandler)
+
 	if task.isViewMode {
 		return nil
 	}
@@ -319,64 +352,6 @@ func (task *Task) Start() error {
 
 func (task *Task) Stop() {
 	close(task.stop)
-}
-
-func (task *Task) copySeed() []byte {
-	copyBts := make([]byte, len(task.seed))
-	copy(copyBts, task.seed)
-	return copyBts
-}
-
-func (task *Task) calClusterNeedDepositAmount(cluster *Cluster) (min, max *big.Int, err error) {
-	networkFee, err := task.ssvNetworkViewsContract.GetNetworkFee(nil)
-	if err != nil {
-		return nil, nil, err
-	}
-	networkFeeDeci := decimal.NewFromBigInt(networkFee, 0)
-
-	ltp, err := task.ssvNetworkViewsContract.GetLiquidationThresholdPeriod(nil)
-	if err != nil {
-		return nil, nil, err
-	}
-	ltpDeci := decimal.NewFromInt(int64(ltp))
-
-	balance, err := task.ssvNetworkViewsContract.GetBalance(nil, task.ssvKeyPair.CommonAddress(), cluster.operatorIds,
-		ssv_network_views.ISSVNetworkCoreCluster(*cluster.latestCluster))
-	if err != nil {
-		if strings.Contains(err.Error(), "execution reverted") {
-			balance = big.NewInt(0)
-		} else {
-			return nil, nil, err
-		}
-	}
-	balanceDeci := decimal.NewFromBigInt(balance, 0)
-
-	totalOpFee := decimal.Zero
-	for _, op := range cluster.operators {
-		totalOpFee = totalOpFee.Add(op.Fee)
-	}
-	totalOpFee = totalOpFee.Add(networkFeeDeci)
-
-	valAmount := decimal.NewFromInt(int64(len(cluster.managingValidators) + 1))
-
-	maxExpected := valAmount.Mul(totalOpFee).Mul(blocksOfOneYear.Add(ltpDeci))
-	minExpected := valAmount.Mul(totalOpFee).Mul(ltpDeci.Mul(decimal.NewFromInt(2)))
-
-	if maxExpected.LessThan(minExpected) {
-		maxExpected = minExpected
-	}
-
-	switch {
-	case balanceDeci.GreaterThanOrEqual(maxExpected):
-		return big.NewInt(0), big.NewInt(0), nil
-	case balanceDeci.GreaterThanOrEqual(minExpected) && balanceDeci.LessThan(maxExpected):
-		return big.NewInt(0), maxExpected.Sub(balanceDeci).BigInt(), nil
-	case balanceDeci.LessThan(minExpected):
-		return maxExpected.Sub(balanceDeci).BigInt(), maxExpected.Sub(balanceDeci).BigInt(), nil
-	default:
-		return nil, nil, fmt.Errorf("unreached balance")
-	}
-
 }
 
 func (task *Task) initContract() error {

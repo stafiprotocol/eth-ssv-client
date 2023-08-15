@@ -17,7 +17,7 @@ func (task *Task) checkAndStake() error {
 		logrus.Debug("checkAndStake end -----------")
 	}()
 
-	poolBalance, err := task.userDepositContract.GetBalance(nil)
+	poolBalance, err := task.getUsablePoolBalance()
 	if err != nil {
 		return err
 	}

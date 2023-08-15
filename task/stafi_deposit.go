@@ -3,6 +3,7 @@ package task
 import (
 	"encoding/hex"
 	"fmt"
+	"math/big"
 
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
@@ -11,13 +12,25 @@ import (
 	"github.com/stafiprotocol/eth-ssv-client/pkg/utils"
 )
 
+func (task *Task) getUsablePoolBalance() (*big.Int, error) {
+	poolBalance, err := task.userDepositContract.GetBalance(nil)
+	if err != nil {
+		return nil, err
+	}
+	if poolBalance.Cmp(task.poolReservedBalance) > 0 {
+		return new(big.Int).Sub(poolBalance, task.poolReservedBalance), nil
+	} else {
+		return big.NewInt(0), nil
+	}
+}
+
 func (task *Task) checkAndDeposit() (retErr error) {
 	logrus.Debug("checkAndDeposit start -----------")
 	defer func() {
 		logrus.Debug("checkAndDeposit end -----------")
 	}()
 
-	poolBalance, err := task.userDepositContract.GetBalance(nil)
+	poolBalance, err := task.getUsablePoolBalance()
 	if err != nil {
 		return err
 	}

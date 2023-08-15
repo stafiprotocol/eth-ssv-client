@@ -11,14 +11,17 @@ import (
 )
 
 type Config struct {
-	Eth1Endpoint     string // url for eth1 rpc endpoint
-	Eth2Endpoint     string // url for eth2 rpc endpoint
-	LogFilePath      string
-	SuperNodeAccount string // ssv use
-	SsvAccount       string // ssv use
-	KeystorePath     string
-	GasLimit         string
-	MaxGasPrice      string
+	Eth1Endpoint        string // url for eth1 rpc endpoint
+	Eth2Endpoint        string // url for eth2 rpc endpoint
+	LogFilePath         string
+	SuperNodeAccount    string // ssv use
+	SsvAccount          string // ssv use
+	KeystorePath        string
+	GasLimit            string
+	MaxGasPrice         string
+	PoolReservedBalance string
+
+	TargetOperators []uint64
 
 	Contracts Contracts
 }
