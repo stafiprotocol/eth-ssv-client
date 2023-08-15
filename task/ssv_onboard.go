@@ -1,6 +1,7 @@
 package task
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
@@ -17,6 +18,8 @@ import (
 	"github.com/stafiprotocol/eth-ssv-client/pkg/keyshare"
 	"github.com/stafiprotocol/eth-ssv-client/pkg/utils"
 )
+
+var migrageWaitBlock = uint64(32 * 3)
 
 // onboard validator if:
 // 0 staked on stafi and uninitial not onboard
@@ -35,12 +38,9 @@ func (task *Task) checkAndOnboardOnSSV() error {
 			return fmt.Errorf("validator at index %d not exist", i)
 		}
 
-		if !((val.statusOnStafi == valStatusStaked &&
-			val.statusOnBeacon == valStatusUnInitiated &&
-			val.statusOnSsv != valStatusRegistedOnSsv) ||
-			(val.statusOnStafi == valStatusStaked &&
-				val.statusOnBeacon == valStatusActiveOnBeacon &&
-				val.statusOnSsv != valStatusRegistedOnSsv)) {
+		if !((val.statusOnStafi == valStatusStaked && (val.statusOnSsv == valStatusUnInitiated || val.statusOnSsv == valStatusRemovedOnSsv) && val.statusOnBeacon == valStatusUnInitiated) || //not init
+			(val.statusOnStafi == valStatusStaked && (val.statusOnSsv == valStatusUnInitiated || val.statusOnSsv == valStatusRemovedOnSsv) && val.statusOnBeacon == valStatusActiveOnBeacon)) { //not migrate
+			logrus.Debugf("val: %s not match onboard will skip", hex.EncodeToString(val.privateKey.PublicKey().Marshal()))
 			continue
 		}
 
@@ -58,6 +58,16 @@ func (task *Task) checkAndOnboardOnSSV() error {
 			return fmt.Errorf("validator %s at index %d is onboard on ssv", val.privateKey.PublicKey().SerializeToHexStr(), val.keyIndex)
 		}
 
+		// check removed block
+		latestBlock, err := task.eth1Client.BlockNumber(context.Background())
+		if err != nil {
+			return err
+		}
+		if val.removedFromSsvOnBlock+migrageWaitBlock > latestBlock {
+			logrus.Debugf("val: %s will wait block %d to onboard", hex.EncodeToString(val.privateKey.PublicKey().Marshal()), val.removedFromSsvOnBlock+migrageWaitBlock-latestBlock)
+			continue
+		}
+
 		cluster, err := task.selectClusterForRegister()
 		if err != nil {
 			return errors.Wrap(err, "selectClusterForRegister failed")
@@ -69,14 +79,16 @@ func (task *Task) checkAndOnboardOnSSV() error {
 			return err
 		}
 
+		logrus.Debug("start build onboard payload")
 		// build payload
 		shares := make([]byte, 0)
 		pubkeys := make([]byte, 0)
 
 		_, needDepositAmount, err := task.calClusterNeedDepositAmount(cluster)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "task.calClusterNeedDepositAmount failed")
 		}
+
 		for i := range cluster.operators {
 			shareBts, err := base64.StdEncoding.DecodeString(encryptShares[i].EncryptedKey)
 			if err != nil {
@@ -92,7 +104,7 @@ func (task *Task) checkAndOnboardOnSSV() error {
 		}
 
 		// sign with val private key
-		data := fmt.Sprintf("%s:%d", task.ssvKeyPair.Address(), cluster.latestRegistrationNonce)
+		data := fmt.Sprintf("%s:%d", task.ssvKeyPair.Address(), task.latestRegistrationNonce)
 		hash := crypto.Keccak256([]byte(data))
 		valPrivateKey, err := bls.PrivateKeyFromBytes(val.privateKey.Marshal())
 		if err != nil {
@@ -108,8 +120,13 @@ func (task *Task) checkAndOnboardOnSSV() error {
 		isLiquidated, err := task.ssvNetworkViewsContract.IsLiquidated(nil, task.ssvKeyPair.CommonAddress(),
 			cluster.operatorIds, ssv_network_views.ISSVNetworkCoreCluster(*cluster.latestCluster))
 		if err != nil {
-			return errors.Wrap(err, "ssvNetworkViewsContract.IsLiquidated failed")
+			if strings.Contains(err.Error(), "execution reverted") {
+				isLiquidated = false
+			} else {
+				return errors.Wrap(err, "ssvNetworkViewsContract.IsLiquidated failed")
+			}
 		}
+
 		if isLiquidated {
 			logrus.WithFields(logrus.Fields{
 				"operators": cluster.operatorIds,
@@ -118,7 +135,7 @@ func (task *Task) checkAndOnboardOnSSV() error {
 		}
 
 		// check ssv allowance
-		allowance, err := task.ssvTokenContract.Allowance(nil, task.ssvKeyPair.CommonAddress(), task.ssvNetworkViewsContractAddress)
+		allowance, err := task.ssvTokenContract.Allowance(nil, task.ssvKeyPair.CommonAddress(), task.ssvNetworkContractAddress)
 		if err != nil {
 			return err
 		}
@@ -164,7 +181,7 @@ func (task *Task) checkAndOnboardOnSSV() error {
 
 		logrus.WithFields(logrus.Fields{
 			"txHash":           registerTx.Hash(),
-			"nonce":            cluster.latestRegistrationNonce,
+			"registerNonce":    task.latestRegistrationNonce,
 			"operaterIds":      cluster.operatorIds,
 			"pubkey":           hex.EncodeToString(val.privateKey.PublicKey().Marshal()),
 			"ssvDepositAmount": needDepositAmount.String(),
@@ -175,7 +192,21 @@ func (task *Task) checkAndOnboardOnSSV() error {
 			return err
 		}
 
-		//todo check validator status on ssv api
+		// check validator status on ssv api
+		validator, err := task.mustGetValidator(task.ssvApiNetwork, hex.EncodeToString(val.privateKey.PublicKey().Marshal()))
+		if err != nil {
+			logrus.Errorf("task.mustGetValidator err: %s, will shutdown.", err.Error())
+			utils.ShutdownRequestChannel <- struct{}{}
+			return err
+		}
+		if !validator.IsValid {
+			logrus.Errorf("val: %s is invalid from sssv api, will shutdown.", hex.EncodeToString(val.privateKey.PublicKey().Marshal()))
+			utils.ShutdownRequestChannel <- struct{}{}
+			return nil
+		}
+
+		// onboard one validator per cycle
+		break
 	}
 
 	return nil

@@ -323,6 +323,7 @@ func GetContractAddress(storage *storage.Storage, name string) (common.Address, 
 func WaitTxOkCommon(client *ethclient.Client, txHash common.Hash) (err error) {
 	defer func() {
 		if err != nil {
+			logrus.Errorf("find err: %s, will shutdown.", err.Error())
 			ShutdownRequestChannel <- struct{}{}
 		}
 	}()

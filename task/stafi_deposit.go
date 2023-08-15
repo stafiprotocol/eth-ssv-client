@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/eth-ssv-client/pkg/credential"
@@ -130,7 +131,7 @@ func (task *Task) checkAndDeposit() (retErr error) {
 
 	depositTx, err := task.superNodeContract.Deposit(task.connectionOfSuperNodeAccount.TxOpts(), validatorPubkeys, sigs, dataRoots)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "superNodeContract.Deposit failed")
 	}
 
 	logrus.WithFields(logrus.Fields{

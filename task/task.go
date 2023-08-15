@@ -91,6 +91,7 @@ type Task struct {
 
 	eth1WithdrawalAdress       common.Address
 	feeRecipientAddressOnStafi common.Address
+	latestRegistrationNonce    uint64
 
 	eth1Client *ethclient.Client
 
@@ -120,10 +121,9 @@ type Task struct {
 }
 
 type Cluster struct {
-	operators               []*keyshare.Operator
-	operatorIds             []uint64
-	latestCluster           *ssv_network.ISSVNetworkCoreCluster
-	latestRegistrationNonce uint64
+	operators     []*keyshare.Operator
+	operatorIds   []uint64
+	latestCluster *ssv_network.ISSVNetworkCoreCluster
 
 	balance decimal.Decimal
 
@@ -146,6 +146,8 @@ type Validator struct {
 	exitEpoch      uint64
 
 	clusterKey string
+
+	removedFromSsvOnBlock uint64
 }
 
 const (
@@ -158,8 +160,9 @@ const (
 	valStatusStaked    = uint8(4)
 
 	// on ssv
-	valStatusRegistedOnSsv = uint8(1)
-	valStatusRemovedOnSsv  = uint8(2)
+	valStatusRegistedOnSsvValid   = uint8(1)
+	valStatusRegistedOnSsvInvalid = uint8(2)
+	valStatusRemovedOnSsv         = uint8(3)
 
 	// on beacon
 	valStatusActiveOnBeacon = uint8(1)
@@ -340,7 +343,11 @@ func (task *Task) calClusterNeedDepositAmount(cluster *Cluster) (min, max *big.I
 	balance, err := task.ssvNetworkViewsContract.GetBalance(nil, task.ssvKeyPair.CommonAddress(), cluster.operatorIds,
 		ssv_network_views.ISSVNetworkCoreCluster(*cluster.latestCluster))
 	if err != nil {
-		return nil, nil, err
+		if strings.Contains(err.Error(), "execution reverted") {
+			balance = big.NewInt(0)
+		} else {
+			return nil, nil, err
+		}
 	}
 	balanceDeci := decimal.NewFromBigInt(balance, 0)
 
@@ -432,34 +439,18 @@ func (task *Task) initContract() error {
 	return nil
 }
 
-func (task *Task) mustGetSuperNodePubkeyStatus(pubkey []byte) (uint8, error) {
-	retry := 0
-	var pubkeyStatus *big.Int
-	var err error
-	for {
-		if retry > utils.RetryLimit {
-			return 0, fmt.Errorf("updateValStatus reach retry limit")
-		}
-		pubkeyStatus, err = task.superNodeContract.GetSuperNodePubkeyStatus(nil, pubkey)
-		if err != nil {
-			logrus.Warnf("GetSuperNodePubkeyStatus err: %s", err.Error())
-			time.Sleep(utils.RetryInterval)
-			retry++
-			continue
-		}
-		break
-	}
-
-	return uint8(pubkeyStatus.Uint64()), nil
-}
-
 func (task *Task) ssvHandler() {
 	logrus.Info("start handler")
 	retry := 0
+	var err error
 	for {
 		if retry > utils.RetryLimit {
 			utils.ShutdownRequestChannel <- struct{}{}
 			return
+		}
+		if err != nil {
+			time.Sleep(utils.RetryInterval * 4)
+			retry++
 		}
 
 		select {
@@ -468,34 +459,26 @@ func (task *Task) ssvHandler() {
 			return
 		default:
 
-			err := task.checkAndRepairValNexKeyIndex()
+			err = task.checkAndRepairValNexKeyIndex()
 			if err != nil {
-				logrus.Warnf("checkAndRepairValNe err %s", err)
-				time.Sleep(utils.RetryInterval)
-				retry++
+				logrus.Warnf("checkAndRepairValNexKeyIndex failed: %s, will retry.", err)
 				continue
 			}
 
 			err = task.updateSsvOffchainState()
 			if err != nil {
-				logrus.Warnf("updateOffchainState err %s", err)
-				time.Sleep(utils.RetryInterval)
-				retry++
+				logrus.Warnf("updateOffchainState failed: %s, will retry.", err)
 				continue
 			}
 
 			err = task.updateValStatus()
 			if err != nil {
-				logrus.Warnf("updateValStatus err %s", err)
-				time.Sleep(utils.RetryInterval)
-				retry++
+				logrus.Warnf("updateValStatus failed: %s, will retry.", err)
 				continue
 			}
 			err = task.updateOperatorStatus()
 			if err != nil {
-				logrus.Warnf("updateOperatorStatus err %s", err)
-				time.Sleep(utils.RetryInterval)
-				retry++
+				logrus.Warnf("updateOperatorStatus failed: %s, will retry.", err)
 				continue
 			}
 
@@ -507,17 +490,13 @@ func (task *Task) ssvHandler() {
 
 			err = task.checkAndStake()
 			if err != nil {
-				logrus.Warnf("checkAndStake err %s", err)
-				time.Sleep(utils.RetryInterval)
-				retry++
+				logrus.Warnf("checkAndStake failed: %s, will retry.", err)
 				continue
 			}
 
 			err = task.checkAndDeposit()
 			if err != nil {
-				logrus.Warnf("checkAndDeposit err %s", err)
-				time.Sleep(utils.RetryInterval)
-				retry++
+				logrus.Warnf("checkAndDeposit failed: %s, will retry.", err)
 				continue
 			}
 
@@ -525,39 +504,31 @@ func (task *Task) ssvHandler() {
 
 			err = task.checkAndSetFeeRecipient()
 			if err != nil {
-				logrus.Warnf("checkAndSetFeeRecipient err %s", err)
-				time.Sleep(utils.RetryInterval)
-				retry++
+				logrus.Warnf("checkAndSetFeeRecipient failed: %s, will retry.", err)
 				continue
 			}
 
 			err = task.checkAndReactiveOnSSV()
 			if err != nil {
-				logrus.Warnf("checkAndReactiveOnSSV err %s", err)
-				time.Sleep(utils.RetryInterval)
-				retry++
+				logrus.Warnf("checkAndReactiveOnSSV failed: %s, will retry.", err)
 				continue
 			}
 
 			err = task.checkAndOnboardOnSSV()
 			if err != nil {
-				logrus.Warnf("checkAndOnboardOnSSV err %s", err)
-				time.Sleep(utils.RetryInterval)
-				retry++
+				logrus.Warnf("checkAndOnboardOnSSV failed: %s, will retry.", err)
 				continue
 			}
 
 			err = task.checkAndOffboardOnSSV()
 			if err != nil {
-				logrus.Warnf("checkAndOffboardOnSSV err %s", err)
-				time.Sleep(utils.RetryInterval)
-				retry++
+				logrus.Warnf("checkAndOffboardOnSSV failed: %s, will retry.", err)
 				continue
 			}
 
 			retry = 0
 		}
 
-		time.Sleep(24 * time.Second) // 2 blocks
+		time.Sleep(48 * time.Second) // 48 blocks
 	}
 }

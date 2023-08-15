@@ -343,3 +343,22 @@ func TestGetGas(t *testing.T) {
 
 	t.Log(gasTip)
 }
+
+func TestTx(t *testing.T) {
+	client, err := ethclient.Dial("https://goerli.infura.io/v3/b3611f564322439ab2491e04ddd55b39")
+	if err != nil {
+		t.Fatal(err)
+	}
+	txr, err := client.TransactionReceipt(context.Background(), common.HexToHash("0x82c151b3d2ca12f59a3264b40fe60af85ef02680d5649e23802dcb532b937d45"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(txr.Logs)
+
+	tx, _, err := client.TransactionByHash(context.Background(), common.HexToHash("0x82c151b3d2ca12f59a3264b40fe60af85ef02680d5649e23802dcb532b937d45"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(tx)
+
+}

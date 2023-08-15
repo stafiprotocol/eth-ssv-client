@@ -29,22 +29,28 @@ func (task *Task) checkAndOffboardOnSSV() error {
 
 		shouldOffboard := false
 
-		// life end
+		// validator is invalid from ssv api
+		if val.statusOnSsv == valStatusRegistedOnSsvInvalid {
+			shouldOffboard = true
+		}
+
+		// validator life end
 		if val.statusOnStafi == valStatusStaked &&
-			val.statusOnSsv == valStatusRegistedOnSsv &&
+			(val.statusOnSsv == valStatusRegistedOnSsvValid || val.statusOnSsv == valStatusRegistedOnSsvInvalid) &&
 			val.statusOnBeacon == valStatusExitedOnBeacon {
 			shouldOffboard = true
 		}
 
 		cluster := task.clusters[val.clusterKey]
-		// life no end but operator not active
+
+		// life no end but some operators is not active
 		if val.statusOnStafi == valStatusStaked &&
-			val.statusOnSsv == valStatusRegistedOnSsv &&
+			(val.statusOnSsv == valStatusRegistedOnSsvValid || val.statusOnSsv == valStatusRegistedOnSsvInvalid) &&
 			val.statusOnBeacon == valStatusActiveOnBeacon {
 
 			for _, op := range cluster.operators {
 				if !op.Active {
-					logrus.Infof("operator: %d is not active will offboard validator: %s", val.validatorIndex)
+					logrus.Infof("operator: %d is not active will offboard validator: %s", op.Id, val.validatorIndex)
 					shouldOffboard = true
 				}
 			}
@@ -76,7 +82,7 @@ func (task *Task) checkAndOffboardOnSSV() error {
 			val.privateKey.PublicKey().Marshal(), cluster.operatorIds, ssv_network.ISSVNetworkCoreCluster(*cluster.latestCluster))
 		if err != nil {
 			task.connectionOfSsvAccount.UnlockTxOpts()
-			return err
+			return errors.Wrap(err, "ssvNetworkContract.RemoveValidator")
 		}
 		task.connectionOfSsvAccount.UnlockTxOpts()
 

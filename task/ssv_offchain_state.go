@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/big"
 	"sort"
+	"strings"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
@@ -136,6 +137,11 @@ func (task *Task) updateSsvOffchainState() (retErr error) {
 					return fmt.Errorf("val %s not exist in offchain state", pubkey)
 				}
 
+				// update removed block
+				if val.removedFromSsvOnBlock < event.Raw.BlockNumber {
+					val.removedFromSsvOnBlock = event.Raw.BlockNumber
+				}
+
 				// update cluster
 				err = task.updateCluster(event.OperatorIds, &event.Cluster, event.Raw.BlockNumber, eventNameValidatorRemoved, val.keyIndex)
 				if err != nil {
@@ -221,7 +227,11 @@ func (task *Task) updateSsvOffchainState() (retErr error) {
 	for key, c := range task.clusters {
 		balance, err := task.ssvNetworkViewsContract.GetBalance(nil, task.ssvKeyPair.CommonAddress(), c.operatorIds, ssv_network_views.ISSVNetworkCoreCluster(*c.latestCluster))
 		if err != nil {
-			return errors.Wrap(err, "ssvNetworkViewsContract.GetBalance failed")
+			if strings.Contains(err.Error(), "execution reverted") {
+				balance = big.NewInt(0)
+			} else {
+				return errors.Wrap(err, "ssvNetworkViewsContract.GetBalance failed")
+			}
 		}
 		c.balance = decimal.NewFromBigInt(balance, 0)
 
@@ -229,7 +239,6 @@ func (task *Task) updateSsvOffchainState() (retErr error) {
 			"clusterKey":                        key,
 			"operators":                         c.operatorIds,
 			"latestState":                       c.latestCluster,
-			"nonce":                             c.latestRegistrationNonce,
 			"managingValidators":                c.managingValidators,
 			"latestUpdateClusterBlockNumber":    c.latestUpdateClusterBlockNumber,
 			"latestValidatorAddedBlockNumber":   c.latestValidatorAddedBlockNumber,
@@ -251,7 +260,7 @@ func (task *Task) updateCluster(operatorIds []uint64, newCluster *ssv_network.IS
 	if !exist {
 		operatorDetails := make([]*keyshare.Operator, len(operatorIds))
 		for i, opId := range operatorIds {
-			operatorDetail, err := utils.GetOperatorDetail(task.ssvApiNetwork, opId)
+			operatorDetail, err := task.mustGetOperatorDetail(task.ssvApiNetwork, opId)
 			if err != nil {
 				return err
 			}
@@ -266,11 +275,10 @@ func (task *Task) updateCluster(operatorIds []uint64, newCluster *ssv_network.IS
 			}
 		}
 		cluster = &Cluster{
-			operators:               operatorDetails,
-			operatorIds:             operatorIds,
-			latestCluster:           newCluster,
-			latestRegistrationNonce: 0,
-			managingValidators:      make(map[int]struct{}),
+			operators:          operatorDetails,
+			operatorIds:        operatorIds,
+			latestCluster:      newCluster,
+			managingValidators: make(map[int]struct{}),
 		}
 
 		task.clusters[cltKey] = cluster
@@ -286,9 +294,10 @@ func (task *Task) updateCluster(operatorIds []uint64, newCluster *ssv_network.IS
 	case eventNameValidatorAdded:
 		if cluster.latestValidatorAddedBlockNumber < blockNumber {
 			cluster.latestValidatorAddedBlockNumber = blockNumber
-			cluster.latestRegistrationNonce++
-
 			cluster.managingValidators[keyIndex] = struct{}{}
+
+			// update nonce
+			task.latestRegistrationNonce++
 		}
 	case eventNameValidatorRemoved:
 		if cluster.latestValidatorRemovedBlockNumber < blockNumber {

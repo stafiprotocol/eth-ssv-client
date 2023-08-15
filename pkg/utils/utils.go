@@ -265,9 +265,12 @@ func UnpackEvent(a abi.ABI, v interface{}, name string, data []byte, topics []co
 			indexed = append(indexed, arg)
 		}
 	}
-	err = abi.ParseTopics(v, indexed, topics[1:])
-	if err != nil {
-		return err
+
+	if len(topics) > 1 {
+		err = abi.ParseTopics(v, indexed, topics[1:])
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

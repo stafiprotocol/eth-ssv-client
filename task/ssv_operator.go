@@ -1,9 +1,10 @@
 package task
 
 import (
+	"fmt"
+
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
-	"github.com/stafiprotocol/eth-ssv-client/pkg/utils"
 )
 
 func (task *Task) updateOperatorStatus() error {
@@ -25,27 +26,25 @@ func (task *Task) updateOperatorStatus() error {
 
 		// check val amount limit per operator
 		for _, op := range c.operators {
-			operatorDetail, err := utils.GetOperatorDetail(task.ssvApiNetwork, op.Id)
+			_, operatorFee, validatorCount, _, isPrivate, isActive, err := task.ssvNetworkViewsContract.GetOperatorById(nil, op.Id)
 			if err != nil {
 				return err
 			}
-
+			if isPrivate {
+				return fmt.Errorf("operator %d is private", op.Id)
+			}
 			// check active
-			if operatorDetail.IsActive != 1 {
-				op.Active = false
-			} else {
+			if isActive {
 				op.Active = true
+			} else {
+				op.Active = false
 			}
 
 			// update fee
-			feeDeci, err := decimal.NewFromString(operatorDetail.Fee)
-			if err != nil {
-				return err
-			}
-			op.Fee = feeDeci
+			op.Fee = decimal.NewFromBigInt(operatorFee, 0)
 
 			// update val count
-			op.ValidatorCount = uint64(operatorDetail.ValidatorsCount)
+			op.ValidatorCount = uint64(validatorCount)
 
 			logrus.WithFields(logrus.Fields{
 				"id":             op.Id,

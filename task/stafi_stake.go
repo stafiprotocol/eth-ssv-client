@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/eth-ssv-client/pkg/credential"
@@ -95,7 +96,7 @@ func (task *Task) checkAndStake() error {
 
 	stakeTx, err := task.superNodeContract.Stake(task.connectionOfSuperNodeAccount.TxOpts(), validatorPubkeys, sigs, dataRoots)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "superNodeContract.Stake failed")
 	}
 	logrus.WithFields(logrus.Fields{
 		"txHash":           stakeTx.Hash(),

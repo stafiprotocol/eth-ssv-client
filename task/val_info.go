@@ -54,29 +54,42 @@ func (task *Task) updateValStatus() error {
 
 		// status on ssv contract
 		if val.statusOnStafi == valStatusStaked {
-			active, err := task.ssvNetworkViewsContract.GetValidator(nil, task.ssvKeyPair.CommonAddress(), val.privateKey.PublicKey().Marshal())
+			isOnboard, err := task.ssvNetworkViewsContract.GetValidator(nil, task.ssvKeyPair.CommonAddress(), val.privateKey.PublicKey().Marshal())
 			if err != nil {
 				// remove when new SSVViews contract is deployed
 				if strings.Contains(err.Error(), "execution reverted") {
-					active = false
+					isOnboard = false
 				} else {
 					return errors.Wrap(err, "ssvNetworkViewsContract.GetValidator failed")
 				}
 			}
 
-			if active {
-				val.statusOnSsv = valStatusRegistedOnSsv
+			if isOnboard {
+				if val.statusOnSsv != valStatusRegistedOnSsvValid {
+					validatorFromApi, err := task.mustGetValidator(task.ssvApiNetwork, hex.EncodeToString(val.privateKey.PublicKey().Marshal()))
+					if err != nil {
+						return errors.Wrap(err, "task.mustGetValidator failed")
+					}
+
+					if validatorFromApi.IsValid {
+						val.statusOnSsv = valStatusRegistedOnSsvValid
+					} else {
+						val.statusOnSsv = valStatusRegistedOnSsvInvalid
+					}
+
+				}
 			} else {
 				val.statusOnSsv = valStatusRemovedOnSsv
 			}
 		}
 
 		logrus.WithFields(logrus.Fields{
-			"keyIndex":       i,
-			"pubkey":         hex.EncodeToString(val.privateKey.PublicKey().Marshal()),
-			"statusOnStafi":  val.statusOnStafi,
-			"statusOnSsv":    val.statusOnSsv,
-			"statusOnBeacon": val.statusOnBeacon,
+			"keyIndex":              i,
+			"pubkey":                hex.EncodeToString(val.privateKey.PublicKey().Marshal()),
+			"statusOnStafi":         val.statusOnStafi,
+			"statusOnSsv":           val.statusOnSsv,
+			"statusOnBeacon":        val.statusOnBeacon,
+			"removedFromSsvOnBlock": val.removedFromSsvOnBlock,
 		}).Debug("valInfo")
 
 		// status on beacon

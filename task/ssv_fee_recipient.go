@@ -3,6 +3,7 @@ package task
 import (
 	"fmt"
 
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/eth-ssv-client/pkg/utils"
 )
@@ -27,7 +28,7 @@ func (task *Task) checkAndSetFeeRecipient() error {
 
 		tx, err := task.ssvNetworkContract.SetFeeRecipientAddress(task.connectionOfSsvAccount.TxOpts(), task.feeRecipientAddressOnStafi)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "ssvNetworkContract.SetFeeRecipientAddress")
 		}
 
 		err = utils.WaitTxOkCommon(task.connectionOfSsvAccount.Eth1Client(), tx.Hash())
