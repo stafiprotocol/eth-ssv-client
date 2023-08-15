@@ -100,10 +100,10 @@ func startSsvCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			logrus.Info("ssv task starting...")
+			logrus.Info("starting services...")
 			err = t.Start()
 			if err != nil {
-				logrus.Errorf("task start err: %s", err)
+				logrus.Errorf("start err: %s", err)
 				return err
 			}
 			defer func() {

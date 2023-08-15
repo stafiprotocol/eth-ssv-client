@@ -34,11 +34,6 @@ const (
 )
 
 func (task *Task) updateSsvOffchainState() (retErr error) {
-	logrus.Debug("updateOffchainState start -----------")
-	defer func() {
-		logrus.Debug("updateOffchainState end -----------")
-	}()
-
 	latestBlockNumber, err := task.connectionOfSuperNodeAccount.Eth1LatestBlock()
 	if err != nil {
 		return err

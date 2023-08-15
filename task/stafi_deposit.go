@@ -25,11 +25,6 @@ func (task *Task) getUsablePoolBalance() (*big.Int, error) {
 }
 
 func (task *Task) checkAndDeposit() (retErr error) {
-	logrus.Debug("checkAndDeposit start -----------")
-	defer func() {
-		logrus.Debug("checkAndDeposit end -----------")
-	}()
-
 	poolBalance, err := task.getUsablePoolBalance()
 	if err != nil {
 		return err

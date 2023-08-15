@@ -14,11 +14,6 @@ import (
 )
 
 func (task *Task) updateValStatus() error {
-	logrus.Debug("updateValStatus start -----------")
-	defer func() {
-		logrus.Debug("updateValStatus end -----------")
-	}()
-
 	for i := 0; i < task.nextKeyIndex; i++ {
 		val, exist := task.validatorsByKeyIndex[i]
 		if !exist {

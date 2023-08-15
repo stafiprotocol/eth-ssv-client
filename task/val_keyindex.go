@@ -17,11 +17,6 @@ func (task *Task) initValNextKeyIndex() error {
 }
 
 func (task *Task) checkAndRepairValNexKeyIndex() error {
-	logrus.Debug("checkAndRepairValNextKeyIndex start -----------")
-	defer func() {
-		logrus.Debug("checkAndRepairValNextKeyIndex end -----------")
-	}()
-
 	retry := 0
 	for {
 		if retry > utils.RetryLimit {

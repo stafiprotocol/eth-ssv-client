@@ -5,18 +5,18 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"reflect"
+	"runtime"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
-	"github.com/prysmaticlabs/prysm/v3/encoding/bytesutil"
-
 	"github.com/prysmaticlabs/prysm/v3/config/params"
 	types "github.com/prysmaticlabs/prysm/v3/consensus-types/primitives"
+	"github.com/prysmaticlabs/prysm/v3/encoding/bytesutil"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/chainbridge/utils/crypto/secp256k1"
@@ -139,6 +139,9 @@ type Task struct {
 	// ssv offchain state
 	clusters                 map[string]*Cluster // cluster key => cluster
 	feeRecipientAddressOnSsv common.Address
+
+	handlers     []func() error
+	handlersName []string
 }
 
 type Cluster struct {
@@ -338,14 +341,27 @@ func (task *Task) Start() error {
 	}
 	logrus.Infof("nextKeyIndex: %d", task.nextKeyIndex)
 
-	utils.SafeGo(task.ssvHandler)
+	task.appendHandlers(
+		task.checkAndRepairValNexKeyIndex,
+		task.updateSsvOffchainState,
+		task.updateValStatus,
+		task.updateOperatorStatus,
+		task.checkAndStake, //stafi
+		task.checkAndDeposit,
+	)
+	if !task.isViewMode {
+		task.appendHandlers(
+			task.checkAndSetFeeRecipient, // ssv
+			task.checkAndReactiveOnSSV,
+			task.checkAndOnboardOnSSV,
+			task.checkAndOffboardOnSSV,
+		)
 
-	if task.isViewMode {
-		return nil
+		utils.SafeGo(task.ejectorService)
+		utils.SafeGo(task.uptimeService)
 	}
 
-	utils.SafeGo(task.monitorHandler)
-	utils.SafeGo(task.uptimeHandler)
+	utils.SafeGo(task.ssvService)
 
 	return nil
 }
@@ -414,96 +430,15 @@ func (task *Task) initContract() error {
 	return nil
 }
 
-func (task *Task) ssvHandler() {
-	logrus.Info("start handler")
-	retry := 0
-	var err error
-	for {
-		if retry > utils.RetryLimit {
-			utils.ShutdownRequestChannel <- struct{}{}
-			return
-		}
-		if err != nil {
-			time.Sleep(utils.RetryInterval * 4)
-			retry++
-		}
+func (task *Task) appendHandlers(handlers ...func() error) {
+	for _, handler := range handlers {
 
-		select {
-		case <-task.stop:
-			logrus.Info("task has stopped")
-			return
-		default:
+		funcNameRaw := runtime.FuncForPC(reflect.ValueOf(handler).Pointer()).Name()
 
-			err = task.checkAndRepairValNexKeyIndex()
-			if err != nil {
-				logrus.Warnf("checkAndRepairValNexKeyIndex failed: %s, will retry.", err)
-				continue
-			}
+		splits := strings.Split(funcNameRaw, "/")
+		funcName := splits[len(splits)-1]
 
-			err = task.updateSsvOffchainState()
-			if err != nil {
-				logrus.Warnf("updateOffchainState failed: %s, will retry.", err)
-				continue
-			}
-
-			err = task.updateValStatus()
-			if err != nil {
-				logrus.Warnf("updateValStatus failed: %s, will retry.", err)
-				continue
-			}
-			err = task.updateOperatorStatus()
-			if err != nil {
-				logrus.Warnf("updateOperatorStatus failed: %s, will retry.", err)
-				continue
-			}
-
-			if task.isViewMode {
-				continue
-			}
-
-			// -------- stafi
-
-			err = task.checkAndStake()
-			if err != nil {
-				logrus.Warnf("checkAndStake failed: %s, will retry.", err)
-				continue
-			}
-
-			err = task.checkAndDeposit()
-			if err != nil {
-				logrus.Warnf("checkAndDeposit failed: %s, will retry.", err)
-				continue
-			}
-
-			// -------- ssv
-
-			err = task.checkAndSetFeeRecipient()
-			if err != nil {
-				logrus.Warnf("checkAndSetFeeRecipient failed: %s, will retry.", err)
-				continue
-			}
-
-			err = task.checkAndReactiveOnSSV()
-			if err != nil {
-				logrus.Warnf("checkAndReactiveOnSSV failed: %s, will retry.", err)
-				continue
-			}
-
-			err = task.checkAndOnboardOnSSV()
-			if err != nil {
-				logrus.Warnf("checkAndOnboardOnSSV failed: %s, will retry.", err)
-				continue
-			}
-
-			err = task.checkAndOffboardOnSSV()
-			if err != nil {
-				logrus.Warnf("checkAndOffboardOnSSV failed: %s, will retry.", err)
-				continue
-			}
-
-			retry = 0
-		}
-
-		time.Sleep(48 * time.Second) // 48 blocks
+		task.handlersName = append(task.handlersName, funcName)
+		task.handlers = append(task.handlers, handler)
 	}
 }

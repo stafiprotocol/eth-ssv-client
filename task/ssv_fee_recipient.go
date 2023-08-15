@@ -9,16 +9,8 @@ import (
 )
 
 func (task *Task) checkAndSetFeeRecipient() error {
-	logrus.Debug("checkAndSetFeeRecipient start -----------")
-	defer func() {
-		logrus.Debug("checkAndSetFeeRecipient end -----------")
-	}()
 
 	if task.feeRecipientAddressOnSsv != task.feeRecipientAddressOnStafi {
-		logrus.WithFields(logrus.Fields{
-			"feeRecipientAddressOnSsv":   task.feeRecipientAddressOnSsv.String(),
-			"feeRecipientAddressOnStafi": task.feeRecipientAddressOnStafi.String(),
-		}).Warn("feeRecipient")
 		// send tx
 		err := task.connectionOfSsvAccount.LockAndUpdateTxOpts()
 		if err != nil {
@@ -30,6 +22,12 @@ func (task *Task) checkAndSetFeeRecipient() error {
 		if err != nil {
 			return errors.Wrap(err, "ssvNetworkContract.SetFeeRecipientAddress")
 		}
+
+		logrus.WithFields(logrus.Fields{
+			"feeRecipientAddressOnSsv":   task.feeRecipientAddressOnSsv.String(),
+			"feeRecipientAddressOnStafi": task.feeRecipientAddressOnStafi.String(),
+			"txHash":                     tx.Hash(),
+		}).Warn("setFeeRecipientAddress")
 
 		err = utils.WaitTxOkCommon(task.connectionOfSsvAccount.Eth1Client(), tx.Hash())
 		if err != nil {

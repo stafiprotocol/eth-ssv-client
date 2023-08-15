@@ -8,10 +8,6 @@ import (
 )
 
 func (task *Task) updateOperatorStatus() error {
-	logrus.Debug("updateOperatorStatus start -----------")
-	defer func() {
-		logrus.Debug("updateOperatorStatus end -----------")
-	}()
 
 	valAmountLimit, err := task.ssvNetworkViewsContract.GetValidatorsPerOperatorLimit(nil)
 	if err != nil {

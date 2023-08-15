@@ -8,7 +8,6 @@ import (
 	"math"
 	"math/big"
 	"net/http"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/prysmaticlabs/prysm/v3/beacon-chain/core/signing"
@@ -19,106 +18,6 @@ import (
 	"github.com/stafiprotocol/eth-ssv-client/pkg/connection/beacon"
 	"github.com/stafiprotocol/eth-ssv-client/pkg/connection/types"
 )
-
-func (task *Task) monitorHandler() {
-	logrus.Info("start monitor")
-
-	for {
-		select {
-		case <-task.stop:
-			logrus.Info("task has stopped")
-			return
-		default:
-			startCycle, err := task.withdrawContract.EjectedStartCycle(nil)
-			if err != nil {
-				logrus.Warnf("monitor err: %s", err)
-				time.Sleep(6 * time.Second)
-				continue
-			}
-
-			currentCycle, err := task.withdrawContract.CurrentWithdrawCycle(nil)
-			if err != nil {
-				logrus.Warnf("monitor err: %s", err)
-				time.Sleep(6 * time.Second)
-				continue
-			}
-			logrus.Debugf("startCycle: %d, currentCycle: %d", startCycle.Uint64(), currentCycle.Uint64())
-
-			start := startCycle.Int64()
-			end := currentCycle.Int64()
-			if start == 0 {
-				start = end - 20
-			}
-			for i := start; i <= end; {
-				err := task.checkCycle(i)
-				if err != nil {
-					logrus.Warnf("monitor check cycle: %d err: %s", i, err)
-					time.Sleep(6 * time.Second)
-					continue
-				}
-				i++
-			}
-		}
-
-		break
-	}
-
-	for {
-		select {
-		case <-task.stop:
-			logrus.Info("task has stopped")
-			return
-		default:
-
-			logrus.Debug("checkCycle start -----------")
-			currentCycle, err := task.withdrawContract.CurrentWithdrawCycle(nil)
-			if err != nil {
-				logrus.Warnf("get currentWithdrawCycle err: %s", err)
-				time.Sleep(6 * time.Second)
-				continue
-			}
-
-			start := currentCycle.Int64() - 10
-			end := currentCycle.Int64()
-
-			for i := start; i <= end; i++ {
-				err = task.checkCycle(i)
-				if err != nil {
-					logrus.Warnf("checkCycle %d err: %s", i, err)
-					time.Sleep(6 * time.Second)
-					continue
-				}
-			}
-			logrus.Debug("checkCycle end -----------")
-
-		}
-
-		time.Sleep(60 * time.Second)
-	}
-}
-
-func (task *Task) uptimeHandler() {
-
-	for {
-		select {
-		case <-task.stop:
-			logrus.Info("task has stopped")
-			return
-		default:
-			logrus.Debug("postUptime start -----------")
-			err := task.postUptime()
-			if err != nil {
-				logrus.Warnf("postUptime err: %s", err)
-				time.Sleep(24 * time.Second)
-				continue
-			}
-
-			logrus.Debug("postUptime end -----------")
-		}
-
-		time.Sleep(5 * time.Minute)
-	}
-}
 
 func (task *Task) checkCycle(cycle int64) error {
 	logrus.Debugf("checkCycle %d", cycle)
@@ -209,6 +108,15 @@ func (task *Task) checkCycle(cycle int64) error {
 	return nil
 }
 
+type RspUptime struct {
+	Status  string      `json:"status"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data"`
+}
+type ReqEjectorUptime struct {
+	ValidatorIndexList []uint64 `json:"validatorIndexList"` //hex string list
+}
+
 func (task *Task) postUptime() error {
 	valIndexList := make([]uint64, 0)
 
@@ -253,13 +161,4 @@ func (task *Task) postUptime() error {
 		return fmt.Errorf("post uptime err: %s", rspUptime.Status)
 	}
 	return nil
-}
-
-type RspUptime struct {
-	Status  string      `json:"status"`
-	Message string      `json:"message"`
-	Data    interface{} `json:"data"`
-}
-type ReqEjectorUptime struct {
-	ValidatorIndexList []uint64 `json:"validatorIndexList"` //hex string list
 }

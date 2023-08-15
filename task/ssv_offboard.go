@@ -16,15 +16,15 @@ import (
 // OR
 // 1 operator is not active
 func (task *Task) checkAndOffboardOnSSV() error {
-	logrus.Debug("checkAndOffboardOnSSV start -----------")
-	defer func() {
-		logrus.Debug("checkAndOffboardOnSSV end -----------")
-	}()
-
 	for i := 0; i < task.nextKeyIndex; i++ {
 		val, exist := task.validatorsByKeyIndex[i]
 		if !exist {
 			return fmt.Errorf("validator at index %d not exist", i)
+		}
+
+		cluster, exist := task.clusters[val.clusterKey]
+		if !exist {
+			return nil
 		}
 
 		shouldOffboard := false
@@ -40,8 +40,6 @@ func (task *Task) checkAndOffboardOnSSV() error {
 			val.statusOnBeacon == valStatusExitedOnBeacon {
 			shouldOffboard = true
 		}
-
-		cluster := task.clusters[val.clusterKey]
 
 		// life no end but some operators is not active
 		if val.statusOnStafi == valStatusStaked &&

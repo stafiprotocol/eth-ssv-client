@@ -26,10 +26,6 @@ var migrageWaitBlock = uint64(32 * 3)
 // OR
 // 1 staked on stafi and active and not onboard
 func (task *Task) checkAndOnboardOnSSV() error {
-	logrus.Debug("checkAndOnboardOnSSV start -----------")
-	defer func() {
-		logrus.Debug("checkAndOnboardOnSSV end -----------")
-	}()
 
 	for i := 0; i < task.nextKeyIndex; i++ {
 
@@ -132,6 +128,16 @@ func (task *Task) checkAndOnboardOnSSV() error {
 				"operators": cluster.operatorIds,
 			}).Warn("cluster is liquidated")
 			return nil
+		}
+		// check balance
+		ssvAccountBalance, err := task.ssvTokenContract.BalanceOf(nil, task.ssvKeyPair.CommonAddress())
+		if err != nil {
+			return err
+		}
+
+		if ssvAccountBalance.Cmp(needDepositAmount) < 0 {
+			utils.ShutdownRequestChannel <- struct{}{}
+			return fmt.Errorf("ssv balance not enough, will shutdown. balance: %s, need: %s", ssvAccountBalance.String(), needDepositAmount.String())
 		}
 
 		// check ssv allowance

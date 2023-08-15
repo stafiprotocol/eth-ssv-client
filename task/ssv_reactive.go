@@ -3,6 +3,7 @@ package task
 import (
 	"fmt"
 	"math/big"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -12,11 +13,6 @@ import (
 )
 
 func (task *Task) checkAndReactiveOnSSV() error {
-	logrus.Debug("checkAndReactiveOnSSV start -----------")
-	defer func() {
-		logrus.Debug("checkAndReactiveOnSSV end -----------")
-	}()
-
 	for _, cluster := range task.clusters {
 		// skip clusters with zero validators
 		if len(cluster.managingValidators) == 0 {
@@ -27,7 +23,11 @@ func (task *Task) checkAndReactiveOnSSV() error {
 		isLiquidated, err := task.ssvNetworkViewsContract.IsLiquidated(nil, task.ssvKeyPair.CommonAddress(),
 			cluster.operatorIds, ssv_network_views.ISSVNetworkCoreCluster(*cluster.latestCluster))
 		if err != nil {
-			return errors.Wrap(err, "ssvNetworkViewsContract.IsLiquidated failed")
+			if strings.Contains(err.Error(), "execution reverted") {
+				isLiquidated = false
+			} else {
+				return errors.Wrap(err, "ssvNetworkViewsContract.IsLiquidated failed")
+			}
 		}
 
 		if isLiquidated {
