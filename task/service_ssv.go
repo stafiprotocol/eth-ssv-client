@@ -10,6 +10,8 @@ import (
 func (task *Task) ssvService() {
 	logrus.Info("start ssv service")
 	retry := 0
+
+Out:
 	for {
 		if retry > utils.RetryLimit {
 			utils.ShutdownRequestChannel <- struct{}{}
@@ -31,7 +33,7 @@ func (task *Task) ssvService() {
 					logrus.Warnf("handler %s failed: %s, will retry.", funcName, err)
 					time.Sleep(utils.RetryInterval * 4)
 					retry++
-					continue
+					continue Out
 				}
 				logrus.Debugf("handler %s end.........", funcName)
 			}
