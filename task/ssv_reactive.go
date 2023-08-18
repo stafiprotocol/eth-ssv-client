@@ -9,10 +9,13 @@ import (
 	"github.com/sirupsen/logrus"
 	ssv_network "github.com/stafiprotocol/eth-ssv-client/bindings/SsvNetwork"
 	ssv_network_views "github.com/stafiprotocol/eth-ssv-client/bindings/SsvNetworkViews"
-	"github.com/stafiprotocol/eth-ssv-client/pkg/utils"
 )
 
 func (task *Task) checkAndReactiveOnSSV() error {
+	if !task.offchainStateIsLatest() {
+		return nil
+	}
+
 	for _, cluster := range task.clusters {
 		// skip clusters with zero validators
 		if len(cluster.managingValidators) == 0 {
@@ -54,7 +57,7 @@ func (task *Task) checkAndReactiveOnSSV() error {
 				"clusterKey": clusterKey(cluster.operatorIds),
 			}).Info("reactive-tx")
 
-			err = utils.WaitTxOkCommon(task.connectionOfSsvAccount.Eth1Client(), reactiveTx.Hash())
+			err = task.waitTxOk(reactiveTx.Hash())
 			if err != nil {
 				return err
 			}
@@ -87,9 +90,9 @@ func (task *Task) checkAndReactiveOnSSV() error {
 				logrus.WithFields(logrus.Fields{
 					"txHash":     depositTx.Hash(),
 					"clusterKey": clusterKey(cluster.operatorIds),
-				}).Info("deposit-tx")
+				}).Info("ssv-deposit-tx")
 
-				err = utils.WaitTxOkCommon(task.connectionOfSsvAccount.Eth1Client(), depositTx.Hash())
+				err = task.waitTxOk(depositTx.Hash())
 				if err != nil {
 					return err
 				}

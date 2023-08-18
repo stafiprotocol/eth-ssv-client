@@ -320,7 +320,7 @@ func GetContractAddress(storage *storage.Storage, name string) (common.Address, 
 	return address, nil
 }
 
-func WaitTxOkCommon(client *ethclient.Client, txHash common.Hash) (err error) {
+func WaitTxOkCommon(client *ethclient.Client, txHash common.Hash) (blockNumber uint64, err error) {
 	defer func() {
 		if err != nil {
 			logrus.Errorf("find err: %s, will shutdown.", err.Error())
@@ -331,7 +331,7 @@ func WaitTxOkCommon(client *ethclient.Client, txHash common.Hash) (err error) {
 	retry := 0
 	for {
 		if retry > RetryLimit {
-			return fmt.Errorf("waitTx %s reach retry limit", txHash.String())
+			return 0, fmt.Errorf("waitTx %s reach retry limit", txHash.String())
 		}
 		_, pending, err := client.TransactionByHash(context.Background(), txHash)
 		if err != nil {
@@ -359,7 +359,7 @@ func WaitTxOkCommon(client *ethclient.Client, txHash common.Hash) (err error) {
 				subRetry := 0
 				for {
 					if subRetry > RetryLimit {
-						return fmt.Errorf("TransactionReceipt %s reach retry limit", txHash.String())
+						return 0, fmt.Errorf("TransactionReceipt %s reach retry limit", txHash.String())
 					}
 
 					receipt, err = client.TransactionReceipt(context.Background(), txHash)
@@ -377,9 +377,10 @@ func WaitTxOkCommon(client *ethclient.Client, txHash common.Hash) (err error) {
 				}
 
 				if receipt.Status == 1 { //success
+					blockNumber = receipt.BlockNumber.Uint64()
 					break
 				} else { //failed
-					return fmt.Errorf("tx %s failed", txHash.String())
+					return 0, fmt.Errorf("tx %s failed", txHash.String())
 				}
 			}
 		}
@@ -389,5 +390,5 @@ func WaitTxOkCommon(client *ethclient.Client, txHash common.Hash) (err error) {
 		"tx": txHash.String(),
 	}).Info("tx send ok")
 
-	return nil
+	return blockNumber, nil
 }

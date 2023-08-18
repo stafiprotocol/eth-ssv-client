@@ -5,10 +5,12 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"github.com/stafiprotocol/eth-ssv-client/pkg/utils"
 )
 
 func (task *Task) checkAndSetFeeRecipient() error {
+	if !task.offchainStateIsLatest() {
+		return nil
+	}
 
 	if task.feeRecipientAddressOnSsv != task.feeRecipientAddressOnStafi {
 		// send tx
@@ -29,7 +31,7 @@ func (task *Task) checkAndSetFeeRecipient() error {
 			"txHash":                     tx.Hash(),
 		}).Warn("setFeeRecipientAddress")
 
-		err = utils.WaitTxOkCommon(task.connectionOfSsvAccount.Eth1Client(), tx.Hash())
+		err = task.waitTxOk(tx.Hash())
 		if err != nil {
 			return err
 		}

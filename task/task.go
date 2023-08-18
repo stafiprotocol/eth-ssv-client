@@ -114,6 +114,7 @@ type Task struct {
 	eth1WithdrawalAdress       common.Address
 	feeRecipientAddressOnStafi common.Address
 	latestRegistrationNonce    uint64
+	latestTxBlock              uint64
 
 	eth1Client *ethclient.Client
 	eth2Config beacon.Eth2Config
@@ -346,11 +347,11 @@ func (task *Task) Start() error {
 		task.updateSsvOffchainState,
 		task.updateValStatus,
 		task.updateOperatorStatus,
-		task.checkAndStake, //stafi
-		task.checkAndDeposit,
 	)
 	if !task.isViewMode {
 		task.appendHandlers(
+			task.checkAndStake, //stafi
+			task.checkAndDeposit,
 			task.checkAndSetFeeRecipient, // ssv
 			task.checkAndReactiveOnSSV,
 			task.checkAndOnboardOnSSV,
@@ -441,4 +442,17 @@ func (task *Task) appendHandlers(handlers ...func() error) {
 		task.handlersName = append(task.handlersName, funcName)
 		task.handlers = append(task.handlers, handler)
 	}
+}
+
+func (task *Task) waitTxOk(txHash common.Hash) error {
+	blockNumber, err := utils.WaitTxOkCommon(task.eth1Client, txHash)
+	if err != nil {
+		return err
+	}
+	task.latestTxBlock = blockNumber
+	return nil
+}
+
+func (task *Task) offchainStateIsLatest() bool {
+	return task.dealedEth1Block > task.latestTxBlock
 }

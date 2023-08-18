@@ -8,7 +8,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	ssv_network "github.com/stafiprotocol/eth-ssv-client/bindings/SsvNetwork"
-	"github.com/stafiprotocol/eth-ssv-client/pkg/utils"
 )
 
 // offboard validator from cluster if:
@@ -16,6 +15,10 @@ import (
 // OR
 // 1 operator is not active
 func (task *Task) checkAndOffboardOnSSV() error {
+	if !task.offchainStateIsLatest() {
+		return nil
+	}
+
 	for i := 0; i < task.nextKeyIndex; i++ {
 		val, exist := task.validatorsByKeyIndex[i]
 		if !exist {
@@ -90,7 +93,7 @@ func (task *Task) checkAndOffboardOnSSV() error {
 			"pubkey":      hex.EncodeToString(val.privateKey.PublicKey().Marshal()),
 		}).Info("offboard-tx")
 
-		err = utils.WaitTxOkCommon(task.eth1Client, removeTx.Hash())
+		err = task.waitTxOk(removeTx.Hash())
 		if err != nil {
 			return err
 		}

@@ -78,15 +78,6 @@ func (task *Task) updateValStatus() error {
 			}
 		}
 
-		logrus.WithFields(logrus.Fields{
-			"keyIndex":              i,
-			"pubkey":                hex.EncodeToString(val.privateKey.PublicKey().Marshal()),
-			"statusOnStafi":         val.statusOnStafi,
-			"statusOnSsv":           val.statusOnSsv,
-			"statusOnBeacon":        val.statusOnBeacon,
-			"removedFromSsvOnBlock": val.removedFromSsvOnBlock,
-		}).Debug("valInfo")
-
 		// status on beacon
 		if val.statusOnStafi == valStatusStaked {
 			beaconHead, err := task.connectionOfSuperNodeAccount.Eth2BeaconHead()
@@ -112,7 +103,7 @@ func (task *Task) updateValStatus() error {
 			logrus.WithFields(logrus.Fields{
 				"validator": hex.EncodeToString(val.privateKey.PublicKey().Marshal()),
 				"status":    valStatus,
-			}).Debug("valStatus")
+			}).Debug("valBeaconStatus")
 
 			// cache validator by val index
 			task.validatorsByValIndexMutex.Lock()
@@ -138,6 +129,21 @@ func (task *Task) updateValStatus() error {
 				return fmt.Errorf("unsupported validator status %d", valStatus.Status)
 			}
 		}
+	}
+
+	for i := 0; i < task.nextKeyIndex; i++ {
+		val, exist := task.validatorsByKeyIndex[i]
+		if !exist {
+			return fmt.Errorf("validator at index %d not exist", i)
+		}
+		logrus.WithFields(logrus.Fields{
+			"keyIndex":              i,
+			"pubkey":                hex.EncodeToString(val.privateKey.PublicKey().Marshal()),
+			"statusOnStafi":         val.statusOnStafi,
+			"statusOnSsv":           val.statusOnSsv,
+			"statusOnBeacon":        val.statusOnBeacon,
+			"removedFromSsvOnBlock": val.removedFromSsvOnBlock,
+		}).Debug("valInfo")
 	}
 
 	return nil

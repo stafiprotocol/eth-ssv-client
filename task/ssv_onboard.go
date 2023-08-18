@@ -26,7 +26,9 @@ var migrageWaitBlock = uint64(32 * 3)
 // OR
 // 1 staked on stafi and active and not onboard
 func (task *Task) checkAndOnboardOnSSV() error {
-
+	if !task.offchainStateIsLatest() {
+		return nil
+	}
 	for i := 0; i < task.nextKeyIndex; i++ {
 
 		val, exist := task.validatorsByKeyIndex[i]
@@ -165,7 +167,7 @@ func (task *Task) checkAndOnboardOnSSV() error {
 				"approveAmount": approveAmount.String(),
 			}).Info("approve-tx")
 
-			err = utils.WaitTxOkCommon(task.eth1Client, approveTx.Hash())
+			err = task.waitTxOk(approveTx.Hash())
 			if err != nil {
 				return err
 			}
@@ -193,7 +195,7 @@ func (task *Task) checkAndOnboardOnSSV() error {
 			"ssvDepositAmount": needDepositAmount.String(),
 		}).Info("onboard-tx")
 
-		err = utils.WaitTxOkCommon(task.eth1Client, registerTx.Hash())
+		err = task.waitTxOk(registerTx.Hash())
 		if err != nil {
 			return err
 		}

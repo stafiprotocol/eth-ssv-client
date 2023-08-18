@@ -12,6 +12,9 @@ import (
 )
 
 func (task *Task) checkAndStake() error {
+	if !task.offchainStateIsLatest() {
+		return nil
+	}
 
 	poolBalance, err := task.getUsablePoolBalance()
 	if err != nil {
@@ -101,7 +104,7 @@ func (task *Task) checkAndStake() error {
 		"dataRoots":        dataRoots,
 	}).Info("stake-tx")
 
-	err = utils.WaitTxOkCommon(task.eth1Client, stakeTx.Hash())
+	err = task.waitTxOk(stakeTx.Hash())
 	if err != nil {
 		return err
 	}

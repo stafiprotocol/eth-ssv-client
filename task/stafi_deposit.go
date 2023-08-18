@@ -25,6 +25,10 @@ func (task *Task) getUsablePoolBalance() (*big.Int, error) {
 }
 
 func (task *Task) checkAndDeposit() (retErr error) {
+	if !task.offchainStateIsLatest() {
+		return nil
+	}
+
 	poolBalance, err := task.getUsablePoolBalance()
 	if err != nil {
 		return err
@@ -149,7 +153,7 @@ func (task *Task) checkAndDeposit() (retErr error) {
 		"dataRoots":        dataRoots,
 	}).Info("deposit-tx")
 
-	err = utils.WaitTxOkCommon(task.eth1Client, depositTx.Hash())
+	err = task.waitTxOk(depositTx.Hash())
 	if err != nil {
 		return err
 	}
