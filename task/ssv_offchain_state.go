@@ -239,6 +239,7 @@ func (task *Task) updateSsvOffchainState() (retErr error) {
 			"latestValidatorAddedBlockNumber":   c.latestValidatorAddedBlockNumber,
 			"latestValidatorRemovedBlockNumber": c.latestValidatorRemovedBlockNumber,
 			"balance":                           c.balance.String(),
+			"hasTargetOperatorIds":              c.hasTargetOperators,
 		}).Debug("clusterInfo")
 
 	}
@@ -254,7 +255,16 @@ func (task *Task) updateCluster(operatorIds []uint64, newCluster *ssv_network.IS
 	cluster, exist := task.clusters[cltKey]
 	if !exist {
 		operatorDetails := make([]*keyshare.Operator, len(operatorIds))
+
+		hasTargetOperators := false
 		for i, opId := range operatorIds {
+			for _, id := range task.targetOperatorIds {
+				if id == opId {
+					hasTargetOperators = true
+					break
+				}
+			}
+
 			operatorDetail, err := task.mustGetOperatorDetail(task.ssvApiNetwork, opId)
 			if err != nil {
 				return err
@@ -269,11 +279,13 @@ func (task *Task) updateCluster(operatorIds []uint64, newCluster *ssv_network.IS
 				Fee:       feeDeci,
 			}
 		}
+
 		cluster = &Cluster{
 			operators:          operatorDetails,
 			operatorIds:        operatorIds,
 			latestCluster:      newCluster,
 			managingValidators: make(map[int]struct{}),
+			hasTargetOperators: hasTargetOperators,
 		}
 
 		task.clusters[cltKey] = cluster
