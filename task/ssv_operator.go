@@ -3,6 +3,7 @@ package task
 import (
 	"fmt"
 
+	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 )
@@ -22,15 +23,21 @@ func (task *Task) updateOperatorStatus() error {
 
 		// check val amount limit per operator
 		for _, op := range c.operators {
-			_, operatorFee, validatorCount, _, isPrivate, isActive, err := task.ssvNetworkViewsContract.GetOperatorById(nil, op.Id)
+			_, operatorFee, validatorCount, _, isPrivate, _, err := task.ssvNetworkViewsContract.GetOperatorById(nil, op.Id)
 			if err != nil {
 				return err
 			}
 			if isPrivate {
 				return fmt.Errorf("operator %d is private", op.Id)
 			}
-			// check active
-			if isActive {
+
+			operatorDetail, err := task.mustGetOperatorDetail(task.ssvApiNetwork, op.Id)
+			if err != nil {
+				return errors.Wrap(err, "mustGetOperatorDetail")
+			}
+
+			// check active from api
+			if operatorDetail.IsActive == 1 {
 				op.Active = true
 			} else {
 				op.Active = false

@@ -334,6 +334,15 @@ func (task *Task) Start() error {
 		if !isActive {
 			return fmt.Errorf("target operator %d is not active", opId)
 		}
+
+		opDetail, err := task.mustGetOperatorDetail(task.ssvApiNetwork, opId)
+		if err != nil {
+			return errors.Wrap(err, "mustGetOperatorDetail failed")
+		}
+		if opDetail.IsActive != 1 {
+			return fmt.Errorf("target operator %d is not active", opId)
+		}
+
 	}
 
 	err = task.initValNextKeyIndex()
@@ -341,6 +350,32 @@ func (task *Task) Start() error {
 		return err
 	}
 	logrus.Infof("nextKeyIndex: %d", task.nextKeyIndex)
+	logrus.Infof("init state...")
+
+	retry := 0
+	for {
+		if retry > utils.RetryLimit {
+			return fmt.Errorf("init state reach retry limit, err: %s", err.Error())
+		}
+		err = task.updateSsvOffchainState()
+		if err != nil {
+			retry++
+			continue
+		}
+		err = task.updateValStatus()
+		if err != nil {
+			retry++
+			continue
+		}
+		err = task.updateOperatorStatus()
+		if err != nil {
+			retry++
+			continue
+		}
+		retry = 0
+
+		break
+	}
 
 	task.appendHandlers(
 		task.checkAndRepairValNexKeyIndex,
@@ -356,6 +391,7 @@ func (task *Task) Start() error {
 			task.checkAndReactiveOnSSV,
 			task.checkAndOnboardOnSSV,
 			task.checkAndOffboardOnSSV,
+			task.checkAndWithdrawOnSSV,
 		)
 
 		utils.SafeGo(task.ejectorService)

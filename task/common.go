@@ -17,6 +17,7 @@ import (
 
 var valAmountThreshold = 5
 var clusterOpAmount = 4
+var opInActiveThreshold = 2
 
 func clusterKey(operators []uint64) string {
 	key := strings.Builder{}
@@ -72,6 +73,9 @@ func (task *Task) fetchNewClusterAndSave() error {
 				continue
 			}
 			if !isActive {
+				continue
+			}
+			if opDetail.IsActive != 1 {
 				continue
 			}
 

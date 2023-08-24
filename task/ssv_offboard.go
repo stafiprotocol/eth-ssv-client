@@ -49,13 +49,19 @@ func (task *Task) checkAndOffboardOnSSV() error {
 			(val.statusOnSsv == valStatusRegistedOnSsvValid || val.statusOnSsv == valStatusRegistedOnSsvInvalid) &&
 			val.statusOnBeacon == valStatusActiveOnBeacon {
 
+			inActiveNumber := 0
 			for _, op := range cluster.operators {
 				if !op.Active {
-					logrus.Infof("operator: %d is not active will offboard validator: %s", op.Id, val.validatorIndex)
-					shouldOffboard = true
+					inActiveNumber++
+					if inActiveNumber >= opInActiveThreshold {
+						logrus.Infof("operator: %d is not active will offboard validator: %d", op.Id, val.validatorIndex)
+						shouldOffboard = true
+						break
+					}
 				}
 			}
 		}
+
 		if !shouldOffboard {
 			continue
 		}

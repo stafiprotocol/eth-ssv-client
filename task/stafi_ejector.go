@@ -41,6 +41,10 @@ func (task *Task) checkCycle(cycle int64) error {
 			continue
 		}
 
+		if validator.statusOnBeacon == valStatusExitedOnBeacon {
+			continue
+		}
+
 		logrus.Infof("validator %d elected at cycle %d", validator.validatorIndex, cycle)
 		// check beacon sync status
 		syncStatus, err := task.connectionOfSuperNodeAccount.Eth2Client().GetSyncStatus()
