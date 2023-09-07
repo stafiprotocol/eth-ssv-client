@@ -2,7 +2,6 @@ package task
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"math/big"
@@ -22,7 +21,7 @@ import (
 
 const (
 	// todo: automatically detect event fetch limit from target rpc
-	fetchEventBlockLimit      = uint64(4900)
+	fetchEventBlockLimit      = uint64(4900) * 7
 	fetchEth1WaitBlockNumbers = uint64(2)
 
 	eventNameValidatorAdded             = "ValidatorAdded"             // 'ValidatorAdded',
@@ -266,10 +265,18 @@ func (task *Task) updateCluster(operatorIds []uint64, newCluster *ssv_network.IS
 				if err != nil {
 					return errors.Wrapf(err, "ssvNetworkContract.FilterOperatorAdded failed, opId %d owner %s", opId, owner.String())
 				}
+				if !operatorAddedEvent.Next() {
+					return fmt.Errorf("filter operator pubkey failed, opId %d owner %s", opId, owner.String())
+				}
+
+				pubkey, err := unpackOperatorPublicKey(operatorAddedEvent.Event.PublicKey)
+				if err != nil {
+					return err
+				}
 
 				task.targetOperators[opId] = &keyshare.Operator{
 					Id:             opId,
-					PublicKey:      base64.StdEncoding.EncodeToString(operatorAddedEvent.Event.PublicKey),
+					PublicKey:      string(pubkey),
 					Fee:            decimal.NewFromBigInt(fee, 0),
 					Active:         isActive,
 					ValidatorCount: uint64(validatorCount),

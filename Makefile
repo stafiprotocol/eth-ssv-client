@@ -45,6 +45,7 @@ abi:
 	abigen --abi ./bindings/SsvNetwork/ssvnetwork_abi.json --pkg ssv_network --type SsvNetwork --out ./bindings/SsvNetwork/SsvNetwork.go
 	abigen --abi ./bindings/SsvNetworkViews/ssvnetworkviews_abi.json --pkg ssv_network_views --type SsvNetworkViews --out ./bindings/SsvNetworkViews/SsvNetworkViews.go
 	abigen --abi ./bindings/Erc20/erc20_abi.json --pkg erc20 --type Erc20 --out ./bindings/Erc20/Erc20.go
+	abigen --abi ./bindings/OperatorPubkey/operatorpubkey_abi.json --pkg operator_pubkey --type OperatorPubkey --out ./bindings/OperatorPubkey/OperatorPubkey.go
 
 
 clean:

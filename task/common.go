@@ -9,6 +9,7 @@ import (
 
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
+	"github.com/stafiprotocol/eth-ssv-client/bindings/OperatorPubkey"
 	ssv_network "github.com/stafiprotocol/eth-ssv-client/bindings/SsvNetwork"
 	ssv_network_views "github.com/stafiprotocol/eth-ssv-client/bindings/SsvNetworkViews"
 	"github.com/stafiprotocol/eth-ssv-client/pkg/utils"
@@ -228,4 +229,22 @@ func (task *Task) calClusterNeedDepositAmount(cluster *Cluster) (min, max *big.I
 		return nil, nil, fmt.Errorf("unreached balance")
 	}
 
+}
+
+func unpackOperatorPublicKey(fieldBytes []byte) ([]byte, error) {
+	abi, err := operator_pubkey.OperatorPubkeyMetaData.GetAbi()
+	if err != nil {
+		return nil, err
+	}
+	outField, err := abi.Unpack("method", fieldBytes)
+	if err != nil {
+		return nil, fmt.Errorf("unpack: %w", err)
+	}
+
+	unpacked, ok := outField[0].([]byte)
+	if !ok {
+		return nil, fmt.Errorf("cast OperatorPublicKey to []byte: %w", err)
+	}
+
+	return unpacked, nil
 }

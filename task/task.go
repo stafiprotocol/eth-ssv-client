@@ -3,7 +3,6 @@ package task
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"fmt"
 	"math/big"
 	"reflect"
@@ -248,6 +247,8 @@ func NewTask(cfg *config.Config, seed []byte, isViewMode bool, superNodeKeyPair,
 		validatorsByPubkey:   make(map[string]*Validator),
 		validatorsByValIndex: make(map[uint64]*Validator),
 
+		targetOperators: make(map[uint64]*keyshare.Operator),
+
 		clusters: make(map[string]*Cluster),
 	}
 
@@ -344,10 +345,16 @@ func (task *Task) Start() error {
 		if err != nil {
 			return errors.Wrapf(err, "ssvNetworkContract.FilterOperatorAdded failed, opId %d owner %s", opId, owner.String())
 		}
-
+		if !operatorAddedEvent.Next() {
+			return fmt.Errorf("filter operator pubkey failed, opId %d owner %s", opId, owner.String())
+		}
+		pubkey, err := unpackOperatorPublicKey(operatorAddedEvent.Event.PublicKey)
+		if err != nil {
+			return err
+		}
 		task.targetOperators[opId] = &keyshare.Operator{
 			Id:             opId,
-			PublicKey:      base64.StdEncoding.EncodeToString(operatorAddedEvent.Event.PublicKey),
+			PublicKey:      string(pubkey),
 			Fee:            decimal.NewFromBigInt(fee, 0),
 			Active:         isActive,
 			ValidatorCount: uint64(validatorCount),
