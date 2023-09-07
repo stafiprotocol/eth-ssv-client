@@ -61,20 +61,12 @@ func (task *Task) updateValStatus() error {
 
 			if isOnboard {
 				if val.statusOnSsv != valStatusRegistedOnSsvValid {
-					validatorFromApi, err := task.mustGetValidator(task.ssvApiNetwork, hex.EncodeToString(val.privateKey.PublicKey().Marshal()))
-					if err != nil {
-						return errors.Wrap(err, "task.mustGetValidator failed")
-					}
-
-					if validatorFromApi.IsValid {
-						val.statusOnSsv = valStatusRegistedOnSsvValid
-					} else {
-						val.statusOnSsv = valStatusRegistedOnSsvInvalid
-					}
-
+					val.statusOnSsv = valStatusRegistedOnSsvValid
 				}
 			} else {
-				val.statusOnSsv = valStatusRemovedOnSsv
+				if val.statusOnSsv != valStatusRemovedOnSsv {
+					val.statusOnSsv = valStatusRemovedOnSsv
+				}
 			}
 		}
 

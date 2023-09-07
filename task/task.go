@@ -3,6 +3,7 @@ package task
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"fmt"
 	"math/big"
 	"reflect"
@@ -137,6 +138,8 @@ type Task struct {
 	validatorsByValIndex      map[uint64]*Validator // val index => validator
 	validatorsByValIndexMutex sync.RWMutex
 
+	targetOperators map[uint64]*keyshare.Operator
+
 	// ssv offchain state
 	clusters                 map[string]*Cluster // cluster key => cluster
 	feeRecipientAddressOnSsv common.Address
@@ -146,7 +149,6 @@ type Task struct {
 }
 
 type Cluster struct {
-	operators     []*keyshare.Operator
 	operatorIds   []uint64
 	latestCluster *ssv_network.ISSVNetworkCoreCluster
 
@@ -157,8 +159,6 @@ type Cluster struct {
 	latestUpdateClusterBlockNumber    uint64
 	latestValidatorAddedBlockNumber   uint64
 	latestValidatorRemovedBlockNumber uint64
-
-	hasTargetOperators bool
 }
 
 type Validator struct {
@@ -223,6 +223,7 @@ func NewTask(cfg *config.Config, seed []byte, isViewMode bool, superNodeKeyPair,
 	if err != nil {
 		return nil, err
 	}
+
 	s := &Task{
 		stop:                make(chan struct{}),
 		eth1Endpoint:        cfg.Eth1Endpoint,
@@ -324,7 +325,11 @@ func (task *Task) Start() error {
 
 	// check target operator id
 	for _, opId := range task.targetOperatorIds {
-		_, _, _, _, isPrivate, isActive, err := task.ssvNetworkViewsContract.GetOperatorById(nil, opId)
+		if _, exist := task.targetOperators[opId]; exist {
+			return fmt.Errorf("duplicate operator id: %d", opId)
+		}
+
+		owner, fee, validatorCount, _, isPrivate, isActive, err := task.ssvNetworkViewsContract.GetOperatorById(nil, opId)
 		if err != nil {
 			return errors.Wrap(err, "ssvNetworkViewsContract.GetOperatorById failed")
 		}
@@ -335,12 +340,17 @@ func (task *Task) Start() error {
 			return fmt.Errorf("target operator %d is not active", opId)
 		}
 
-		opDetail, err := task.mustGetOperatorDetail(task.ssvApiNetwork, opId)
+		operatorAddedEvent, err := task.ssvNetworkContract.FilterOperatorAdded(nil, []uint64{opId}, []common.Address{owner})
 		if err != nil {
-			return errors.Wrap(err, "mustGetOperatorDetail failed")
+			return errors.Wrapf(err, "ssvNetworkContract.FilterOperatorAdded failed, opId %d owner %s", opId, owner.String())
 		}
-		if opDetail.IsActive != 1 {
-			return fmt.Errorf("target operator %d is not active", opId)
+
+		task.targetOperators[opId] = &keyshare.Operator{
+			Id:             opId,
+			PublicKey:      base64.StdEncoding.EncodeToString(operatorAddedEvent.Event.PublicKey),
+			Fee:            decimal.NewFromBigInt(fee, 0),
+			Active:         isActive,
+			ValidatorCount: uint64(validatorCount),
 		}
 
 	}
@@ -372,7 +382,6 @@ func (task *Task) Start() error {
 			retry++
 			continue
 		}
-		retry = 0
 
 		break
 	}

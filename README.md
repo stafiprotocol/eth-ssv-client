@@ -53,6 +53,7 @@ Use "ssv-client [command] --help" for more information about a command.
 Automatically:
 * Generate valdiator keys from mnemonic
 * Deposit/Stake on StaFi staking pool
-* Select/Monitor operators from SSV api
+* ~~Select/Monitor operators from SSV api~~ (Due to ssv api not support on mainnet)
 * Onboard/Offboard validators on SSV
-* Hold StaFi ejector service
+* Deposit/Withdraw/Reactive cluster on SSV
+* Hold StaFi staking pool ejector service

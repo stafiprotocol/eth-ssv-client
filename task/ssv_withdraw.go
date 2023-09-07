@@ -37,9 +37,13 @@ func (task *Task) checkAndWithdrawOnSSV() error {
 		}
 
 		shouldWithdraw := false
-		for _, op := range cluster.operators {
-			if !op.Active {
-				logrus.Infof("operator: %d is not active will withdraw cluster: %v", op.Id, cluster.operatorIds)
+		for _, opId := range cluster.operatorIds {
+			operator, exist := task.targetOperators[opId]
+			if !exist {
+				return fmt.Errorf("operator %d not exist in target operators", opId)
+			}
+			if !operator.Active {
+				logrus.Infof("operator: %d is not active will withdraw cluster: %v", opId, cluster.operatorIds)
 				shouldWithdraw = true
 				break
 			}

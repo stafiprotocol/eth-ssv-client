@@ -11,11 +11,10 @@ import (
 	"github.com/sirupsen/logrus"
 	ssv_network "github.com/stafiprotocol/eth-ssv-client/bindings/SsvNetwork"
 	ssv_network_views "github.com/stafiprotocol/eth-ssv-client/bindings/SsvNetworkViews"
-	"github.com/stafiprotocol/eth-ssv-client/pkg/keyshare"
 	"github.com/stafiprotocol/eth-ssv-client/pkg/utils"
 )
 
-var valAmountThreshold = 5
+var valAmountThreshold = uint64(5)
 var clusterOpAmount = 4
 var opInActiveThreshold = 2
 
@@ -29,155 +28,45 @@ func clusterKey(operators []uint64) string {
 
 // fetch new cluster and cache
 func (task *Task) fetchNewClusterAndSave() error {
-	selectedOperator := make([]*keyshare.Operator, 0)
 	operatorIds := make([]uint64, 0)
-	valAmountLimit, err := task.ssvNetworkViewsContract.GetValidatorsPerOperatorLimit(nil)
-	if err != nil {
-		return err
-	}
 
-	hasTargetOperators := false
-	targetOperatorsLen := 0
 	// select from target operator
-	if len(task.targetOperatorIds) > 0 {
-		for _, opId := range task.targetOperatorIds {
-			// check enough and reset if already exist
-			if len(selectedOperator) == clusterOpAmount {
-				cltKey := clusterKey(operatorIds)
-				if _, exist := task.clusters[cltKey]; exist {
-					selectedOperator = make([]*keyshare.Operator, 0)
-					operatorIds = make([]uint64, 0)
-					continue
-				}
-
-				break
-			}
-
-			opDetail, err := task.mustGetOperatorDetail(task.ssvApiNetwork, opId)
-			if err != nil {
-				return err
-			}
-
-			if opDetail.IsActive != 1 {
-				continue
-			}
-			if opDetail.ValidatorsCount > int(valAmountLimit)-valAmountThreshold {
-				continue
-			}
-
-			_, _, _, _, isPrivate, isActive, err := task.ssvNetworkViewsContract.GetOperatorById(nil, opId)
-			if err != nil {
-				return err
-			}
-			if isPrivate {
-				continue
-			}
-			if !isActive {
-				continue
-			}
-			if opDetail.IsActive != 1 {
-				continue
-			}
-
-			feeDeci, err := decimal.NewFromString(opDetail.Fee)
-			if err != nil {
-				return err
-			}
-			selectedOperator = append(selectedOperator, &keyshare.Operator{
-				Id:             uint64(opDetail.ID),
-				PublicKey:      opDetail.PublicKey,
-				Fee:            feeDeci,
-				Active:         true,
-				ValidatorCount: uint64(opDetail.ValidatorsCount),
-			})
-			operatorIds = append(operatorIds, uint64(opDetail.ID))
-		}
-		logrus.Debugf("fetchNewClusterFromTarget operators len %d", len(selectedOperator))
-
-		targetOperatorsLen = len(selectedOperator)
-		if targetOperatorsLen > 0 {
-			hasTargetOperators = true
-		} else {
-			return fmt.Errorf("target operators %v unavailable", task.targetOperatorIds)
-		}
-	}
-
-	// select from api
-	operators, err := utils.GetOperators(task.ssvApiNetwork)
-	if err != nil {
-		return err
-	}
-	logrus.Debugf("fetchNewClusterFromApi operators len %d", len(operators.Operators))
-	for _, op := range operators.Operators {
-		// check enough and clear if already exist
-		if len(selectedOperator) == clusterOpAmount {
+	for _, operator := range task.targetOperators {
+		// check enough and reset if already exist
+		if len(operatorIds) == clusterOpAmount {
 			cltKey := clusterKey(operatorIds)
 			if _, exist := task.clusters[cltKey]; exist {
-				selectedOperator = selectedOperator[:targetOperatorsLen]
-				operatorIds = operatorIds[:targetOperatorsLen]
+				operatorIds = make([]uint64, 0)
 				continue
 			}
 
 			break
 		}
 
-		if op.IsActive != 1 {
+		if !operator.Active {
 			continue
 		}
-		if op.ValidatorsCount > int(valAmountLimit)-valAmountThreshold {
-			continue
-		}
-
-		_, _, _, _, isPrivate, isActive, err := task.ssvNetworkViewsContract.GetOperatorById(nil, uint64(op.ID))
-		if err != nil {
-			return err
-		}
-		if isPrivate {
-			continue
-		}
-		if !isActive {
+		if operator.ValidatorCount+valAmountThreshold > task.validatorsPerOperatorLimit {
 			continue
 		}
 
-		feeDeci, err := decimal.NewFromString(op.Fee)
-		if err != nil {
-			return err
-		}
-		selectedOperator = append(selectedOperator, &keyshare.Operator{
-			Id:             uint64(op.ID),
-			PublicKey:      op.PublicKey,
-			Fee:            feeDeci,
-			Active:         true,
-			ValidatorCount: uint64(op.ValidatorsCount),
-		})
-		operatorIds = append(operatorIds, uint64(op.ID))
+		operatorIds = append(operatorIds, operator.Id)
 	}
 
-	if len(selectedOperator) != clusterOpAmount {
-		return fmt.Errorf("not select enough operators for cluster")
+	if len(operatorIds) != clusterOpAmount {
+		return fmt.Errorf("not select enough operators for cluster, please check available operators")
 	}
 
 	sort.Slice(operatorIds, func(i, j int) bool {
 		return operatorIds[i] < operatorIds[j]
 	})
-	sort.Slice(selectedOperator, func(i, j int) bool {
-		return selectedOperator[i].Id < selectedOperator[j].Id
-	})
 
 	logrus.WithFields(logrus.Fields{
-		"ids":       operatorIds,
-		"operators": selectedOperator,
+		"ids": operatorIds,
 	}).Debug("final selected operators", operatorIds)
-
-	for _, op := range selectedOperator {
-		logrus.WithFields(logrus.Fields{
-			"operator": *op,
-		}).Debug("operatorDetail")
-	}
 
 	cltKey := clusterKey(operatorIds)
 	task.clusters[cltKey] = &Cluster{
-		operators:                         selectedOperator,
 		operatorIds:                       operatorIds,
 		latestUpdateClusterBlockNumber:    0,
 		latestValidatorAddedBlockNumber:   0,
@@ -190,7 +79,6 @@ func (task *Task) fetchNewClusterAndSave() error {
 			Balance:         big.NewInt(0),
 		},
 		managingValidators: make(map[int]struct{}),
-		hasTargetOperators: hasTargetOperators,
 	}
 
 	return nil
@@ -198,79 +86,21 @@ func (task *Task) fetchNewClusterAndSave() error {
 
 func (task *Task) selectClusterForRegister() (*Cluster, error) {
 	clusterSelected := make([]*Cluster, 0)
-	if len(task.targetOperatorIds) > 0 {
-		hasUsableTargetOperators := false
-	Usable:
-		for _, c := range task.clusters {
-			if c.hasTargetOperators {
-				// check val amount limit per operator
-				for _, op := range c.operators {
-					if int(op.ValidatorCount) > int(task.validatorsPerOperatorLimit)-valAmountThreshold {
-						continue Usable
-					}
-
-					if !op.Active {
-						continue Usable
-					}
-				}
-
-				hasUsableTargetOperators = true
-
-				break
-			}
-		}
-
-		if !hasUsableTargetOperators {
-			err := task.fetchNewClusterAndSave()
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		// select from target clusters
-	TargetOut:
-		for _, c := range task.clusters {
-			if c.hasTargetOperators {
-				// check val amount limit per operator
-				for _, op := range c.operators {
-					if int(op.ValidatorCount) > int(task.validatorsPerOperatorLimit)-valAmountThreshold {
-						continue TargetOut
-					}
-
-					if !op.Active {
-						continue TargetOut
-					}
-				}
-
-				clusterSelected = append(clusterSelected, c)
-				break
-			}
-		}
-
-		if len(clusterSelected) == 0 {
-			return nil, fmt.Errorf("target operators %v unavailable", task.targetOperatorIds)
-		}
-
-		return clusterSelected[0], nil
-	}
-
-	// select from api
-	if len(task.clusters) == 0 {
-		err := task.fetchNewClusterAndSave()
-		if err != nil {
-			return nil, err
-		}
-	}
-Out:
+Clusters:
 	for _, c := range task.clusters {
 		// check val amount limit per operator
-		for _, op := range c.operators {
-			if int(op.ValidatorCount) > int(task.validatorsPerOperatorLimit)-valAmountThreshold {
-				continue Out
+		for _, opId := range c.operatorIds {
+			operator, exist := task.targetOperators[opId]
+			if !exist {
+				return nil, fmt.Errorf("operator %d not exist in target operators", opId)
 			}
 
-			if !op.Active {
-				continue Out
+			if operator.ValidatorCount+valAmountThreshold > task.validatorsPerOperatorLimit {
+				continue Clusters
+			}
+
+			if !operator.Active {
+				continue Clusters
 			}
 		}
 
@@ -282,22 +112,31 @@ Out:
 		if err != nil {
 			return nil, err
 		}
+	}
 
-	Inner:
-		for _, c := range task.clusters {
-			// check val amount limit per operator
-			for _, op := range c.operators {
-				if int(op.ValidatorCount) > int(task.validatorsPerOperatorLimit)-valAmountThreshold {
-					continue Inner
-				}
+Clusters2:
+	for _, c := range task.clusters {
+		// check val amount limit per operator
+		for _, opId := range c.operatorIds {
+			operator, exist := task.targetOperators[opId]
+			if !exist {
+				return nil, fmt.Errorf("operator %d not exist in target operators", opId)
 			}
 
-			clusterSelected = append(clusterSelected, c)
+			if operator.ValidatorCount+valAmountThreshold > task.validatorsPerOperatorLimit {
+				continue Clusters2
+			}
+
+			if !operator.Active {
+				continue Clusters2
+			}
 		}
 
-		if len(clusterSelected) == 0 {
-			return nil, fmt.Errorf("selectCluster failed")
-		}
+		clusterSelected = append(clusterSelected, c)
+	}
+
+	if len(clusterSelected) == 0 {
+		return nil, fmt.Errorf("select cluster faield, please check target operators")
 	}
 
 	sort.Slice(clusterSelected, func(i, j int) bool {
@@ -326,48 +165,6 @@ func (task *Task) mustGetSuperNodePubkeyStatus(pubkey []byte) (uint8, error) {
 	}
 
 	return uint8(pubkeyStatus.Uint64()), nil
-}
-
-func (task *Task) mustGetOperatorDetail(network string, id uint64) (*utils.OperatorDetail, error) {
-	retry := 0
-	var operatorDetail *utils.OperatorDetail
-	var err error
-	for {
-		if retry > utils.RetryLimit {
-			return nil, fmt.Errorf("GetOperatorDetail reach retry limit")
-		}
-		operatorDetail, err = utils.GetOperatorDetail(network, id)
-		if err != nil {
-			logrus.Warnf("GetOperatorDetail err: %s", err.Error())
-			time.Sleep(utils.RetryInterval)
-			retry++
-			continue
-		}
-		break
-	}
-
-	return operatorDetail, nil
-}
-
-func (task *Task) mustGetValidator(network, pubkey string) (*utils.SsvValidator, error) {
-	retry := 0
-	var val *utils.SsvValidator
-	var err error
-	for {
-		if retry > utils.RetryLimit {
-			return nil, fmt.Errorf("GetValidator reach retry limit")
-		}
-		val, err = utils.GetValidator(network, pubkey)
-		if err != nil {
-			logrus.Warnf("GetValidator err: %s, will retry.", err.Error())
-			time.Sleep(utils.RetryInterval)
-			retry++
-			continue
-		}
-		break
-	}
-
-	return val, nil
 }
 
 func (task *Task) copySeed() []byte {
@@ -401,8 +198,13 @@ func (task *Task) calClusterNeedDepositAmount(cluster *Cluster) (min, max *big.I
 	balanceDeci := decimal.NewFromBigInt(balance, 0)
 
 	totalOpFee := decimal.Zero
-	for _, op := range cluster.operators {
-		totalOpFee = totalOpFee.Add(op.Fee)
+	for _, opId := range cluster.operatorIds {
+		operator, exist := task.targetOperators[opId]
+		if !exist {
+			return nil, nil, fmt.Errorf("operator %d not exist in target operators", opId)
+		}
+
+		totalOpFee = totalOpFee.Add(operator.Fee)
 	}
 	totalOpFee = totalOpFee.Add(networkFeeDeci)
 

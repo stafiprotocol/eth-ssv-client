@@ -2,6 +2,7 @@ package task
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"math/big"
@@ -239,7 +240,6 @@ func (task *Task) updateSsvOffchainState() (retErr error) {
 			"latestValidatorAddedBlockNumber":   c.latestValidatorAddedBlockNumber,
 			"latestValidatorRemovedBlockNumber": c.latestValidatorRemovedBlockNumber,
 			"balance":                           c.balance.String(),
-			"hasTargetOperatorIds":              c.hasTargetOperators,
 		}).Debug("clusterInfo")
 
 	}
@@ -254,38 +254,34 @@ func (task *Task) updateCluster(operatorIds []uint64, newCluster *ssv_network.IS
 	cltKey := clusterKey(operatorIds)
 	cluster, exist := task.clusters[cltKey]
 	if !exist {
-		operatorDetails := make([]*keyshare.Operator, len(operatorIds))
 
-		hasTargetOperators := false
-		for i, opId := range operatorIds {
-			for _, id := range task.targetOperatorIds {
-				if id == opId {
-					hasTargetOperators = true
-					break
+		for _, opId := range operatorIds {
+			if _, exist := task.targetOperators[opId]; !exist {
+				owner, fee, validatorCount, _, _, isActive, err := task.ssvNetworkViewsContract.GetOperatorById(nil, opId)
+				if err != nil {
+					return errors.Wrap(err, "ssvNetworkViewsContract.GetOperatorById failed")
 				}
-			}
 
-			operatorDetail, err := task.mustGetOperatorDetail(task.ssvApiNetwork, opId)
-			if err != nil {
-				return err
-			}
-			feeDeci, err := decimal.NewFromString(operatorDetail.Fee)
-			if err != nil {
-				return err
-			}
-			operatorDetails[i] = &keyshare.Operator{
-				Id:        opId,
-				PublicKey: operatorDetail.PublicKey,
-				Fee:       feeDeci,
+				operatorAddedEvent, err := task.ssvNetworkContract.FilterOperatorAdded(nil, []uint64{opId}, []common.Address{owner})
+				if err != nil {
+					return errors.Wrapf(err, "ssvNetworkContract.FilterOperatorAdded failed, opId %d owner %s", opId, owner.String())
+				}
+
+				task.targetOperators[opId] = &keyshare.Operator{
+					Id:             opId,
+					PublicKey:      base64.StdEncoding.EncodeToString(operatorAddedEvent.Event.PublicKey),
+					Fee:            decimal.NewFromBigInt(fee, 0),
+					Active:         isActive,
+					ValidatorCount: uint64(validatorCount),
+				}
+
 			}
 		}
 
 		cluster = &Cluster{
-			operators:          operatorDetails,
 			operatorIds:        operatorIds,
 			latestCluster:      newCluster,
 			managingValidators: make(map[int]struct{}),
-			hasTargetOperators: hasTargetOperators,
 		}
 
 		task.clusters[cltKey] = cluster

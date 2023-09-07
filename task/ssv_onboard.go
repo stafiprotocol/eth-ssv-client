@@ -72,7 +72,16 @@ func (task *Task) checkAndOnboardOnSSV() error {
 		}
 
 		// encrypt share
-		encryptShares, err := keyshare.EncryptShares(val.privateKey.Marshal(), cluster.operators)
+		clusterOperators := make([]*keyshare.Operator, 0)
+		for _, id := range cluster.operatorIds {
+			operator, exist := task.targetOperators[id]
+			if !exist {
+				return fmt.Errorf("operator %d not exist in target operators", id)
+			}
+
+			clusterOperators = append(clusterOperators, operator)
+		}
+		encryptShares, err := keyshare.EncryptShares(val.privateKey.Marshal(), clusterOperators)
 		if err != nil {
 			return err
 		}
@@ -87,7 +96,7 @@ func (task *Task) checkAndOnboardOnSSV() error {
 			return errors.Wrap(err, "task.calClusterNeedDepositAmount failed")
 		}
 
-		for i := range cluster.operators {
+		for i := range clusterOperators {
 			shareBts, err := base64.StdEncoding.DecodeString(encryptShares[i].EncryptedKey)
 			if err != nil {
 				return errors.Wrap(err, "EncryptedKey decode failed")
@@ -201,14 +210,14 @@ func (task *Task) checkAndOnboardOnSSV() error {
 		}
 
 		// check validator status on ssv api
-		validator, err := task.mustGetValidator(task.ssvApiNetwork, hex.EncodeToString(val.privateKey.PublicKey().Marshal()))
+		active, err := task.ssvNetworkViewsContract.GetValidator(nil, task.connectionOfSsvAccount.Keypair().CommonAddress(), val.privateKey.PublicKey().Marshal())
 		if err != nil {
-			logrus.Errorf("task.mustGetValidator err: %s, will shutdown.", err.Error())
+			logrus.Errorf("ssvNetworkViewsContract.GetValidator err: %s, will shutdown.", err.Error())
 			utils.ShutdownRequestChannel <- struct{}{}
 			return err
 		}
-		if !validator.IsValid {
-			logrus.Errorf("val: %s is invalid from sssv api, will shutdown.", hex.EncodeToString(val.privateKey.PublicKey().Marshal()))
+		if !active {
+			logrus.Errorf("val: %s is inactive, will shutdown.", hex.EncodeToString(val.privateKey.PublicKey().Marshal()))
 			utils.ShutdownRequestChannel <- struct{}{}
 			return nil
 		}

@@ -66,7 +66,9 @@ func startSsvCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-
+			if len(cfg.TargetOperators) < 4 {
+				return fmt.Errorf("target operators must have at least 4")
+			}
 			//interrupt signal
 			ctx := utils.ShutdownListener()
 

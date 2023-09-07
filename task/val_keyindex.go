@@ -40,7 +40,7 @@ func (task *Task) checkAndRepairValNexKeyIndex() error {
 			break
 		}
 
-		valStatus := valStatusUnInitiated
+		var valStatus uint8
 		switch pubkeyStatus {
 		case utils.ValidatorStatusUnInitial:
 			return fmt.Errorf("should not happen here")
