@@ -21,6 +21,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/chainbridge/utils/crypto/secp256k1"
 	erc20 "github.com/stafiprotocol/eth-ssv-client/bindings/Erc20"
+	"github.com/stafiprotocol/eth-ssv-client/bindings/Settings"
 	ssv_network "github.com/stafiprotocol/eth-ssv-client/bindings/SsvNetwork"
 	ssv_network_views "github.com/stafiprotocol/eth-ssv-client/bindings/SsvNetworkViews"
 	storage "github.com/stafiprotocol/eth-ssv-client/bindings/Storage"
@@ -125,12 +126,15 @@ type Task struct {
 	ssvNetworkViewsContract *ssv_network_views.SsvNetworkViews
 	ssvTokenContract        *erc20.Erc20
 	withdrawContract        *withdraw.Withdraw
+	networkSettingsContract *network_settings.NetworkSettings
 
 	ssvNetworkAbi abi.ABI
 
-	nextKeyIndex               int
-	dealedEth1Block            uint64 // for offchain state
-	validatorsPerOperatorLimit uint64
+	nextKeyIndex                int
+	dealedEth1Block             uint64 // for offchain state
+	validatorsPerOperatorLimit  uint64
+	ValidatorsPerSuperNodeLimit uint64
+	ValidatorsLimitByGas        uint64 // gas = 162917*n+268921
 
 	validatorsByKeyIndex      map[int]*Validator    // key index => validator, cache all validators(pending/active/exist) by keyIndex
 	validatorsByPubkey        map[string]*Validator // pubkey => validator, cache all validators(pending/active/exist) by pubkey
@@ -198,6 +202,15 @@ func NewTask(cfg *config.Config, seed []byte, isViewMode bool, superNodeKeyPair,
 	if gasLimitDeci.LessThanOrEqual(decimal.Zero) {
 		return nil, fmt.Errorf("gas limit is zero")
 	}
+
+	// gas = 162917*n+268921
+	n := gasLimitDeci.Sub(decimal.NewFromInt(268921)).Div(decimal.NewFromInt(162917))
+	validatorsLimitByGas := n.BigInt().Uint64()
+	if validatorsLimitByGas == 0 {
+		return nil, fmt.Errorf("gasLimit %s too small", cfg.GasLimit)
+	}
+	logrus.Debug("validatorsLimitByGas ", validatorsLimitByGas)
+
 	maxGasPriceDeci, err := decimal.NewFromString(cfg.MaxGasPrice)
 	if err != nil {
 		return nil, err
@@ -224,19 +237,20 @@ func NewTask(cfg *config.Config, seed []byte, isViewMode bool, superNodeKeyPair,
 	}
 
 	s := &Task{
-		stop:                make(chan struct{}),
-		eth1Endpoint:        cfg.Eth1Endpoint,
-		eth2Endpoint:        cfg.Eth2Endpoint,
-		eth1Client:          eth1client,
-		superNodeKeyPair:    superNodeKeyPair,
-		ssvKeyPair:          ssvKeyPair,
-		seed:                seed,
-		isViewMode:          isViewMode,
-		gasLimit:            gasLimitDeci.BigInt(),
-		maxGasPrice:         maxGasPriceDeci.BigInt(),
-		poolReservedBalance: poolReservedBalance,
-		eth1StartHeight:     utils.TheMergeBlockNumber,
-		targetOperatorIds:   cfg.TargetOperators,
+		stop:                 make(chan struct{}),
+		eth1Endpoint:         cfg.Eth1Endpoint,
+		eth2Endpoint:         cfg.Eth2Endpoint,
+		eth1Client:           eth1client,
+		superNodeKeyPair:     superNodeKeyPair,
+		ssvKeyPair:           ssvKeyPair,
+		seed:                 seed,
+		isViewMode:           isViewMode,
+		gasLimit:             gasLimitDeci.BigInt(),
+		maxGasPrice:          maxGasPriceDeci.BigInt(),
+		poolReservedBalance:  poolReservedBalance,
+		eth1StartHeight:      utils.TheMergeBlockNumber,
+		targetOperatorIds:    cfg.TargetOperators,
+		ValidatorsLimitByGas: validatorsLimitByGas,
 
 		storageContractAddress:         common.HexToAddress(cfg.Contracts.StorageContractAddress),
 		ssvNetworkContractAddress:      common.HexToAddress(cfg.Contracts.SsvNetworkAddress),
@@ -359,7 +373,6 @@ func (task *Task) Start() error {
 			Active:         isActive,
 			ValidatorCount: uint64(validatorCount),
 		}
-
 	}
 
 	err = task.initValNextKeyIndex()
@@ -454,6 +467,15 @@ func (task *Task) initContract() error {
 		return err
 	}
 	task.userDepositContract, err = user_deposit.NewUserDeposit(userDepositAddress, task.eth1Client)
+	if err != nil {
+		return err
+	}
+
+	networkSettingsAddress, err := utils.GetContractAddress(storageContract, "stafiNetworkSettings")
+	if err != nil {
+		return err
+	}
+	task.networkSettingsContract, err = network_settings.NewNetworkSettings(networkSettingsAddress, task.eth1Client)
 	if err != nil {
 		return err
 	}

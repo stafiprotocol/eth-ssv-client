@@ -14,6 +14,14 @@ import (
 )
 
 func (task *Task) updateValStatus() error {
+	validatorsLimit, err := task.networkSettingsContract.GetSuperNodePubkeyLimit(nil)
+	if err != nil {
+		return err
+	}
+	task.ValidatorsPerSuperNodeLimit = validatorsLimit.Uint64()
+
+	logrus.Debugf("ValidatorsPerSuperNodeLimit %d", task.ValidatorsPerSuperNodeLimit)
+
 	for i := 0; i < task.nextKeyIndex; i++ {
 		val, exist := task.validatorsByKeyIndex[i]
 		if !exist {

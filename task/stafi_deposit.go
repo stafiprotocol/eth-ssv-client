@@ -52,6 +52,21 @@ func (task *Task) checkAndDeposit() (retErr error) {
 
 	// validators need deposit
 	depositLen := poolBalanceDeci.Div(minAmountNeedDeposit).IntPart()
+	maxAvailableDepositLen := uint64(0)
+	if task.ValidatorsPerSuperNodeLimit > uint64(len(task.validatorsByKeyIndex)) {
+		maxAvailableDepositLen = task.ValidatorsPerSuperNodeLimit - uint64(len(task.validatorsByKeyIndex))
+	}
+	if depositLen > int64(maxAvailableDepositLen) {
+		depositLen = int64(maxAvailableDepositLen)
+	}
+	if depositLen > int64(task.ValidatorsLimitByGas) {
+		depositLen = int64(task.ValidatorsLimitByGas)
+	}
+
+	if depositLen == 0 {
+		return nil
+	}
+
 	validatorPubkeys := make([][]byte, depositLen)
 	sigs := make([][]byte, depositLen)
 	dataRoots := make([][32]byte, depositLen)
