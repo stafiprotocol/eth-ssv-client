@@ -13,7 +13,7 @@ import (
 // offboard validator from cluster if:
 // 0 exit on beacon
 // OR
-// 1 operator is not active
+// 1 operator is not active/fee not match
 func (task *Task) checkAndOffboardOnSSV() error {
 	if !task.offchainStateIsLatest() {
 		return nil
@@ -58,6 +58,24 @@ func (task *Task) checkAndOffboardOnSSV() error {
 						shouldOffboard = true
 						break
 					}
+				}
+			}
+		}
+
+		// life no end but some operator's fee changed
+		if val.statusOnStafi == valStatusStaked &&
+			(val.statusOnSsv == valStatusRegistedOnSsvValid || val.statusOnSsv == valStatusRegistedOnSsvInvalid) &&
+			val.statusOnBeacon == valStatusActiveOnBeacon {
+
+			preSelectedOperators, err := task.preSelectOperators()
+			if err != nil {
+				return err
+			}
+			midFee := preSelectedOperators[len(preSelectedOperators)/2].Fee
+			for _, opId := range cluster.operatorIds {
+				if task.targetOperators[opId].Fee.GreaterThan(midFee) {
+					shouldOffboard = true
+					break
 				}
 			}
 		}

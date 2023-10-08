@@ -12,6 +12,7 @@ import (
 	"github.com/stafiprotocol/eth-ssv-client/bindings/OperatorPubkey"
 	ssv_network "github.com/stafiprotocol/eth-ssv-client/bindings/SsvNetwork"
 	ssv_network_views "github.com/stafiprotocol/eth-ssv-client/bindings/SsvNetworkViews"
+	"github.com/stafiprotocol/eth-ssv-client/pkg/keyshare"
 	"github.com/stafiprotocol/eth-ssv-client/pkg/utils"
 )
 
@@ -27,23 +28,9 @@ func clusterKey(operators []uint64) string {
 	return key.String()
 }
 
-// fetch new cluster and cache
-func (task *Task) fetchNewClusterAndSave() error {
-	operatorIds := make([]uint64, 0)
-
-	// select from target operator
+func (task *Task) preSelectOperators() ([]*keyshare.Operator, error) {
+	preSelectedOperators := make([]*keyshare.Operator, 0)
 	for _, operator := range task.targetOperators {
-		// check enough and reset if already exist
-		if len(operatorIds) == clusterOpAmount {
-			cltKey := clusterKey(operatorIds)
-			if _, exist := task.clusters[cltKey]; exist {
-				operatorIds = make([]uint64, 0)
-				continue
-			}
-
-			break
-		}
-
 		if !operator.Active {
 			continue
 		}
@@ -51,24 +38,66 @@ func (task *Task) fetchNewClusterAndSave() error {
 			continue
 		}
 
-		operatorIds = append(operatorIds, operator.Id)
+		preSelectedOperators = append(preSelectedOperators, operator)
 	}
 
-	if len(operatorIds) != clusterOpAmount {
+	if len(preSelectedOperators) < opInActiveThreshold*2 {
+		return nil, fmt.Errorf("preSelectedOperators number %d less than %d", len(preSelectedOperators), opInActiveThreshold*2)
+	}
+	sort.Slice(preSelectedOperators, func(i, j int) bool {
+		if preSelectedOperators[i].Fee.Equal(preSelectedOperators[j].Fee) {
+			return preSelectedOperators[i].Id < preSelectedOperators[j].Id
+		} else {
+			return preSelectedOperators[i].Fee.LessThan(preSelectedOperators[j].Fee)
+		}
+	})
+
+	return preSelectedOperators, nil
+}
+
+// fetch new cluster and cache
+// operators sort by fee asc
+func (task *Task) fetchNewClusterAndSave() error {
+	preSelectedOperators, err := task.preSelectOperators()
+	if err != nil {
+		return err
+	}
+	midFee := preSelectedOperators[len(preSelectedOperators)/2].Fee
+
+	selectedOperatorIds := make([]uint64, 0)
+	for _, operator := range preSelectedOperators {
+		if operator.Fee.GreaterThan(midFee) {
+			break
+		}
+		// check enough and reset if already exist
+		if len(selectedOperatorIds) == clusterOpAmount {
+			cltKey := clusterKey(selectedOperatorIds)
+			if _, exist := task.clusters[cltKey]; exist {
+				selectedOperatorIds = make([]uint64, 0)
+				continue
+			}
+
+			break
+		}
+
+		selectedOperatorIds = append(selectedOperatorIds, operator.Id)
+	}
+
+	if len(selectedOperatorIds) != clusterOpAmount {
 		return fmt.Errorf("not select enough operators for cluster, please check available operators")
 	}
 
-	sort.Slice(operatorIds, func(i, j int) bool {
-		return operatorIds[i] < operatorIds[j]
+	sort.Slice(selectedOperatorIds, func(i, j int) bool {
+		return selectedOperatorIds[i] < selectedOperatorIds[j]
 	})
 
 	logrus.WithFields(logrus.Fields{
-		"ids": operatorIds,
-	}).Debug("final selected operators", operatorIds)
+		"ids": selectedOperatorIds,
+	}).Debug("final selected operators")
 
-	cltKey := clusterKey(operatorIds)
+	cltKey := clusterKey(selectedOperatorIds)
 	task.clusters[cltKey] = &Cluster{
-		operatorIds:                       operatorIds,
+		operatorIds:                       selectedOperatorIds,
 		latestUpdateClusterBlockNumber:    0,
 		latestValidatorAddedBlockNumber:   0,
 		latestValidatorRemovedBlockNumber: 0,
@@ -85,22 +114,33 @@ func (task *Task) fetchNewClusterAndSave() error {
 	return nil
 }
 
-func (task *Task) selectClusterForRegister() (*Cluster, error) {
+func (task *Task) preSelectClusterForRegister() ([]*Cluster, error) {
+	preSelectOperators, err := task.preSelectOperators()
+	if err != nil {
+		return nil, err
+	}
+	midFee := preSelectOperators[len(preSelectOperators)/2].Fee
+
 	clusterSelected := make([]*Cluster, 0)
 Clusters:
 	for _, c := range task.clusters {
-		// check val amount limit per operator
 		for _, opId := range c.operatorIds {
 			operator, exist := task.targetOperators[opId]
 			if !exist {
 				return nil, fmt.Errorf("operator %d not exist in target operators", opId)
 			}
 
+			// check val amount limit per operator
 			if operator.ValidatorCount+valAmountThreshold > task.validatorsPerOperatorLimit {
 				continue Clusters
 			}
 
+			// check active
 			if !operator.Active {
+				continue Clusters
+			}
+			// check fee
+			if operator.Fee.GreaterThan(midFee) {
 				continue Clusters
 			}
 		}
@@ -108,43 +148,36 @@ Clusters:
 		clusterSelected = append(clusterSelected, c)
 	}
 
-	if len(clusterSelected) == 0 {
+	return clusterSelected, nil
+}
+
+func (task *Task) selectClusterForRegister() (*Cluster, error) {
+	clusterSelectedFirst, err := task.preSelectClusterForRegister()
+	if err != nil {
+		return nil, err
+	}
+
+	if len(clusterSelectedFirst) == 0 {
 		err := task.fetchNewClusterAndSave()
 		if err != nil {
 			return nil, err
 		}
 	}
 
-Clusters2:
-	for _, c := range task.clusters {
-		// check val amount limit per operator
-		for _, opId := range c.operatorIds {
-			operator, exist := task.targetOperators[opId]
-			if !exist {
-				return nil, fmt.Errorf("operator %d not exist in target operators", opId)
-			}
-
-			if operator.ValidatorCount+valAmountThreshold > task.validatorsPerOperatorLimit {
-				continue Clusters2
-			}
-
-			if !operator.Active {
-				continue Clusters2
-			}
-		}
-
-		clusterSelected = append(clusterSelected, c)
+	clusterSelectedFinal, err := task.preSelectClusterForRegister()
+	if err != nil {
+		return nil, err
 	}
 
-	if len(clusterSelected) == 0 {
+	if len(clusterSelectedFinal) == 0 {
 		return nil, fmt.Errorf("select cluster faield, please check target operators")
 	}
 
-	sort.Slice(clusterSelected, func(i, j int) bool {
-		return len(clusterSelected[i].managingValidators) < len(clusterSelected[j].managingValidators)
+	sort.Slice(clusterSelectedFinal, func(i, j int) bool {
+		return len(clusterSelectedFinal[i].managingValidators) < len(clusterSelectedFinal[j].managingValidators)
 	})
 
-	return clusterSelected[0], nil
+	return clusterSelectedFinal[0], nil
 }
 
 func (task *Task) mustGetSuperNodePubkeyStatus(pubkey []byte) (uint8, error) {

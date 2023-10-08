@@ -47,6 +47,8 @@ var (
 	blocksOfOneYear = decimal.NewFromInt(2629800)
 )
 
+const minNumberOfTargetOperators = 10
+
 var (
 	devPostUptimeUrl     = "https://test-drop-api.stafi.io/reth/v1/uploadEjectorUptime"
 	mainnetPostUptimeUrl = "https://drop-api.stafi.io/reth/v1/uploadEjectorUptime"
@@ -192,6 +194,9 @@ func NewTask(cfg *config.Config, seed []byte, isViewMode bool, superNodeKeyPair,
 	}
 	if !common.IsHexAddress(cfg.Contracts.SsvTokenAddress) {
 		return nil, fmt.Errorf("SsvTokenAddress contract address fmt err")
+	}
+	if len(cfg.TargetOperators) < minNumberOfTargetOperators {
+		return nil, fmt.Errorf("target operators number %d less than %d", len(cfg.TargetOperators), minNumberOfTargetOperators)
 	}
 
 	gasLimitDeci, err := decimal.NewFromString(cfg.GasLimit)
