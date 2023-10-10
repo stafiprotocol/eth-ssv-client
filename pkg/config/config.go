@@ -4,7 +4,6 @@
 package config
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/BurntSushi/toml"
@@ -59,6 +58,5 @@ func loadSysConfig(path string, config *Config) error {
 	if _, err := toml.DecodeFile(path, config); err != nil {
 		return err
 	}
-	fmt.Println("load config success")
 	return nil
 }

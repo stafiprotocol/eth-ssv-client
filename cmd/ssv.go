@@ -31,7 +31,7 @@ func startSsvCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Printf("operators path: %s\n", configPath)
+			fmt.Printf("operators path: %s\n", operatorsPath)
 
 			viewMode, err := cmd.Flags().GetBool(flagViewMode)
 			if err != nil {

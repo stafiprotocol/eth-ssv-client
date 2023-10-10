@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/base64"
 	"fmt"
 	"os"
 
@@ -47,6 +48,11 @@ func fetchOperatorsCmd() *cobra.Command {
 
 			ssvOperators := SsvOperators{Operators: make([]Operator, len(operators))}
 			for i, op := range operators {
+				_, err := base64.StdEncoding.DecodeString(op.PublicKey)
+				if err != nil {
+					fmt.Printf("operator: %d pubkey decode err, will skip this operator. pubkey: %s\n", op.ID, op.PublicKey)
+					continue
+				}
 				ssvOperators.Operators[i] = Operator{Id: uint64(op.ID), Pubkey: op.PublicKey}
 			}
 

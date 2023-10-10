@@ -247,7 +247,7 @@ func NewTask(cfg *config.Config, seed []byte, isViewMode bool, superNodeKeyPair,
 	for _, op := range cfg.Operators {
 		_, err := base64.StdEncoding.DecodeString(op.Pubkey)
 		if err != nil {
-			logrus.Warnf("operator: %d pubkey decode err, will skip. pubkey: %s", op.Id, op.Pubkey)
+			logrus.Warnf("operator: %d pubkey decode err, will skip this operator. pubkey: %s", op.Id, op.Pubkey)
 			continue
 		}
 		opPubkes[op.Id] = op.Pubkey
