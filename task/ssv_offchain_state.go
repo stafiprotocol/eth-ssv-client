@@ -256,27 +256,19 @@ func (task *Task) updateCluster(operatorIds []uint64, newCluster *ssv_network.IS
 
 		for _, opId := range operatorIds {
 			if _, exist := task.targetOperators[opId]; !exist {
-				owner, fee, validatorCount, _, _, isActive, err := task.ssvNetworkViewsContract.GetOperatorById(nil, opId)
+				_, fee, validatorCount, _, _, isActive, err := task.ssvNetworkViewsContract.GetOperatorById(nil, opId)
 				if err != nil {
 					return errors.Wrap(err, "ssvNetworkViewsContract.GetOperatorById failed")
 				}
 
-				operatorAddedEvent, err := task.ssvNetworkContract.FilterOperatorAdded(nil, []uint64{opId}, []common.Address{owner})
-				if err != nil {
-					return errors.Wrapf(err, "ssvNetworkContract.FilterOperatorAdded failed, opId %d owner %s", opId, owner.String())
-				}
-				if !operatorAddedEvent.Next() {
-					return fmt.Errorf("filter operator pubkey failed, opId %d owner %s", opId, owner.String())
-				}
-
-				pubkey, err := unpackOperatorPublicKey(operatorAddedEvent.Event.PublicKey)
-				if err != nil {
-					return err
+				willUsePubkey := ""
+				if pubkey, exist := task.operatorPubkeys[opId]; exist {
+					willUsePubkey = pubkey
 				}
 
 				task.targetOperators[opId] = &keyshare.Operator{
 					Id:             opId,
-					PublicKey:      string(pubkey),
+					PublicKey:      willUsePubkey,
 					Fee:            decimal.NewFromBigInt(fee, 0),
 					Active:         isActive,
 					ValidatorCount: uint64(validatorCount),

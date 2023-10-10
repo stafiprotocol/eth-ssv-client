@@ -42,3 +42,4 @@ log_file/
 log_data/
 conf_dev.*
 conf_main.*
+operators.toml

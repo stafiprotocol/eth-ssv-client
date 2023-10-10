@@ -24,6 +24,7 @@ type Config struct {
 	TargetOperators []uint64
 
 	Contracts Contracts
+	Operators []Operator
 }
 
 type Contracts struct {
@@ -31,6 +32,11 @@ type Contracts struct {
 	SsvNetworkAddress      string
 	SsvNetworkViewsAddress string
 	SsvTokenAddress        string
+}
+
+type Operator struct {
+	Id     uint64
+	Pubkey string
 }
 
 func Load(configFilePath string) (*Config, error) {

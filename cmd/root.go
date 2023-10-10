@@ -12,13 +12,17 @@ var (
 )
 
 const (
-	flagKeystorePath = "keystore_path"
-	flagLogLevel     = "log_level"
-	flagConfigPath   = "config"
-	flagViewMode     = "view_mode"
+	flagKeystorePath  = "keystore_path"
+	flagLogLevel      = "log_level"
+	flagConfigPath    = "config"
+	flagOperatorsPath = "operators"
+	flagViewMode      = "view_mode"
+	flagNetwork       = "network"
 
-	defaultKeystorePath = "./keys"
-	defaultConfigPath   = "./config.toml"
+	defaultKeystorePath  = "./keys"
+	defaultConfigPath    = "./config.toml"
+	defaultOperatorsPath = "./operators.toml"
+	defaultNetwork       = "prater"
 )
 
 // NewRootCmd returns the root command.
@@ -38,6 +42,7 @@ func NewRootCmd() *cobra.Command {
 		importAccountCmd(),
 		importMnemonicCmd(),
 		startSsvCmd(),
+		fetchOperatorsCmd(),
 		versionCmd(),
 	)
 	return rootCmd

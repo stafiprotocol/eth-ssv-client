@@ -27,6 +27,12 @@ func startSsvCmd() *cobra.Command {
 			}
 			fmt.Printf("config path: %s\n", configPath)
 
+			operatorsPath, err := cmd.Flags().GetString(flagOperatorsPath)
+			if err != nil {
+				return err
+			}
+			fmt.Printf("operators path: %s\n", configPath)
+
 			viewMode, err := cmd.Flags().GetBool(flagViewMode)
 			if err != nil {
 				return err
@@ -46,6 +52,16 @@ func startSsvCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			cfgSub, err := config.Load(operatorsPath)
+			if err != nil {
+				return err
+			}
+			if len(cfgSub.Operators) == 0 {
+				return fmt.Errorf("operators file: %s is empty", operatorsPath)
+			}
+
+			cfg.Operators = cfgSub.Operators
+
 			logrus.Infof(
 				`config info:
   logFilePath: %s
@@ -119,6 +135,7 @@ func startSsvCmd() *cobra.Command {
 	}
 
 	cmd.Flags().String(flagConfigPath, defaultConfigPath, "Config file path")
+	cmd.Flags().String(flagOperatorsPath, defaultOperatorsPath, "Operators file path")
 	cmd.Flags().String(flagLogLevel, logrus.InfoLevel.String(), "The logging level (trace|debug|info|warn|error|fatal|panic)")
 	cmd.Flags().Bool(flagViewMode, false, "Start with view mode")
 

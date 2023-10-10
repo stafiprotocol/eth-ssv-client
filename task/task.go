@@ -3,6 +3,7 @@ package task
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"fmt"
 	"math/big"
 	"reflect"
@@ -100,6 +101,7 @@ type Task struct {
 	postUptimeUrl       string
 	isViewMode          bool
 	targetOperatorIds   []uint64
+	operatorPubkeys     map[uint64]string
 
 	storageContractAddress         common.Address
 	ssvNetworkContractAddress      common.Address
@@ -241,6 +243,16 @@ func NewTask(cfg *config.Config, seed []byte, isViewMode bool, superNodeKeyPair,
 		return nil, err
 	}
 
+	opPubkes := make(map[uint64]string)
+	for _, op := range cfg.Operators {
+		_, err := base64.StdEncoding.DecodeString(op.Pubkey)
+		if err != nil {
+			logrus.Warnf("operator: %d pubkey decode err, will skip. pubkey: %s", op.Id, op.Pubkey)
+			continue
+		}
+		opPubkes[op.Id] = op.Pubkey
+	}
+
 	s := &Task{
 		stop:                 make(chan struct{}),
 		eth1Endpoint:         cfg.Eth1Endpoint,
@@ -256,6 +268,7 @@ func NewTask(cfg *config.Config, seed []byte, isViewMode bool, superNodeKeyPair,
 		eth1StartHeight:      utils.TheMergeBlockNumber,
 		targetOperatorIds:    cfg.TargetOperators,
 		ValidatorsLimitByGas: validatorsLimitByGas,
+		operatorPubkeys:      opPubkes,
 
 		storageContractAddress:         common.HexToAddress(cfg.Contracts.StorageContractAddress),
 		ssvNetworkContractAddress:      common.HexToAddress(cfg.Contracts.SsvNetworkAddress),
@@ -349,7 +362,7 @@ func (task *Task) Start() error {
 			return fmt.Errorf("duplicate operator id: %d", opId)
 		}
 
-		owner, fee, validatorCount, _, isPrivate, isActive, err := task.ssvNetworkViewsContract.GetOperatorById(nil, opId)
+		_, fee, validatorCount, _, isPrivate, isActive, err := task.ssvNetworkViewsContract.GetOperatorById(nil, opId)
 		if err != nil {
 			return errors.Wrap(err, "ssvNetworkViewsContract.GetOperatorById failed")
 		}
@@ -360,20 +373,14 @@ func (task *Task) Start() error {
 			return fmt.Errorf("target operator %d is not active", opId)
 		}
 
-		operatorAddedEvent, err := task.ssvNetworkContract.FilterOperatorAdded(nil, []uint64{opId}, []common.Address{owner})
-		if err != nil {
-			return errors.Wrapf(err, "ssvNetworkContract.FilterOperatorAdded failed, opId %d owner %s", opId, owner.String())
+		pubkey, exist := task.operatorPubkeys[opId]
+		if !exist {
+			return fmt.Errorf("operator %d pubkey not exist", opId)
 		}
-		if !operatorAddedEvent.Next() {
-			return fmt.Errorf("filter operator pubkey failed, opId %d owner %s", opId, owner.String())
-		}
-		pubkey, err := unpackOperatorPublicKey(operatorAddedEvent.Event.PublicKey)
-		if err != nil {
-			return err
-		}
+
 		task.targetOperators[opId] = &keyshare.Operator{
 			Id:             opId,
-			PublicKey:      string(pubkey),
+			PublicKey:      pubkey,
 			Fee:            decimal.NewFromBigInt(fee, 0),
 			Active:         isActive,
 			ValidatorCount: uint64(validatorCount),

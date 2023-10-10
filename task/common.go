@@ -31,6 +31,10 @@ func clusterKey(operators []uint64) string {
 func (task *Task) preSelectOperators() ([]*keyshare.Operator, error) {
 	preSelectedOperators := make([]*keyshare.Operator, 0)
 	for _, operator := range task.targetOperators {
+		if len(operator.PublicKey) == 0 {
+			continue
+		}
+
 		if !operator.Active {
 			continue
 		}
@@ -44,6 +48,7 @@ func (task *Task) preSelectOperators() ([]*keyshare.Operator, error) {
 	if len(preSelectedOperators) < opInActiveThreshold*2 {
 		return nil, fmt.Errorf("preSelectedOperators number %d less than %d", len(preSelectedOperators), opInActiveThreshold*2)
 	}
+
 	sort.Slice(preSelectedOperators, func(i, j int) bool {
 		if preSelectedOperators[i].Fee.Equal(preSelectedOperators[j].Fee) {
 			return preSelectedOperators[i].Id < preSelectedOperators[j].Id
@@ -128,6 +133,10 @@ Clusters:
 			operator, exist := task.targetOperators[opId]
 			if !exist {
 				return nil, fmt.Errorf("operator %d not exist in target operators", opId)
+			}
+			// check pubkey
+			if len(operator.PublicKey) == 0 {
+				continue Clusters
 			}
 
 			// check val amount limit per operator
