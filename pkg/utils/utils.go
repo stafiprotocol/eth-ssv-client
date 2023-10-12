@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"math/big"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -17,8 +18,10 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/forta-network/go-multicall"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
+	ssv_network_views "github.com/stafiprotocol/eth-ssv-client/bindings/SsvNetworkViews"
 )
 
 var location *time.Location
@@ -285,4 +288,38 @@ func EventTopics(a abi.ABI, names ...string) ([]common.Hash, error) {
 		}
 	}
 	return topics, nil
+}
+
+type OperatorInfoOnChain struct {
+	Owner          common.Address
+	Fee            *big.Int
+	ValidatorCount uint32
+	WhiteList      common.Address
+	IsPrivete      bool
+	IsActive       bool
+}
+
+func BatchGetOperators(multicaller *multicall.Caller, ssvNetworkViewsContractAddress common.Address, ids []uint64) (map[uint64]*OperatorInfoOnChain, error) {
+	contract, err := multicall.NewContract(ssv_network_views.SsvNetworkViewsABI, ssvNetworkViewsContractAddress.String())
+	if err != nil {
+		return nil, nil
+	}
+
+	calls := make([]*multicall.Call, len(ids))
+	for i, id := range ids {
+		calls[i] = contract.NewCall(new(OperatorInfoOnChain), "getOperatorById", id)
+	}
+
+	_, err = multicaller.Call(nil, calls...)
+	if err != nil {
+		return nil, err
+	}
+	ops := make(map[uint64]*OperatorInfoOnChain, 0)
+	for i, call := range calls {
+		if call.Failed {
+			return nil, fmt.Errorf("call failed, id %d", ids[i])
+		}
+		ops[ids[i]] = call.Outputs.(*OperatorInfoOnChain)
+	}
+	return ops, nil
 }

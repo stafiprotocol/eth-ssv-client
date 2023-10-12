@@ -2,13 +2,10 @@ package task
 
 import (
 	"fmt"
-	"math/big"
-	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	ssv_network "github.com/stafiprotocol/eth-ssv-client/bindings/SsvNetwork"
-	ssv_network_views "github.com/stafiprotocol/eth-ssv-client/bindings/SsvNetworkViews"
 )
 
 func (task *Task) checkAndWithdrawOnSSV() error {
@@ -22,17 +19,7 @@ func (task *Task) checkAndWithdrawOnSSV() error {
 			continue
 		}
 
-		balance, err := task.ssvNetworkViewsContract.GetBalance(nil, task.ssvKeyPair.CommonAddress(), cluster.operatorIds,
-			ssv_network_views.ISSVNetworkCoreCluster(*cluster.latestCluster))
-		if err != nil {
-			if strings.Contains(err.Error(), "execution reverted") {
-				balance = big.NewInt(0)
-			} else {
-				return err
-			}
-		}
-
-		if balance.Cmp(big.NewInt(0)) == 0 {
+		if cluster.balance.IsZero() {
 			continue
 		}
 
@@ -53,21 +40,21 @@ func (task *Task) checkAndWithdrawOnSSV() error {
 		}
 
 		// send tx
-		err = task.connectionOfSsvAccount.LockAndUpdateTxOpts()
+		err := task.connectionOfSsvAccount.LockAndUpdateTxOpts()
 		if err != nil {
 			return fmt.Errorf("LockAndUpdateTxOpts err: %s", err)
 		}
 		defer task.connectionOfSsvAccount.UnlockTxOpts()
 
 		withdrawTx, err := task.ssvNetworkContract.Withdraw(task.connectionOfSsvAccount.TxOpts(),
-			cluster.operatorIds, balance, ssv_network.ISSVNetworkCoreCluster(*cluster.latestCluster))
+			cluster.operatorIds, cluster.balance.BigInt(), ssv_network.ISSVNetworkCoreCluster(*cluster.latestCluster))
 		if err != nil {
 			return errors.Wrap(err, "ssvNetworkContract.RegisterValidator failed")
 		}
 
 		logrus.WithFields(logrus.Fields{
 			"txHash":     withdrawTx.Hash(),
-			"amount":     balance.String(),
+			"amount":     cluster.balance.String(),
 			"clusterKey": clusterKey(cluster.operatorIds),
 		}).Info("withdraw-tx")
 

@@ -14,6 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/forta-network/go-multicall"
 	"github.com/pkg/errors"
 	"github.com/prysmaticlabs/prysm/v3/config/params"
 	types "github.com/prysmaticlabs/prysm/v3/consensus-types/primitives"
@@ -131,6 +132,8 @@ type Task struct {
 	ssvTokenContract        *erc20.Erc20
 	withdrawContract        *withdraw.Withdraw
 	networkSettingsContract *network_settings.NetworkSettings
+
+	multicaler *multicall.Caller
 
 	ssvNetworkAbi abi.ABI
 
@@ -355,6 +358,12 @@ func (task *Task) Start() error {
 	if err != nil {
 		return err
 	}
+
+	caller, err := multicall.Dial(context.Background(), task.eth1Endpoint)
+	if err != nil {
+		return err
+	}
+	task.multicaler = caller
 
 	// check target operator id
 	for _, opId := range task.targetOperatorIds {

@@ -4,9 +4,9 @@ go 1.20
 
 require (
 	github.com/BurntSushi/toml v1.2.0
-	github.com/depocket/multicall-go v0.0.35
 	github.com/ethereum/go-ethereum v1.13.2
 	github.com/ferranbt/fastssz v0.1.3
+	github.com/forta-network/go-multicall v0.0.0-20230701154355-9467c4ddaa83
 	github.com/gin-gonic/gin v1.8.1
 	github.com/google/uuid v1.3.0
 	github.com/herumi/bls-eth-go-binary v1.31.0

@@ -1,8 +1,11 @@
 package task
 
 import (
+	"fmt"
+
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
+	"github.com/stafiprotocol/eth-ssv-client/pkg/utils"
 )
 
 func (task *Task) updateOperatorStatus() error {
@@ -16,25 +19,33 @@ func (task *Task) updateOperatorStatus() error {
 
 	logrus.Debugf("validatorsPerOperatorLimit %d", task.validatorsPerOperatorLimit)
 
-	for _, op := range task.targetOperators {
+	opIds := make([]uint64, 0)
+	for id := range task.targetOperators {
+		opIds = append(opIds, id)
+	}
 
-		// check val amount limit per operator
-		_, operatorFee, validatorCount, _, _, isActive, err := task.ssvNetworkViewsContract.GetOperatorById(nil, op.Id)
-		if err != nil {
-			return err
+	rspOperators, err := utils.BatchGetOperators(task.multicaler, task.ssvNetworkViewsContractAddress, opIds)
+	if err != nil {
+		return err
+	}
+
+	for _, op := range task.targetOperators {
+		rspOperator, exist := rspOperators[op.Id]
+		if !exist {
+			return fmt.Errorf("operator : %d not fetch", op.Id)
 		}
 
-		if isActive {
+		if rspOperator.IsActive {
 			op.Active = true
 		} else {
 			op.Active = false
 		}
 
 		// update fee
-		op.Fee = decimal.NewFromBigInt(operatorFee, 0)
+		op.Fee = decimal.NewFromBigInt(rspOperator.Fee, 0)
 
 		// update val count
-		op.ValidatorCount = uint64(validatorCount)
+		op.ValidatorCount = uint64(rspOperator.ValidatorCount)
 
 		logrus.WithFields(logrus.Fields{
 			"id":             op.Id,
