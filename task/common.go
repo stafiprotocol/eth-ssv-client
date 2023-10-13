@@ -9,7 +9,6 @@ import (
 
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
-	"github.com/stafiprotocol/eth-ssv-client/bindings/OperatorPubkey"
 	ssv_network "github.com/stafiprotocol/eth-ssv-client/bindings/SsvNetwork"
 	ssv_network_views "github.com/stafiprotocol/eth-ssv-client/bindings/SsvNetworkViews"
 	"github.com/stafiprotocol/eth-ssv-client/pkg/keyshare"
@@ -119,7 +118,7 @@ func (task *Task) fetchNewClusterAndSave() error {
 	return nil
 }
 
-func (task *Task) preSelectClusterForRegister() ([]*Cluster, error) {
+func (task *Task) selectLocalClusterForRegister() ([]*Cluster, error) {
 	preSelectOperators, err := task.preSelectOperators()
 	if err != nil {
 		return nil, err
@@ -161,7 +160,7 @@ Clusters:
 }
 
 func (task *Task) selectClusterForRegister() (*Cluster, error) {
-	clusterSelectedFirst, err := task.preSelectClusterForRegister()
+	clusterSelectedFirst, err := task.selectLocalClusterForRegister()
 	if err != nil {
 		return nil, err
 	}
@@ -173,7 +172,7 @@ func (task *Task) selectClusterForRegister() (*Cluster, error) {
 		}
 	}
 
-	clusterSelectedFinal, err := task.preSelectClusterForRegister()
+	clusterSelectedFinal, err := task.selectLocalClusterForRegister()
 	if err != nil {
 		return nil, err
 	}
@@ -273,20 +272,41 @@ func (task *Task) calClusterNeedDepositAmount(cluster *Cluster) (min, max *big.I
 
 }
 
-func unpackOperatorPublicKey(fieldBytes []byte) ([]byte, error) {
-	abi, err := operator_pubkey.OperatorPubkeyMetaData.GetAbi()
-	if err != nil {
-		return nil, err
-	}
-	outField, err := abi.Unpack("method", fieldBytes)
-	if err != nil {
-		return nil, fmt.Errorf("unpack: %w", err)
+// func unpackOperatorPublicKey(fieldBytes []byte) ([]byte, error) {
+// 	abi, err := operator_pubkey.OperatorPubkeyMetaData.GetAbi()
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	outField, err := abi.Unpack("method", fieldBytes)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("unpack: %w", err)
+// 	}
+
+// 	unpacked, ok := outField[0].([]byte)
+// 	if !ok {
+// 		return nil, fmt.Errorf("cast OperatorPublicKey to []byte: %w", err)
+// 	}
+
+// 	return unpacked, nil
+// }
+
+func (task *Task) mustGetOperatorDetail(network string, id uint64) (*utils.OperatorFromApi, error) {
+	retry := 0
+	var operatorDetail *utils.OperatorFromApi
+	var err error
+	for {
+		if retry > utils.RetryLimit {
+			return nil, fmt.Errorf("GetOperatorDetail reach retry limit")
+		}
+		operatorDetail, err = utils.GetOperatorFromApi(network, id)
+		if err != nil {
+			logrus.Warnf("GetOperatorDetail err: %s", err.Error())
+			time.Sleep(utils.RetryInterval)
+			retry++
+			continue
+		}
+		break
 	}
 
-	unpacked, ok := outField[0].([]byte)
-	if !ok {
-		return nil, fmt.Errorf("cast OperatorPublicKey to []byte: %w", err)
-	}
-
-	return unpacked, nil
+	return operatorDetail, nil
 }

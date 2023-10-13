@@ -41,7 +41,7 @@ func fetchOperatorsCmd() *cobra.Command {
 				return fmt.Errorf("unsupported network: %s", network)
 			}
 
-			operators, err := utils.GetSsvOperators(network)
+			operators, err := utils.GetAllSsvOperatorsFromApi(network)
 			if err != nil {
 				return err
 			}

@@ -371,27 +371,34 @@ func (task *Task) Start() error {
 			return fmt.Errorf("duplicate operator id: %d", opId)
 		}
 
-		_, fee, validatorCount, _, isPrivate, isActive, err := task.ssvNetworkViewsContract.GetOperatorById(nil, opId)
+		pubkey, exist := task.operatorPubkeys[opId]
+		if !exist {
+			return fmt.Errorf("operator %d pubkey not exist", opId)
+		}
+
+		_, fee, validatorCount, _, isPrivate, _, err := task.ssvNetworkViewsContract.GetOperatorById(nil, opId)
 		if err != nil {
 			return errors.Wrap(err, "ssvNetworkViewsContract.GetOperatorById failed")
 		}
 		if isPrivate {
 			return fmt.Errorf("target operator %d is private", opId)
 		}
-		if !isActive {
-			return fmt.Errorf("target operator %d is not active", opId)
+
+		// fetch acitve status from api
+		operatorFromApi, err := task.mustGetOperatorDetail(task.ssvApiNetwork, opId)
+		if err != nil {
+			return err
 		}
 
-		pubkey, exist := task.operatorPubkeys[opId]
-		if !exist {
-			return fmt.Errorf("operator %d pubkey not exist", opId)
+		if operatorFromApi.IsActive != 1 {
+			return fmt.Errorf("target operator %d is not active", opId)
 		}
 
 		task.targetOperators[opId] = &keyshare.Operator{
 			Id:             opId,
 			PublicKey:      pubkey,
 			Fee:            decimal.NewFromBigInt(fee, 0),
-			Active:         isActive,
+			Active:         true,
 			ValidatorCount: uint64(validatorCount),
 		}
 	}

@@ -24,28 +24,34 @@ func (task *Task) updateOperatorStatus() error {
 		opIds = append(opIds, id)
 	}
 
-	rspOperators, err := utils.BatchGetOperators(task.multicaler, task.ssvNetworkViewsContractAddress, opIds)
+	rspOperatorsOnChain, err := utils.BatchGetOperatorsOnChain(task.multicaler, task.ssvNetworkViewsContractAddress, opIds)
 	if err != nil {
 		return err
 	}
 
 	for _, op := range task.targetOperators {
-		rspOperator, exist := rspOperators[op.Id]
+		rspOperatorOnChain, exist := rspOperatorsOnChain[op.Id]
 		if !exist {
 			return fmt.Errorf("operator : %d not fetch", op.Id)
 		}
 
-		if rspOperator.IsActive {
+		// get active status from api
+		rspOperatorFromApi, err := task.mustGetOperatorDetail(task.ssvApiNetwork, op.Id)
+		if err != nil {
+			return err
+		}
+
+		if rspOperatorFromApi.IsActive == 1 {
 			op.Active = true
 		} else {
 			op.Active = false
 		}
 
 		// update fee
-		op.Fee = decimal.NewFromBigInt(rspOperator.Fee, 0)
+		op.Fee = decimal.NewFromBigInt(rspOperatorOnChain.Fee, 0)
 
 		// update val count
-		op.ValidatorCount = uint64(rspOperator.ValidatorCount)
+		op.ValidatorCount = uint64(rspOperatorOnChain.ValidatorCount)
 
 		logrus.WithFields(logrus.Fields{
 			"id":             op.Id,

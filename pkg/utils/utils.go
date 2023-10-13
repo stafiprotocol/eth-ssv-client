@@ -299,7 +299,7 @@ type OperatorInfoOnChain struct {
 	IsActive       bool
 }
 
-func BatchGetOperators(multicaller *multicall.Caller, ssvNetworkViewsContractAddress common.Address, ids []uint64) (map[uint64]*OperatorInfoOnChain, error) {
+func BatchGetOperatorsOnChain(multicaller *multicall.Caller, ssvNetworkViewsContractAddress common.Address, ids []uint64) (map[uint64]*OperatorInfoOnChain, error) {
 	contract, err := multicall.NewContract(ssv_network_views.SsvNetworkViewsABI, ssvNetworkViewsContractAddress.String())
 	if err != nil {
 		return nil, nil

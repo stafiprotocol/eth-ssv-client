@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func GetSsvOperators(network string) ([]Operator, error) {
+func GetAllSsvOperatorsFromApi(network string) ([]OperatorFromApi, error) {
 	rsp, err := http.Get(fmt.Sprintf("https://api.ssv.network/api/v4/%s/operators?page=1&perPage=5000&ordering=id:asc", network))
 	if err != nil {
 		return nil, err
@@ -39,10 +39,11 @@ type RspSsvOperators struct {
 		Pages   int `json:"pages"`
 		PerPage int `json:"per_page"`
 	} `json:"pagination"`
-	Operators []Operator `json:"operators"`
+	Operators []OperatorFromApi `json:"operators"`
+	Error     RspError          `json:"error"`
 }
 
-type Operator struct {
+type OperatorFromApi struct {
 	ID             int    `json:"id"`
 	IDStr          string `json:"id_str"`
 	DeclaredFee    string `json:"declared_fee"`
@@ -75,4 +76,49 @@ type Operator struct {
 	MevRelays        string `json:"mev_relays,omitempty"`
 	DkgAddress       string `json:"dkg_address,omitempty"`
 	AddressWhitelist string `json:"address_whitelist,omitempty"`
+}
+
+type RspSsvOperator struct {
+	OperatorFromApi
+	Error RspError `json:"error"`
+}
+
+type RspError struct {
+	Code    int `json:"code"`
+	Message struct {
+		Error  string `json:"error"`
+		Status int    `json:"status"`
+	} `json:"message"`
+}
+
+var apiOfSsvOperator = "https://api.ssv.network/api/v4/%s/operators/%d"
+
+func GetOperatorFromApi(network string, id uint64) (*OperatorFromApi, error) {
+	rsp, err := http.Get(fmt.Sprintf(apiOfSsvOperator, network, id))
+	if err != nil {
+		return nil, err
+	}
+	defer rsp.Body.Close()
+	if rsp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("status err %d", rsp.StatusCode)
+	}
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	if err != nil {
+		return nil, err
+	}
+	if len(bodyBytes) == 0 {
+		return nil, fmt.Errorf("bodyBytes zero err")
+	}
+	operator := RspSsvOperator{}
+	err = json.Unmarshal(bodyBytes, &operator)
+	if err != nil {
+		return nil, err
+	}
+
+	if operator.Error.Code != 0 {
+		return nil, fmt.Errorf("err code: %d, err: %s", operator.Error.Code, operator.Error.Message.Error)
+	}
+
+	return &operator.OperatorFromApi, nil
+
 }

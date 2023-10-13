@@ -22,3 +22,11 @@ func TestAppendFile(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestGetOperatorFromApi(t *testing.T) {
+	op, err := utils.GetOperatorFromApi("prater", 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("%+v", op)
+}
