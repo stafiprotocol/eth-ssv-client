@@ -17,7 +17,7 @@ import (
 
 var valAmountThreshold = uint64(5)
 var clusterOpAmount = 4
-var opInActiveThreshold = 2
+var opInActiveThreshold = 1
 
 func clusterKey(operators []uint64) string {
 	key := strings.Builder{}
@@ -44,8 +44,8 @@ func (task *Task) preSelectOperators() ([]*keyshare.Operator, error) {
 		preSelectedOperators = append(preSelectedOperators, operator)
 	}
 
-	if len(preSelectedOperators) < opInActiveThreshold*2 {
-		return nil, fmt.Errorf("preSelectedOperators number %d less than %d", len(preSelectedOperators), opInActiveThreshold*2)
+	if len(preSelectedOperators) < clusterOpAmount*2 {
+		return nil, fmt.Errorf("preSelectedOperators number %d less than %d", len(preSelectedOperators), clusterOpAmount*2)
 	}
 
 	sort.Slice(preSelectedOperators, func(i, j int) bool {
