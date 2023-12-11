@@ -125,8 +125,10 @@ func (task *Task) postUptime() error {
 	valIndexList := make([]uint64, 0)
 
 	task.validatorsByValIndexMutex.RLock()
-	for key := range task.validatorsByValIndex {
-		valIndexList = append(valIndexList, key)
+	for key, val := range task.validatorsByValIndex {
+		if val.statusOnBeacon == valStatusActiveOnBeacon {
+			valIndexList = append(valIndexList, key)
+		}
 	}
 	task.validatorsByValIndexMutex.RUnlock()
 
