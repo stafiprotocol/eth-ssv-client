@@ -23,6 +23,8 @@ type Operator struct {
 
 	Active         bool
 	ValidatorCount uint64
+
+	LastNotActiveTime int64
 }
 
 type KeystoreShareInfo struct {

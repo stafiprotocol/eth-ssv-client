@@ -2,6 +2,7 @@ package task
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
@@ -43,8 +44,21 @@ func (task *Task) updateOperatorStatus() error {
 
 		if rspOperatorFromApi.IsActive == 1 {
 			op.Active = true
+			op.LastNotActiveTime = 0
 		} else {
-			op.Active = false
+			now := time.Now().Unix()
+
+			if op.LastNotActiveTime == 0 {
+				op.Active = true
+				op.LastNotActiveTime = now
+			} else {
+				// 1h
+				if (now - op.LastNotActiveTime) > 1*60*60 {
+					op.Active = false
+				} else {
+					op.Active = true
+				}
+			}
 		}
 
 		// update fee
