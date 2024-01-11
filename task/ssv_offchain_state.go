@@ -266,14 +266,18 @@ func (task *Task) updateCluster(operatorIds []uint64, newCluster *ssv_network.IS
 					willUsePubkey = pubkey
 				}
 
-				// fetch active status from api
-				operatorFromApi, err := task.mustGetOperatorDetail(task.ssvApiNetwork, opId)
-				if err != nil {
-					return err
-				}
 				isActive := false
-				if operatorFromApi.IsActive == 1 {
-					isActive = true
+				if opId == 9 {
+
+				} else {
+					// fetch active status from api
+					operatorFromApi, err := task.mustGetOperatorDetail(task.ssvApiNetwork, opId)
+					if err != nil {
+						return err
+					}
+					if operatorFromApi.IsActive == 1 {
+						isActive = true
+					}
 				}
 
 				task.targetOperators[opId] = &keyshare.Operator{
