@@ -348,6 +348,7 @@ func (task *Task) Start() error {
 	if err != nil {
 		return err
 	}
+	logrus.Infof("ssv network: %s", task.ssvApiNetwork)
 
 	task.ssvNetworkAbi, err = abi.JSON(strings.NewReader(ssv_network.SsvNetworkABI))
 	if err != nil {

@@ -300,7 +300,7 @@ func (task *Task) mustGetOperatorDetail(network string, id uint64) (*utils.Opera
 		}
 		operatorDetail, err = utils.GetOperatorFromApi(network, id)
 		if err != nil {
-			logrus.Warnf("GetOperatorDetail err: %s", err.Error())
+			logrus.Warnf("GetOperatorDetail err: %s, id: %d", err.Error(), id)
 			time.Sleep(utils.RetryInterval)
 			retry++
 			continue
