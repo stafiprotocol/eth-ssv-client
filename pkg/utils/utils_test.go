@@ -24,10 +24,10 @@ func TestAppendFile(t *testing.T) {
 }
 
 func TestGetOperatorFromApi(t *testing.T) {
-	list := []uint64{198, 45, 48, 121, 200, 156, 83, 88, 22, 55, 20, 90, 49, 33, 120, 71, 135, 179, 132, 73, 208, 187, 14, 21, 134, 7}
+	list := []uint64{9, 198, 45, 48, 121, 200, 156, 83, 88, 22, 55, 20, 90, 49, 33, 120, 71, 135, 179, 132, 73, 208, 187, 14, 21, 134, 7}
 	for _, l := range list {
 
-		op, err := utils.GetOperatorFromApi("mainnet", l)
+		op, err := utils.MustGetOperatorDetail("mainnet", l)
 		if err != nil {
 			t.Fatal(err, l)
 		}

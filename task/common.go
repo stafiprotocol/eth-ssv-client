@@ -289,24 +289,3 @@ func (task *Task) calClusterNeedDepositAmount(cluster *Cluster) (min, max *big.I
 
 // 	return unpacked, nil
 // }
-
-func (task *Task) mustGetOperatorDetail(network string, id uint64) (*utils.OperatorFromApi, error) {
-	retry := 0
-	var operatorDetail *utils.OperatorFromApi
-	var err error
-	for {
-		if retry > utils.RetryLimit {
-			return nil, fmt.Errorf("GetOperatorDetail reach retry limit")
-		}
-		operatorDetail, err = utils.GetOperatorFromApi(network, id)
-		if err != nil {
-			logrus.Warnf("GetOperatorDetail err: %s, id: %d", err.Error(), id)
-			time.Sleep(utils.RetryInterval)
-			retry++
-			continue
-		}
-		break
-	}
-
-	return operatorDetail, nil
-}

@@ -256,10 +256,6 @@ func (task *Task) updateCluster(operatorIds []uint64, newCluster *ssv_network.IS
 
 		for _, opId := range operatorIds {
 			if _, exist := task.targetOperators[opId]; !exist {
-				_, fee, validatorCount, _, _, _, err := task.ssvNetworkViewsContract.GetOperatorById(nil, opId)
-				if err != nil {
-					return errors.Wrap(err, "ssvNetworkViewsContract.GetOperatorById failed")
-				}
 
 				willUsePubkey := ""
 				if pubkey, exist := task.operatorPubkeys[opId]; exist {
@@ -267,13 +263,22 @@ func (task *Task) updateCluster(operatorIds []uint64, newCluster *ssv_network.IS
 				}
 
 				// fetch active status from api
-				operatorFromApi, err := task.mustGetOperatorDetail(task.ssvApiNetwork, opId)
+				operatorFromApi, err := utils.MustGetOperatorDetail(task.ssvApiNetwork, opId)
 				if err != nil {
 					return err
 				}
 				isActive := false
 				if operatorFromApi.IsActive == 1 {
 					isActive = true
+				}
+
+				fee := big.NewInt(0)
+				validatorCount := uint32(0)
+				if isActive {
+					_, fee, validatorCount, _, _, _, err = task.ssvNetworkViewsContract.GetOperatorById(nil, opId)
+					if err != nil {
+						return errors.Wrap(err, "ssvNetworkViewsContract.GetOperatorById failed")
+					}
 				}
 
 				task.targetOperators[opId] = &keyshare.Operator{

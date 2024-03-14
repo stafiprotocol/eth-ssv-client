@@ -37,7 +37,7 @@ func (task *Task) updateOperatorStatus() error {
 		}
 
 		// get active status from api
-		rspOperatorFromApi, err := task.mustGetOperatorDetail(task.ssvApiNetwork, op.Id)
+		rspOperatorFromApi, err := utils.MustGetOperatorDetail(task.ssvApiNetwork, op.Id)
 		if err != nil {
 			return err
 		}

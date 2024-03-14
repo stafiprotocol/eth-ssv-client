@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
+	"time"
 )
 
 func GetAllSsvOperatorsFromApi(network string) ([]OperatorFromApi, error) {
@@ -121,4 +123,31 @@ func GetOperatorFromApi(network string, id uint64) (*OperatorFromApi, error) {
 
 	return &operator.OperatorFromApi, nil
 
+}
+
+func MustGetOperatorDetail(network string, id uint64) (*OperatorFromApi, error) {
+	retry := 0
+	var operatorDetail *OperatorFromApi
+	var err error
+	for {
+		if retry > RetryLimit {
+			return nil, fmt.Errorf("GetOperatorDetail reach retry limit")
+		}
+		operatorDetail, err = GetOperatorFromApi(network, id)
+		if err != nil {
+			if strings.Contains(err.Error(), "404") {
+				return &OperatorFromApi{
+					ID:      int(id),
+					Network: network,
+				}, nil
+			}
+
+			time.Sleep(RetryInterval)
+			retry++
+			continue
+		}
+		break
+	}
+
+	return operatorDetail, nil
 }
