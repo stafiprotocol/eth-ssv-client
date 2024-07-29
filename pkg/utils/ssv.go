@@ -10,7 +10,24 @@ import (
 )
 
 func GetAllSsvOperatorsFromApi(network string) ([]OperatorFromApi, error) {
-	rsp, err := http.Get(fmt.Sprintf("https://api.ssv.network/api/v4/%s/operators?page=1&perPage=5000&ordering=id:asc", network))
+	rsp := make([]OperatorFromApi, 0)
+	firstPage, err := getAllSsvOperatorsFromApi(network, 1)
+	if err != nil {
+		return nil, err
+	}
+	rsp = append(rsp, firstPage.Operators...)
+	for i := 1; i <= firstPage.Pagination.Pages; i++ {
+		netxtPage, err := getAllSsvOperatorsFromApi(network, i)
+		if err != nil {
+			return nil, err
+		}
+		rsp = append(rsp, netxtPage.Operators...)
+	}
+	return rsp, nil
+}
+
+func getAllSsvOperatorsFromApi(network string, page int) (*RspSsvOperators, error) {
+	rsp, err := http.Get(fmt.Sprintf("https://api.ssv.network/api/v4/%s/operators?page=%d&perPage=100&ordering=id:asc", network, page))
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +48,7 @@ func GetAllSsvOperatorsFromApi(network string) ([]OperatorFromApi, error) {
 		return nil, err
 	}
 
-	return rspSsv.Operators, nil
+	return &rspSsv, nil
 }
 
 type RspSsvOperators struct {
