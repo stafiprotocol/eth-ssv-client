@@ -59,6 +59,14 @@ func (task *Task) updateOperatorStatus() error {
 					op.Active = true
 				}
 			}
+
+			logrus.WithFields(logrus.Fields{
+				"id":                op.Id,
+				"active":            op.Active,
+				"LastNotActiveTime": op.LastNotActiveTime,
+				"validatorcount":    op.ValidatorCount,
+				"pubkey":            op.PublicKey,
+			}).Info("get operatorInfo not active info")
 		}
 
 		// update fee
