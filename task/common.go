@@ -128,6 +128,10 @@ func (task *Task) selectLocalClusterForRegister() ([]*Cluster, error) {
 	clusterSelected := make([]*Cluster, 0)
 Clusters:
 	for _, c := range task.clusters {
+		// skip clusters with zero validators
+		if len(c.managingValidators) == 0 {
+			continue
+		}
 		for _, opId := range c.operatorIds {
 			operator, exist := task.targetOperators[opId]
 			if !exist {
