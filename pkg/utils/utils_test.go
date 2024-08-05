@@ -1,6 +1,7 @@
 package utils_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stafiprotocol/eth-ssv-client/pkg/utils"
@@ -24,13 +25,17 @@ func TestAppendFile(t *testing.T) {
 }
 
 func TestGetOperatorFromApi(t *testing.T) {
-	list := []uint64{253, 9, 198, 45, 48, 121, 200, 156, 83, 88, 22, 55, 20, 90, 49, 33, 120, 71, 135, 179, 132, 73, 208, 187, 14, 21, 134, 7}
-	for _, l := range list {
-
-		op, err := utils.MustGetOperatorDetail("mainnet", l)
+	for i := 0; i < 1000; i++ {
+		_, err := utils.MustGetOperatorDetail("mainnet", uint64(i))
 		if err != nil {
-			t.Fatal(err, l)
+			if strings.Contains(err.Error(), "404") {
+				t.Log("operatorId :", i)
+				continue
+			} else {
+				t.Fatal(err)
+			}
+
 		}
-		t.Logf("%d %+v", l, op)
+
 	}
 }

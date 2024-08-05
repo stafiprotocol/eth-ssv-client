@@ -51,6 +51,10 @@ func (task *Task) checkAndOffboardOnSSV() error {
 
 			inActiveNumber := 0
 			for _, opId := range cluster.operatorIds {
+				if _, exist := task.targetOperators[opId]; !exist {
+					return fmt.Errorf("operator %d not exist in targets", opId)
+				}
+
 				if !task.targetOperators[opId].Active {
 					inActiveNumber++
 					if inActiveNumber >= opInActiveThreshold {

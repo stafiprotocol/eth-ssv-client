@@ -101,7 +101,6 @@ type Task struct {
 	poolReservedBalance *big.Int
 	seed                []byte
 	postUptimeUrl       string
-	isViewMode          bool
 	targetOperatorIds   []uint64
 	operatorPubkeys     map[uint64]string
 
@@ -188,7 +187,7 @@ type Validator struct {
 	removedFromSsvOnBlock uint64
 }
 
-func NewTask(cfg *config.Config, seed []byte, isViewMode bool, superNodeKeyPair, ssvKeyPair *secp256k1.Keypair) (*Task, error) {
+func NewTask(cfg *config.Config, seed []byte, superNodeKeyPair, ssvKeyPair *secp256k1.Keypair) (*Task, error) {
 	if !common.IsHexAddress(cfg.Contracts.StorageContractAddress) {
 		return nil, fmt.Errorf("storage contract address fmt err")
 	}
@@ -265,7 +264,6 @@ func NewTask(cfg *config.Config, seed []byte, isViewMode bool, superNodeKeyPair,
 		superNodeKeyPair:     superNodeKeyPair,
 		ssvKeyPair:           ssvKeyPair,
 		seed:                 seed,
-		isViewMode:           isViewMode,
 		gasLimit:             gasLimitDeci.BigInt(),
 		maxGasPrice:          maxGasPriceDeci.BigInt(),
 		poolReservedBalance:  poolReservedBalance,
@@ -447,22 +445,17 @@ func (task *Task) Start() error {
 		task.updateSsvOffchainState,
 		task.updateValStatus,
 		task.updateOperatorStatus,
+		task.checkAndStake, //stafi
+		task.checkAndDeposit,
+		task.checkAndSetFeeRecipient, // ssv
+		task.checkAndWithdrawOnSSV,
+		task.checkAndReactiveOnSSV,
+		task.checkAndOnboardOnSSV,
+		task.checkAndOffboardOnSSV,
 	)
-	if !task.isViewMode {
-		task.appendHandlers(
-			task.checkAndStake, //stafi
-			task.checkAndDeposit,
-			task.checkAndSetFeeRecipient, // ssv
-			task.checkAndWithdrawOnSSV,
-			task.checkAndReactiveOnSSV,
-			task.checkAndOnboardOnSSV,
-			task.checkAndOffboardOnSSV,
-		)
 
-		utils.SafeGo(task.ejectorService)
-		utils.SafeGo(task.uptimeService)
-	}
-
+	utils.SafeGo(task.ejectorService)
+	utils.SafeGo(task.uptimeService)
 	utils.SafeGo(task.ssvService)
 
 	return nil

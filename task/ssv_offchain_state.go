@@ -15,7 +15,6 @@ import (
 	"github.com/sirupsen/logrus"
 	ssv_network "github.com/stafiprotocol/eth-ssv-client/bindings/SsvNetwork"
 	ssv_network_views "github.com/stafiprotocol/eth-ssv-client/bindings/SsvNetworkViews"
-	"github.com/stafiprotocol/eth-ssv-client/pkg/keyshare"
 	"github.com/stafiprotocol/eth-ssv-client/pkg/utils"
 )
 
@@ -254,43 +253,43 @@ func (task *Task) updateCluster(operatorIds []uint64, newCluster *ssv_network.IS
 	cluster, exist := task.clusters[cltKey]
 	if !exist {
 
-		for _, opId := range operatorIds {
-			if _, exist := task.targetOperators[opId]; !exist {
+		// for _, opId := range operatorIds {
+		// 	if _, exist := task.targetOperators[opId]; !exist {
 
-				willUsePubkey := ""
-				if pubkey, exist := task.operatorPubkeys[opId]; exist {
-					willUsePubkey = pubkey
-				}
+		// 		willUsePubkey := ""
+		// 		if pubkey, exist := task.operatorPubkeys[opId]; exist {
+		// 			willUsePubkey = pubkey
+		// 		}
 
-				// fetch active status from api
-				operatorFromApi, err := utils.MustGetOperatorDetail(task.ssvApiNetwork, opId)
-				if err != nil {
-					return err
-				}
-				isActive := false
-				if operatorFromApi.IsActive == 1 {
-					isActive = true
-				}
+		// 		// fetch active status from api
+		// 		operatorFromApi, err := utils.MustGetOperatorDetail(task.ssvApiNetwork, opId)
+		// 		if err != nil {
+		// 			return err
+		// 		}
+		// 		isActive := false
+		// 		if operatorFromApi.IsActive == 1 {
+		// 			isActive = true
+		// 		}
 
-				fee := big.NewInt(0)
-				validatorCount := uint32(0)
-				if isActive {
-					_, fee, validatorCount, _, _, _, err = task.ssvNetworkViewsContract.GetOperatorById(nil, opId)
-					if err != nil {
-						return errors.Wrap(err, "ssvNetworkViewsContract.GetOperatorById failed")
-					}
-				}
+		// 		fee := big.NewInt(0)
+		// 		validatorCount := uint32(0)
+		// 		if isActive {
+		// 			_, fee, validatorCount, _, _, _, err = task.ssvNetworkViewsContract.GetOperatorById(nil, opId)
+		// 			if err != nil {
+		// 				return errors.Wrap(err, "ssvNetworkViewsContract.GetOperatorById failed")
+		// 			}
+		// 		}
 
-				task.targetOperators[opId] = &keyshare.Operator{
-					Id:             opId,
-					PublicKey:      willUsePubkey,
-					Fee:            decimal.NewFromBigInt(fee, 0),
-					Active:         isActive,
-					ValidatorCount: uint64(validatorCount),
-				}
+		// 		task.targetOperators[opId] = &keyshare.Operator{
+		// 			Id:             opId,
+		// 			PublicKey:      willUsePubkey,
+		// 			Fee:            decimal.NewFromBigInt(fee, 0),
+		// 			Active:         isActive,
+		// 			ValidatorCount: uint64(validatorCount),
+		// 		}
 
-			}
-		}
+		// 	}
+		// }
 
 		cluster = &Cluster{
 			operatorIds:        operatorIds,
