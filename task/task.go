@@ -446,10 +446,10 @@ func (task *Task) Start() error {
 			task.checkAndStake, //stafi
 			task.checkAndDeposit,
 			task.checkAndSetFeeRecipient, // ssv
+			task.checkAndWithdrawOnSSV,
 			task.checkAndReactiveOnSSV,
 			task.checkAndOnboardOnSSV,
 			task.checkAndOffboardOnSSV,
-			task.checkAndWithdrawOnSSV,
 		)
 
 		utils.SafeGo(task.ejectorService)

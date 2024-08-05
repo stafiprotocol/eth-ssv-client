@@ -23,21 +23,21 @@ func (task *Task) checkAndWithdrawOnSSV() error {
 			continue
 		}
 
-		shouldWithdraw := false
-		for _, opId := range cluster.operatorIds {
-			operator, exist := task.targetOperators[opId]
-			if !exist {
-				return fmt.Errorf("operator %d not exist in target operators", opId)
-			}
-			if !operator.Active {
-				logrus.Infof("operator: %d is not active will withdraw cluster: %v", opId, cluster.operatorIds)
-				shouldWithdraw = true
-				break
-			}
-		}
-		if !shouldWithdraw {
-			continue
-		}
+		// shouldWithdraw := false
+		// for _, opId := range cluster.operatorIds {
+		// 	operator, exist := task.targetOperators[opId]
+		// 	if !exist {
+		// 		return fmt.Errorf("operator %d not exist in target operators", opId)
+		// 	}
+		// 	if !operator.Active {
+		// 		logrus.Infof("operator: %d is not active will withdraw cluster: %v", opId, cluster.operatorIds)
+		// 		shouldWithdraw = true
+		// 		break
+		// 	}
+		// }
+		// if !shouldWithdraw {
+		// 	continue
+		// }
 
 		// send tx
 		err := task.connectionOfSsvAccount.LockAndUpdateTxOpts()
