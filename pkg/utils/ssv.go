@@ -153,7 +153,7 @@ func MustGetOperatorDetail(network string, id uint64) (*OperatorFromApi, error) 
 		operatorDetail, err = GetOperatorFromApi(network, id)
 		if err != nil {
 			if strings.Contains(err.Error(), "404") {
-				return nil, err
+				return nil, fmt.Errorf("get operator failed, id: %d 404 err: %s", id, err.Error())
 			}
 
 			time.Sleep(RetryInterval)

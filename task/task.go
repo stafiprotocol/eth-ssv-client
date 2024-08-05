@@ -10,6 +10,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -413,22 +414,28 @@ func (task *Task) Start() error {
 
 	retry := 0
 	for {
-		if retry > utils.RetryLimit {
+		if retry > 60 {
 			return fmt.Errorf("init state reach retry limit, err: %s", err.Error())
 		}
 		err = task.updateSsvOffchainState()
 		if err != nil {
 			retry++
+			logrus.Errorf("updateSsvOffchainState err: %s", err.Error())
+			time.Sleep(time.Second)
 			continue
 		}
 		err = task.updateValStatus()
 		if err != nil {
 			retry++
+			logrus.Errorf("updateValStatus err: %s", err.Error())
+			time.Sleep(time.Second)
 			continue
 		}
 		err = task.updateOperatorStatus()
 		if err != nil {
 			retry++
+			logrus.Errorf("updateOperatorStatus err: %s", err.Error())
+			time.Sleep(time.Second)
 			continue
 		}
 
