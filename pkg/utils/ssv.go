@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -49,6 +50,10 @@ func getAllSsvOperatorsFromApi(network string, page int) (*RspSsvOperators, erro
 	}
 
 	return &rspSsv, nil
+}
+
+type Operator struct {
+	Active bool
 }
 
 type RspSsvOperators struct {
@@ -112,7 +117,7 @@ type RspError struct {
 
 var apiOfSsvOperator = "https://api.ssv.network/api/v4/%s/operators/%d"
 
-func GetOperatorFromApi(network string, id uint64) (*OperatorFromApi, error) {
+func GetOperatorFromApi(network string, id uint64) (*Operator, error) {
 	rsp, err := http.Get(fmt.Sprintf(apiOfSsvOperator, network, id))
 	if err != nil {
 		return nil, err
@@ -137,20 +142,23 @@ func GetOperatorFromApi(network string, id uint64) (*OperatorFromApi, error) {
 	if operator.Error.Code != 0 {
 		return nil, fmt.Errorf("err code: %d, err: %s", operator.Error.Code, operator.Error.Message.Error)
 	}
+	active := false
+	if operator.OperatorFromApi.IsActive == 1 {
+		active = true
+	}
 
-	return &operator.OperatorFromApi, nil
-
+	return &Operator{Active: active}, nil
 }
 
-func MustGetOperatorDetail(network string, id uint64) (*OperatorFromApi, error) {
+func MustGetOperatorDetail(network string, id uint64) (*Operator, error) {
 	retry := 0
-	var operatorDetail *OperatorFromApi
+	var operatorDetail *Operator
 	var err error
 	for {
 		if retry > RetryLimit {
 			return nil, fmt.Errorf("GetOperatorDetail reach retry limit")
 		}
-		operatorDetail, err = GetOperatorFromApi(network, id)
+		operatorDetail, err = GetOperatorFromGraph(network, id)
 		if err != nil {
 			if strings.Contains(err.Error(), "404") {
 				return nil, fmt.Errorf("get operator failed, id: %d 404 err: %s", id, err.Error())
@@ -164,4 +172,62 @@ func MustGetOperatorDetail(network string, id uint64) (*OperatorFromApi, error) 
 	}
 
 	return operatorDetail, nil
+}
+
+const mainnetGraphUrl = "https://api.studio.thegraph.com/query/71118/ssv-network-ethereum/version/latest"
+const holeskyGraphUrl = "https://api.studio.thegraph.com/query/71118/ssv-network-holesky/version/latest"
+
+type RspSsvOperatorFromGraph struct {
+	Data struct {
+		Operator struct {
+			Active         bool   `json:"active"`
+			Fee            string `json:"fee"`
+			IsPrivate      bool   `json:"isPrivate"`
+			TotalWithdrawn string `json:"totalWithdrawn"`
+		} `json:"operator"`
+	} `json:"data"`
+	Message string
+}
+
+type query struct {
+	Query string `json:"query"`
+}
+
+func GetOperatorFromGraph(network string, id uint64) (*Operator, error) {
+	graphUrl := ""
+	switch network {
+	case "mainnet":
+		graphUrl = mainnetGraphUrl
+	case "prater":
+		graphUrl = holeskyGraphUrl
+	default:
+		return nil, fmt.Errorf("network not support")
+	}
+	q := query{Query: fmt.Sprintf("query ValidatorCountPerOperator {  operator(id: \"%d\") {    fee    active    totalWithdrawn    isPrivate  }}", id)}
+	queryBts, err := json.Marshal(q)
+	if err != nil {
+		return nil, err
+	}
+	rsp, err := http.Post(graphUrl, "application/json", bytes.NewReader(queryBts))
+	if err != nil {
+		return nil, err
+	}
+	defer rsp.Body.Close()
+	if rsp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("status err %d", rsp.StatusCode)
+	}
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	if err != nil {
+		return nil, err
+	}
+	if len(bodyBytes) == 0 {
+		return nil, fmt.Errorf("bodyBytes zero err")
+	}
+	operator := RspSsvOperatorFromGraph{}
+	err = json.Unmarshal(bodyBytes, &operator)
+	if err != nil {
+		return nil, err
+	}
+	return &Operator{Active: operator.Data.Operator.Active}, nil
+
 }

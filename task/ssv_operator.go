@@ -38,12 +38,12 @@ func (task *Task) updateOperatorStatus() error {
 					}
 
 					// fetch active status from api
-					operatorFromApi, err := utils.MustGetOperatorDetail(task.ssvApiNetwork, opId)
+					rspOperator, err := utils.MustGetOperatorDetail(task.ssvApiNetwork, opId)
 					if err != nil {
 						return err
 					}
 					isActive := false
-					if operatorFromApi.IsActive == 1 {
+					if rspOperator.Active {
 						isActive = true
 					}
 
@@ -87,12 +87,12 @@ func (task *Task) updateOperatorStatus() error {
 		}
 
 		// get active status from api
-		rspOperatorFromApi, err := utils.MustGetOperatorDetail(task.ssvApiNetwork, op.Id)
+		rspOperator, err := utils.MustGetOperatorDetail(task.ssvApiNetwork, op.Id)
 		if err != nil {
 			return err
 		}
 
-		if rspOperatorFromApi.IsActive == 1 {
+		if rspOperator.Active {
 			op.Active = true
 			op.LastNotActiveTime = 0
 		} else {

@@ -385,12 +385,12 @@ func (task *Task) Start() error {
 		}
 
 		// fetch acitve status from api
-		operatorFromApi, err := utils.MustGetOperatorDetail(task.ssvApiNetwork, opId)
+		rspOperator, err := utils.MustGetOperatorDetail(task.ssvApiNetwork, opId)
 		if err != nil {
 			return err
 		}
 
-		if operatorFromApi.IsActive != 1 {
+		if !rspOperator.Active {
 			return fmt.Errorf("target operator %d is not active", opId)
 		}
 

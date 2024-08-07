@@ -39,3 +39,12 @@ func TestGetOperatorFromApi(t *testing.T) {
 
 	}
 }
+
+func TestGetOperatorFromGraph(t *testing.T) {
+	o, err := utils.GetOperatorFromGraph("mainnet", 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(o)
+
+}
