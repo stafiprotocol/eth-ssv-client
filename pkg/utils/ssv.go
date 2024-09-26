@@ -177,10 +177,17 @@ func MustGetOperatorDetail(network string, id uint64) (*Operator, error) {
 const mainnetGraphUrl = "https://api.studio.thegraph.com/query/71118/ssv-network-ethereum/version/latest"
 const holeskyGraphUrl = "https://api.studio.thegraph.com/query/71118/ssv-network-holesky/version/latest"
 
+// {
+// 	operators(where: {operatorId_in:["596","598","10","9"]}){
+// 	  operatorId
+// 	  active
+// 	}
+// }
+
 type RspSsvOperatorFromGraph struct {
 	Data struct {
 		Operator struct {
-			Active         bool   `json:"active"`
+			Removed        bool   `json:"removed"`
 			Fee            string `json:"fee"`
 			IsPrivate      bool   `json:"isPrivate"`
 			TotalWithdrawn string `json:"totalWithdrawn"`
@@ -203,7 +210,7 @@ func GetOperatorFromGraph(network string, id uint64) (*Operator, error) {
 	default:
 		return nil, fmt.Errorf("network not support")
 	}
-	q := query{Query: fmt.Sprintf("query ValidatorCountPerOperator {  operator(id: \"%d\") {    fee    active    totalWithdrawn    isPrivate  }}", id)}
+	q := query{Query: fmt.Sprintf("{  operator(id: \"%d\") {    fee    removed    totalWithdrawn    isPrivate  }}", id)}
 	queryBts, err := json.Marshal(q)
 	if err != nil {
 		return nil, err
@@ -228,6 +235,6 @@ func GetOperatorFromGraph(network string, id uint64) (*Operator, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Operator{Active: operator.Data.Operator.Active}, nil
+	return &Operator{Active: !operator.Data.Operator.Removed}, nil
 
 }
