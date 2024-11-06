@@ -12,7 +12,6 @@ import (
 	"github.com/stafiprotocol/chainbridge/utils/keystore"
 	"github.com/stafiprotocol/eth-ssv-client/pkg/config"
 	"github.com/stafiprotocol/eth-ssv-client/pkg/log"
-	"github.com/stafiprotocol/eth-ssv-client/pkg/utils"
 	"github.com/stafiprotocol/eth-ssv-client/task"
 )
 
@@ -67,10 +66,11 @@ func startSsvCmd() *cobra.Command {
   ssvNetworkAddress: %s
   ssvNetworkViewsAddress: %s
   targetOperators: %v
-  poolReservedBalance: %s`,
+  poolReservedBalance: %s,
+  ssvReceiveAddress: %s`,
 				cfg.LogFilePath, logLevelStr, cfg.Eth1Endpoint, cfg.Eth2Endpoint,
 				cfg.Contracts.StorageContractAddress, cfg.Contracts.SsvNetworkAddress,
-				cfg.Contracts.SsvNetworkViewsAddress, cfg.TargetOperators, cfg.PoolReservedBalance)
+				cfg.Contracts.SsvNetworkViewsAddress, cfg.TargetOperators, cfg.PoolReservedBalance, cfg.SsvReceiveAddress)
 
 			err = log.InitLogFile(cfg.LogFilePath + "/ssv")
 			if err != nil {
@@ -80,7 +80,7 @@ func startSsvCmd() *cobra.Command {
 				return fmt.Errorf("target operators must have at least 4")
 			}
 			//interrupt signal
-			ctx := utils.ShutdownListener()
+			// ctx := utils.ShutdownListener()
 
 			// load super node account
 			kpI, err := keystore.KeypairFromAddress(cfg.SuperNodeAccount, keystore.EthChain, cfg.KeystorePath, false)
@@ -123,7 +123,7 @@ func startSsvCmd() *cobra.Command {
 				t.Stop()
 			}()
 
-			<-ctx.Done()
+			// <-ctx.Done()
 			return nil
 		},
 	}

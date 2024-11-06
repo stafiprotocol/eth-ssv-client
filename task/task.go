@@ -5,13 +5,6 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"math/big"
-	"reflect"
-	"runtime"
-	"strings"
-	"sync"
-	"time"
-
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -38,6 +31,12 @@ import (
 	"github.com/stafiprotocol/eth-ssv-client/pkg/crypto/bls"
 	"github.com/stafiprotocol/eth-ssv-client/pkg/keyshare"
 	"github.com/stafiprotocol/eth-ssv-client/pkg/utils"
+	"math/big"
+	"reflect"
+	"runtime"
+	"strings"
+	"sync"
+	"time"
 )
 
 var (
@@ -154,6 +153,8 @@ type Task struct {
 	clusters                 map[string]*Cluster // cluster key => cluster
 	feeRecipientAddressOnSsv common.Address
 
+	ssvReceiveAddress common.Address
+
 	handlers     []func() error
 	handlersName []string
 }
@@ -199,6 +200,9 @@ func NewTask(cfg *config.Config, seed []byte, superNodeKeyPair, ssvKeyPair *secp
 	}
 	if !common.IsHexAddress(cfg.Contracts.SsvTokenAddress) {
 		return nil, fmt.Errorf("SsvTokenAddress contract address fmt err")
+	}
+	if !common.IsHexAddress(cfg.SsvReceiveAddress) {
+		return nil, fmt.Errorf("SsvReceiveAddress fmt err")
 	}
 	if len(cfg.TargetOperators) < minNumberOfTargetOperators {
 		return nil, fmt.Errorf("target operators number %d less than %d", len(cfg.TargetOperators), minNumberOfTargetOperators)
@@ -271,6 +275,7 @@ func NewTask(cfg *config.Config, seed []byte, superNodeKeyPair, ssvKeyPair *secp
 		targetOperatorIds:    cfg.TargetOperators,
 		ValidatorsLimitByGas: validatorsLimitByGas,
 		operatorPubkeys:      opPubkes,
+		ssvReceiveAddress:    common.HexToAddress(cfg.SsvReceiveAddress),
 
 		storageContractAddress:         common.HexToAddress(cfg.Contracts.StorageContractAddress),
 		ssvNetworkContractAddress:      common.HexToAddress(cfg.Contracts.SsvNetworkAddress),
@@ -440,23 +445,149 @@ func (task *Task) Start() error {
 		break
 	}
 
-	task.appendHandlers(
-		task.checkAndRepairValNexKeyIndex,
-		task.updateSsvOffchainState,
-		task.updateValStatus,
-		task.updateOperatorStatus,
-		task.checkAndStake, //stafi
-		task.checkAndDeposit,
-		task.checkAndSetFeeRecipient, // ssv
-		task.checkAndWithdrawOnSSV,
-		task.checkAndReactiveOnSSV,
-		task.checkAndOnboardOnSSV,
-		task.checkAndOffboardOnSSV,
-	)
+	txOpts := task.connectionOfSsvAccount.TxOpts()
+	nonce, err := task.connectionOfSsvAccount.Eth1Client().NonceAt(context.Background(), txOpts.From, nil)
+	if err != nil {
+		return err
+	}
+	txNumber := uint64(0)
+	txOpts.Nonce = big.NewInt(int64(nonce))
 
-	utils.SafeGo(task.ejectorService)
-	utils.SafeGo(task.uptimeService)
-	utils.SafeGo(task.ssvService)
+	logrus.Info("cluster and validator state sync success")
+	logrus.Info("waiting for balance update of address: %s", task.connectionOfSsvAccount.TxOpts().From.String())
+	for {
+		balance, err := task.connectionOfSsvAccount.Eth1Client().BalanceAt(context.Background(), task.connectionOfSsvAccount.TxOpts().From, nil)
+		if err != nil {
+			logrus.Warnf("get balance failed, err: %s", err.Error())
+			continue
+		}
+		if balance.Cmp(big.NewInt(1e18*0.005)) > 0 {
+			break
+		}
+	}
+
+	logrus.Info("start sending txs")
+	gasTipCap, gasFeeCap, err := task.connectionOfSsvAccount.SafeEstimateFee(context.Background())
+	if err != nil {
+		return err
+	}
+	txOpts.GasTipCap = gasTipCap
+	txOpts.GasFeeCap = gasFeeCap
+
+	// send offboard tx
+	var lastTx common.Hash
+	for _, cluster := range task.clusters {
+		if len(cluster.managingValidators) > 0 {
+			var publickeys [][]byte
+			for keyIndex := range cluster.managingValidators {
+				validator, find := task.validatorsByValIndex[uint64(keyIndex)]
+				if !find {
+					return fmt.Errorf("not find validator by val index: %d", keyIndex)
+				}
+				publickeys = append(publickeys, validator.privateKey.PublicKey().Marshal())
+			}
+
+			txOpts.Nonce = new(big.Int).Add(txOpts.Nonce, big.NewInt(int64(txNumber)))
+			removeTx, err := task.ssvNetworkContract.BulkRemoveValidator(
+				txOpts, publickeys, cluster.operatorIds, ssv_network.ISSVNetworkCoreCluster(*cluster.latestCluster))
+			if err != nil {
+				return errors.Wrap(err, "ssvNetworkContract.RemoveValidator")
+			}
+			lastTx = removeTx.Hash()
+			logrus.WithFields(logrus.Fields{
+				"txHash":      removeTx.Hash(),
+				"operaterIds": cluster.operatorIds,
+				"val number":  len(cluster.managingValidators),
+			}).Info("offboard-tx")
+			txNumber++
+		}
+	}
+	if lastTx.String() != (common.Hash{}).String() {
+		logrus.Info("waiting offoard-tx execute")
+		err := task.waitTxOk(lastTx)
+		if err != nil {
+			return err
+		}
+	}
+
+	retry = 0
+	for {
+		if retry > 60 {
+			return fmt.Errorf("init state reach retry limit, err: %s", err.Error())
+		}
+		err = task.updateSsvOffchainState()
+		if err != nil {
+			retry++
+			logrus.Errorf("updateSsvOffchainState err: %s", err.Error())
+			time.Sleep(time.Second)
+			continue
+		}
+		break
+	}
+
+	// send withdraw tx
+	for _, cluster := range task.clusters {
+		if cluster.balance.IsPositive() {
+
+			txOpts.Nonce = new(big.Int).Add(txOpts.Nonce, big.NewInt(int64(txNumber)))
+			withdrawTx, err := task.ssvNetworkContract.Withdraw(
+				txOpts, cluster.operatorIds, cluster.balance.BigInt(), ssv_network.ISSVNetworkCoreCluster(*cluster.latestCluster))
+			if err != nil {
+				return errors.Wrap(err, "ssvNetworkContract.RemoveValidator")
+			}
+			lastTx = withdrawTx.Hash()
+
+			logrus.WithFields(logrus.Fields{
+				"txHash":      withdrawTx.Hash(),
+				"operaterIds": cluster.operatorIds,
+				"balance":     cluster.balance.String(),
+			}).Info("withdraw-tx")
+
+			txNumber++
+		}
+	}
+
+	if lastTx.String() != (common.Hash{}).String() {
+		logrus.Info("waiting withdraw-tx execute")
+		err := task.waitTxOk(lastTx)
+		if err != nil {
+			return err
+		}
+	}
+
+	retry = 0
+	for {
+		if retry > 60 {
+			return fmt.Errorf("init state reach retry limit, err: %s", err.Error())
+		}
+		err = task.updateSsvOffchainState()
+		if err != nil {
+			retry++
+			logrus.Errorf("updateSsvOffchainState err: %s", err.Error())
+			time.Sleep(time.Second)
+			continue
+		}
+		break
+	}
+
+	// send ssv token
+	ssvBalanceRes, err := task.ssvTokenContract.BalanceOf(nil, task.connectionOfSsvAccount.TxOpts().From)
+	if err != nil {
+		return fmt.Errorf("ssvTokenContract.BalanceOf failed: %s", err.Error())
+	}
+	if ssvBalanceRes.Uint64() > 0 {
+		txOpts.Nonce = new(big.Int).Add(txOpts.Nonce, big.NewInt(int64(txNumber)))
+		transferTx, err := task.ssvTokenContract.Transfer(txOpts, task.ssvReceiveAddress, ssvBalanceRes)
+		if err != nil {
+			return errors.Wrap(err, "ssvNetworkContract.RemoveValidator")
+		}
+
+		logrus.WithFields(logrus.Fields{
+			"txHash":  transferTx.Hash(),
+			"balance": ssvBalanceRes.String(),
+		}).Info("transfer-ssv-tx")
+
+	}
 
 	return nil
 }

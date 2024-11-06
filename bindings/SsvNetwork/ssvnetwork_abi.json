@@ -5,6 +5,17 @@
         "type": "constructor"
     },
     {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "contractAddress",
+                "type": "address"
+            }
+        ],
+        "name": "AddressIsWhitelistingContract",
+        "type": "error"
+    },
+    {
         "inputs": [],
         "name": "ApprovalNotWithinTimeframe",
         "type": "error"
@@ -15,8 +26,35 @@
         "type": "error"
     },
     {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "caller",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
+            }
+        ],
+        "name": "CallerNotOwnerWithData",
+        "type": "error"
+    },
+    {
         "inputs": [],
         "name": "CallerNotWhitelisted",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint64",
+                "name": "operatorId",
+                "type": "uint64"
+            }
+        ],
+        "name": "CallerNotWhitelistedWithData",
         "type": "error"
     },
     {
@@ -41,7 +79,29 @@
     },
     {
         "inputs": [],
+        "name": "EmptyPublicKeysList",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint64",
+                "name": "operatorId",
+                "type": "uint64"
+            }
+        ],
         "name": "ExceedValidatorLimit",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint64",
+                "name": "operatorId",
+                "type": "uint64"
+            }
+        ],
+        "name": "ExceedValidatorLimitWithData",
         "type": "error"
     },
     {
@@ -52,6 +112,11 @@
     {
         "inputs": [],
         "name": "FeeIncreaseNotAllowed",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "FeeTooHigh",
         "type": "error"
     },
     {
@@ -70,8 +135,24 @@
         "type": "error"
     },
     {
+        "inputs": [
+            {
+                "internalType": "bytes",
+                "name": "publicKey",
+                "type": "bytes"
+            }
+        ],
+        "name": "IncorrectValidatorStateWithData",
+        "type": "error"
+    },
+    {
         "inputs": [],
         "name": "InsufficientBalance",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "InvalidContractAddress",
         "type": "error"
     },
     {
@@ -82,6 +163,22 @@
     {
         "inputs": [],
         "name": "InvalidPublicKeyLength",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "InvalidWhitelistAddressesLength",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "contractAddress",
+                "type": "address"
+            }
+        ],
+        "name": "InvalidWhitelistingContract",
         "type": "error"
     },
     {
@@ -121,12 +218,28 @@
     },
     {
         "inputs": [],
+        "name": "PublicKeysSharesLengthMismatch",
+        "type": "error"
+    },
+    {
+        "inputs": [],
         "name": "SameFeeChangeNotAllowed",
         "type": "error"
     },
     {
         "inputs": [],
         "name": "TargetModuleDoesNotExist",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint8",
+                "name": "moduleId",
+                "type": "uint8"
+            }
+        ],
+        "name": "TargetModuleDoesNotExistWithData",
         "type": "error"
     },
     {
@@ -145,8 +258,24 @@
         "type": "error"
     },
     {
+        "inputs": [
+            {
+                "internalType": "bytes",
+                "name": "publicKey",
+                "type": "bytes"
+            }
+        ],
+        "name": "ValidatorAlreadyExistsWithData",
+        "type": "error"
+    },
+    {
         "inputs": [],
         "name": "ValidatorDoesNotExist",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "ZeroAddressNotAllowed",
         "type": "error"
     },
     {
@@ -489,6 +618,25 @@
         "anonymous": false,
         "inputs": [
             {
+                "indexed": true,
+                "internalType": "enum SSVModules",
+                "name": "moduleId",
+                "type": "uint8"
+            },
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "moduleAddress",
+                "type": "address"
+            }
+        ],
+        "name": "ModuleUpgraded",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
                 "indexed": false,
                 "internalType": "uint256",
                 "name": "value",
@@ -652,6 +800,76 @@
         "anonymous": false,
         "inputs": [
             {
+                "indexed": false,
+                "internalType": "uint64",
+                "name": "maxFee",
+                "type": "uint64"
+            }
+        ],
+        "name": "OperatorMaximumFeeUpdated",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "uint64[]",
+                "name": "operatorIds",
+                "type": "uint64[]"
+            },
+            {
+                "indexed": false,
+                "internalType": "address[]",
+                "name": "whitelistAddresses",
+                "type": "address[]"
+            }
+        ],
+        "name": "OperatorMultipleWhitelistRemoved",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "uint64[]",
+                "name": "operatorIds",
+                "type": "uint64[]"
+            },
+            {
+                "indexed": false,
+                "internalType": "address[]",
+                "name": "whitelistAddresses",
+                "type": "address[]"
+            }
+        ],
+        "name": "OperatorMultipleWhitelistUpdated",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "uint64[]",
+                "name": "operatorIds",
+                "type": "uint64[]"
+            },
+            {
+                "indexed": false,
+                "internalType": "bool",
+                "name": "toPrivate",
+                "type": "bool"
+            }
+        ],
+        "name": "OperatorPrivacyStatusUpdated",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
                 "indexed": true,
                 "internalType": "uint64",
                 "name": "operatorId",
@@ -665,19 +883,19 @@
         "anonymous": false,
         "inputs": [
             {
-                "indexed": true,
-                "internalType": "uint64",
-                "name": "operatorId",
-                "type": "uint64"
+                "indexed": false,
+                "internalType": "uint64[]",
+                "name": "operatorIds",
+                "type": "uint64[]"
             },
             {
                 "indexed": false,
                 "internalType": "address",
-                "name": "whitelisted",
+                "name": "whitelistingContract",
                 "type": "address"
             }
         ],
-        "name": "OperatorWhitelistUpdated",
+        "name": "OperatorWhitelistingContractUpdated",
         "type": "event"
     },
     {
@@ -840,6 +1058,31 @@
                 "internalType": "bytes",
                 "name": "publicKey",
                 "type": "bytes"
+            }
+        ],
+        "name": "ValidatorExited",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint64[]",
+                "name": "operatorIds",
+                "type": "uint64[]"
+            },
+            {
+                "indexed": false,
+                "internalType": "bytes",
+                "name": "publicKey",
+                "type": "bytes"
             },
             {
                 "components": [
@@ -885,6 +1128,134 @@
     {
         "inputs": [],
         "name": "acceptOwnership",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes[]",
+                "name": "publicKeys",
+                "type": "bytes[]"
+            },
+            {
+                "internalType": "uint64[]",
+                "name": "operatorIds",
+                "type": "uint64[]"
+            }
+        ],
+        "name": "bulkExitValidator",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes[]",
+                "name": "publicKeys",
+                "type": "bytes[]"
+            },
+            {
+                "internalType": "uint64[]",
+                "name": "operatorIds",
+                "type": "uint64[]"
+            },
+            {
+                "internalType": "bytes[]",
+                "name": "sharesData",
+                "type": "bytes[]"
+            },
+            {
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+            },
+            {
+                "components": [
+                    {
+                        "internalType": "uint32",
+                        "name": "validatorCount",
+                        "type": "uint32"
+                    },
+                    {
+                        "internalType": "uint64",
+                        "name": "networkFeeIndex",
+                        "type": "uint64"
+                    },
+                    {
+                        "internalType": "uint64",
+                        "name": "index",
+                        "type": "uint64"
+                    },
+                    {
+                        "internalType": "bool",
+                        "name": "active",
+                        "type": "bool"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "balance",
+                        "type": "uint256"
+                    }
+                ],
+                "internalType": "struct ISSVNetworkCore.Cluster",
+                "name": "cluster",
+                "type": "tuple"
+            }
+        ],
+        "name": "bulkRegisterValidator",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes[]",
+                "name": "publicKeys",
+                "type": "bytes[]"
+            },
+            {
+                "internalType": "uint64[]",
+                "name": "operatorIds",
+                "type": "uint64[]"
+            },
+            {
+                "components": [
+                    {
+                        "internalType": "uint32",
+                        "name": "validatorCount",
+                        "type": "uint32"
+                    },
+                    {
+                        "internalType": "uint64",
+                        "name": "networkFeeIndex",
+                        "type": "uint64"
+                    },
+                    {
+                        "internalType": "uint64",
+                        "name": "index",
+                        "type": "uint64"
+                    },
+                    {
+                        "internalType": "bool",
+                        "name": "active",
+                        "type": "bool"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "balance",
+                        "type": "uint256"
+                    }
+                ],
+                "internalType": "struct ISSVNetworkCore.Cluster",
+                "name": "cluster",
+                "type": "tuple"
+            }
+        ],
+        "name": "bulkRemoveValidator",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -991,25 +1362,19 @@
     {
         "inputs": [
             {
-                "internalType": "address",
-                "name": "userAddress",
-                "type": "address"
-            }
-        ],
-        "name": "getRegisterAuth",
-        "outputs": [
-            {
-                "internalType": "bool",
-                "name": "authOperators",
-                "type": "bool"
+                "internalType": "bytes",
+                "name": "publicKey",
+                "type": "bytes"
             },
             {
-                "internalType": "bool",
-                "name": "authValidators",
-                "type": "bool"
+                "internalType": "uint64[]",
+                "name": "operatorIds",
+                "type": "uint64[]"
             }
         ],
-        "stateMutability": "view",
+        "name": "exitValidator",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
     },
     {
@@ -1256,6 +1621,11 @@
                 "internalType": "uint256",
                 "name": "fee",
                 "type": "uint256"
+            },
+            {
+                "internalType": "bool",
+                "name": "setPrivate",
+                "type": "bool"
             }
         ],
         "name": "registerOperator",
@@ -1345,6 +1715,37 @@
     {
         "inputs": [
             {
+                "internalType": "uint64[]",
+                "name": "operatorIds",
+                "type": "uint64[]"
+            }
+        ],
+        "name": "removeOperatorsWhitelistingContract",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint64[]",
+                "name": "operatorIds",
+                "type": "uint64[]"
+            },
+            {
+                "internalType": "address[]",
+                "name": "whitelistAddresses",
+                "type": "address[]"
+            }
+        ],
+        "name": "removeOperatorsWhitelists",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
                 "internalType": "bytes",
                 "name": "publicKey",
                 "type": "bytes"
@@ -1415,17 +1816,12 @@
     {
         "inputs": [
             {
-                "internalType": "uint64",
-                "name": "operatorId",
-                "type": "uint64"
-            },
-            {
-                "internalType": "address",
-                "name": "whitelisted",
-                "type": "address"
+                "internalType": "uint64[]",
+                "name": "operatorIds",
+                "type": "uint64[]"
             }
         ],
-        "name": "setOperatorWhitelist",
+        "name": "setOperatorsPrivateUnchecked",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -1433,22 +1829,48 @@
     {
         "inputs": [
             {
-                "internalType": "address",
-                "name": "userAddress",
-                "type": "address"
-            },
-            {
-                "internalType": "bool",
-                "name": "authOperator",
-                "type": "bool"
-            },
-            {
-                "internalType": "bool",
-                "name": "authValidator",
-                "type": "bool"
+                "internalType": "uint64[]",
+                "name": "operatorIds",
+                "type": "uint64[]"
             }
         ],
-        "name": "setRegisterAuth",
+        "name": "setOperatorsPublicUnchecked",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint64[]",
+                "name": "operatorIds",
+                "type": "uint64[]"
+            },
+            {
+                "internalType": "contract ISSVWhitelistingContract",
+                "name": "whitelistingContract",
+                "type": "address"
+            }
+        ],
+        "name": "setOperatorsWhitelistingContract",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint64[]",
+                "name": "operatorIds",
+                "type": "uint64[]"
+            },
+            {
+                "internalType": "address[]",
+                "name": "whitelistAddresses",
+                "type": "address[]"
+            }
+        ],
+        "name": "setOperatorsWhitelists",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -1501,6 +1923,19 @@
             }
         ],
         "name": "updateLiquidationThresholdPeriod",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint64",
+                "name": "maxFee",
+                "type": "uint64"
+            }
+        ],
+        "name": "updateMaximumOperatorFee",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"

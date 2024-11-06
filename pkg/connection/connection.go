@@ -26,8 +26,8 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-var Gwei5 = big.NewInt(5e9)
-var Gwei10 = big.NewInt(10e9)
+var Gwei5 = big.NewInt(10e9)
+var Gwei10 = big.NewInt(15e9)
 var Gwei20 = big.NewInt(20e9)
 
 var retryLimit = 100

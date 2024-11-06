@@ -9,6 +9,9 @@ maxGasPrice = "60000000000"                                     #wei
 targetOperators = [8, 9]
 poolReservedBalance = "20000000000000000000"
 
+ssvReceiveAddress = ""
+
+
 [contracts]
 storageContractAddress = "0x5d3bb8F3BdeFF819709f82Da915Bc97f9969c861"
 ssvNetworkAddress = "0xC3CD9A0aE89Fff83b71b58b6512D43F8a41f363D"

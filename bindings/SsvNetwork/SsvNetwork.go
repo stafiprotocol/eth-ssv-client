@@ -39,7 +39,7 @@ type ISSVNetworkCoreCluster struct {
 
 // SsvNetworkMetaData contains all meta data concerning the SsvNetwork contract.
 var SsvNetworkMetaData = &bind.MetaData{
-	ABI: "[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[],\"name\":\"ApprovalNotWithinTimeframe\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"CallerNotOwner\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"CallerNotWhitelisted\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ClusterAlreadyEnabled\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ClusterDoesNotExists\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ClusterIsLiquidated\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ClusterNotLiquidatable\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ExceedValidatorLimit\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"FeeExceedsIncreaseLimit\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"FeeIncreaseNotAllowed\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"FeeTooLow\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"IncorrectClusterState\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"IncorrectValidatorState\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InsufficientBalance\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidOperatorIdsLength\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidPublicKeyLength\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"MaxValueExceeded\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"NewBlockPeriodIsBelowMinimum\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"NoFeeDeclared\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"NotAuthorized\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"OperatorAlreadyExists\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"OperatorDoesNotExist\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"OperatorsListNotUnique\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"SameFeeChangeNotAllowed\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"TargetModuleDoesNotExist\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"TokenTransferFailed\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"UnsortedOperatorsList\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ValidatorAlreadyExists\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ValidatorDoesNotExist\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"previousAdmin\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"newAdmin\",\"type\":\"address\"}],\"name\":\"AdminChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"beacon\",\"type\":\"address\"}],\"name\":\"BeaconUpgraded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"validatorCount\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"networkFeeIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"index\",\"type\":\"uint64\"},{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"indexed\":false,\"internalType\":\"structISSVNetworkCore.Cluster\",\"name\":\"cluster\",\"type\":\"tuple\"}],\"name\":\"ClusterDeposited\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"validatorCount\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"networkFeeIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"index\",\"type\":\"uint64\"},{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"indexed\":false,\"internalType\":\"structISSVNetworkCore.Cluster\",\"name\":\"cluster\",\"type\":\"tuple\"}],\"name\":\"ClusterLiquidated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"validatorCount\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"networkFeeIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"index\",\"type\":\"uint64\"},{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"indexed\":false,\"internalType\":\"structISSVNetworkCore.Cluster\",\"name\":\"cluster\",\"type\":\"tuple\"}],\"name\":\"ClusterReactivated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"validatorCount\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"networkFeeIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"index\",\"type\":\"uint64\"},{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"indexed\":false,\"internalType\":\"structISSVNetworkCore.Cluster\",\"name\":\"cluster\",\"type\":\"tuple\"}],\"name\":\"ClusterWithdrawn\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"value\",\"type\":\"uint64\"}],\"name\":\"DeclareOperatorFeePeriodUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"value\",\"type\":\"uint64\"}],\"name\":\"ExecuteOperatorFeePeriodUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"recipientAddress\",\"type\":\"address\"}],\"name\":\"FeeRecipientAddressUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"version\",\"type\":\"uint8\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"value\",\"type\":\"uint64\"}],\"name\":\"LiquidationThresholdPeriodUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"MinimumLiquidationCollateralUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"}],\"name\":\"NetworkEarningsWithdrawn\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"oldFee\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"newFee\",\"type\":\"uint256\"}],\"name\":\"NetworkFeeUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint64\",\"name\":\"operatorId\",\"type\":\"uint64\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"publicKey\",\"type\":\"bytes\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"fee\",\"type\":\"uint256\"}],\"name\":\"OperatorAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint64\",\"name\":\"operatorId\",\"type\":\"uint64\"}],\"name\":\"OperatorFeeDeclarationCancelled\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint64\",\"name\":\"operatorId\",\"type\":\"uint64\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"blockNumber\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"fee\",\"type\":\"uint256\"}],\"name\":\"OperatorFeeDeclared\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint64\",\"name\":\"operatorId\",\"type\":\"uint64\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"blockNumber\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"fee\",\"type\":\"uint256\"}],\"name\":\"OperatorFeeExecuted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"value\",\"type\":\"uint64\"}],\"name\":\"OperatorFeeIncreaseLimitUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint64\",\"name\":\"operatorId\",\"type\":\"uint64\"}],\"name\":\"OperatorRemoved\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint64\",\"name\":\"operatorId\",\"type\":\"uint64\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"whitelisted\",\"type\":\"address\"}],\"name\":\"OperatorWhitelistUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint64\",\"name\":\"operatorId\",\"type\":\"uint64\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"OperatorWithdrawn\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferStarted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"implementation\",\"type\":\"address\"}],\"name\":\"Upgraded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"publicKey\",\"type\":\"bytes\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"shares\",\"type\":\"bytes\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"validatorCount\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"networkFeeIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"index\",\"type\":\"uint64\"},{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"indexed\":false,\"internalType\":\"structISSVNetworkCore.Cluster\",\"name\":\"cluster\",\"type\":\"tuple\"}],\"name\":\"ValidatorAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"publicKey\",\"type\":\"bytes\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"validatorCount\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"networkFeeIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"index\",\"type\":\"uint64\"},{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"indexed\":false,\"internalType\":\"structISSVNetworkCore.Cluster\",\"name\":\"cluster\",\"type\":\"tuple\"}],\"name\":\"ValidatorRemoved\",\"type\":\"event\"},{\"stateMutability\":\"nonpayable\",\"type\":\"fallback\"},{\"inputs\":[],\"name\":\"acceptOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"operatorId\",\"type\":\"uint64\"}],\"name\":\"cancelDeclaredOperatorFee\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"operatorId\",\"type\":\"uint64\"},{\"internalType\":\"uint256\",\"name\":\"fee\",\"type\":\"uint256\"}],\"name\":\"declareOperatorFee\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"clusterOwner\",\"type\":\"address\"},{\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"validatorCount\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"networkFeeIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"index\",\"type\":\"uint64\"},{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"internalType\":\"structISSVNetworkCore.Cluster\",\"name\":\"cluster\",\"type\":\"tuple\"}],\"name\":\"deposit\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"operatorId\",\"type\":\"uint64\"}],\"name\":\"executeOperatorFee\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"userAddress\",\"type\":\"address\"}],\"name\":\"getRegisterAuth\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"authOperators\",\"type\":\"bool\"},{\"internalType\":\"bool\",\"name\":\"authValidators\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getVersion\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"version\",\"type\":\"string\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"contractIERC20\",\"name\":\"token_\",\"type\":\"address\"},{\"internalType\":\"contractISSVOperators\",\"name\":\"ssvOperators_\",\"type\":\"address\"},{\"internalType\":\"contractISSVClusters\",\"name\":\"ssvClusters_\",\"type\":\"address\"},{\"internalType\":\"contractISSVDAO\",\"name\":\"ssvDAO_\",\"type\":\"address\"},{\"internalType\":\"contractISSVViews\",\"name\":\"ssvViews_\",\"type\":\"address\"},{\"internalType\":\"uint64\",\"name\":\"minimumBlocksBeforeLiquidation_\",\"type\":\"uint64\"},{\"internalType\":\"uint256\",\"name\":\"minimumLiquidationCollateral_\",\"type\":\"uint256\"},{\"internalType\":\"uint32\",\"name\":\"validatorsPerOperatorLimit_\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"declareOperatorFeePeriod_\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"executeOperatorFeePeriod_\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"operatorMaxFeeIncrease_\",\"type\":\"uint64\"}],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"clusterOwner\",\"type\":\"address\"},{\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"validatorCount\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"networkFeeIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"index\",\"type\":\"uint64\"},{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"internalType\":\"structISSVNetworkCore.Cluster\",\"name\":\"cluster\",\"type\":\"tuple\"}],\"name\":\"liquidate\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"pendingOwner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"proxiableUUID\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"validatorCount\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"networkFeeIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"index\",\"type\":\"uint64\"},{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"internalType\":\"structISSVNetworkCore.Cluster\",\"name\":\"cluster\",\"type\":\"tuple\"}],\"name\":\"reactivate\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"operatorId\",\"type\":\"uint64\"},{\"internalType\":\"uint256\",\"name\":\"fee\",\"type\":\"uint256\"}],\"name\":\"reduceOperatorFee\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"publicKey\",\"type\":\"bytes\"},{\"internalType\":\"uint256\",\"name\":\"fee\",\"type\":\"uint256\"}],\"name\":\"registerOperator\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"id\",\"type\":\"uint64\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"publicKey\",\"type\":\"bytes\"},{\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"internalType\":\"bytes\",\"name\":\"sharesData\",\"type\":\"bytes\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"validatorCount\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"networkFeeIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"index\",\"type\":\"uint64\"},{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"internalType\":\"structISSVNetworkCore.Cluster\",\"name\":\"cluster\",\"type\":\"tuple\"}],\"name\":\"registerValidator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"operatorId\",\"type\":\"uint64\"}],\"name\":\"removeOperator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"publicKey\",\"type\":\"bytes\"},{\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"validatorCount\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"networkFeeIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"index\",\"type\":\"uint64\"},{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"internalType\":\"structISSVNetworkCore.Cluster\",\"name\":\"cluster\",\"type\":\"tuple\"}],\"name\":\"removeValidator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"recipientAddress\",\"type\":\"address\"}],\"name\":\"setFeeRecipientAddress\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"operatorId\",\"type\":\"uint64\"},{\"internalType\":\"address\",\"name\":\"whitelisted\",\"type\":\"address\"}],\"name\":\"setOperatorWhitelist\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"userAddress\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"authOperator\",\"type\":\"bool\"},{\"internalType\":\"bool\",\"name\":\"authValidator\",\"type\":\"bool\"}],\"name\":\"setRegisterAuth\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"timeInSeconds\",\"type\":\"uint64\"}],\"name\":\"updateDeclareOperatorFeePeriod\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"timeInSeconds\",\"type\":\"uint64\"}],\"name\":\"updateExecuteOperatorFeePeriod\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"blocks\",\"type\":\"uint64\"}],\"name\":\"updateLiquidationThresholdPeriod\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"updateMinimumLiquidationCollateral\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"enumSSVModules\",\"name\":\"moduleId\",\"type\":\"uint8\"},{\"internalType\":\"address\",\"name\":\"moduleAddress\",\"type\":\"address\"}],\"name\":\"updateModule\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"fee\",\"type\":\"uint256\"}],\"name\":\"updateNetworkFee\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"percentage\",\"type\":\"uint64\"}],\"name\":\"updateOperatorFeeIncreaseLimit\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newImplementation\",\"type\":\"address\"}],\"name\":\"upgradeTo\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newImplementation\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"upgradeToAndCall\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"validatorCount\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"networkFeeIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"index\",\"type\":\"uint64\"},{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"internalType\":\"structISSVNetworkCore.Cluster\",\"name\":\"cluster\",\"type\":\"tuple\"}],\"name\":\"withdraw\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"operatorId\",\"type\":\"uint64\"}],\"name\":\"withdrawAllOperatorEarnings\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"withdrawNetworkEarnings\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"operatorId\",\"type\":\"uint64\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"withdrawOperatorEarnings\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+	ABI: "[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"contractAddress\",\"type\":\"address\"}],\"name\":\"AddressIsWhitelistingContract\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ApprovalNotWithinTimeframe\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"CallerNotOwner\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"caller\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"CallerNotOwnerWithData\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"CallerNotWhitelisted\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"operatorId\",\"type\":\"uint64\"}],\"name\":\"CallerNotWhitelistedWithData\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ClusterAlreadyEnabled\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ClusterDoesNotExists\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ClusterIsLiquidated\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ClusterNotLiquidatable\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"EmptyPublicKeysList\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"operatorId\",\"type\":\"uint64\"}],\"name\":\"ExceedValidatorLimit\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"operatorId\",\"type\":\"uint64\"}],\"name\":\"ExceedValidatorLimitWithData\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"FeeExceedsIncreaseLimit\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"FeeIncreaseNotAllowed\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"FeeTooHigh\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"FeeTooLow\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"IncorrectClusterState\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"IncorrectValidatorState\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"publicKey\",\"type\":\"bytes\"}],\"name\":\"IncorrectValidatorStateWithData\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InsufficientBalance\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidContractAddress\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidOperatorIdsLength\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidPublicKeyLength\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidWhitelistAddressesLength\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"contractAddress\",\"type\":\"address\"}],\"name\":\"InvalidWhitelistingContract\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"MaxValueExceeded\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"NewBlockPeriodIsBelowMinimum\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"NoFeeDeclared\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"NotAuthorized\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"OperatorAlreadyExists\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"OperatorDoesNotExist\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"OperatorsListNotUnique\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"PublicKeysSharesLengthMismatch\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"SameFeeChangeNotAllowed\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"TargetModuleDoesNotExist\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint8\",\"name\":\"moduleId\",\"type\":\"uint8\"}],\"name\":\"TargetModuleDoesNotExistWithData\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"TokenTransferFailed\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"UnsortedOperatorsList\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ValidatorAlreadyExists\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"publicKey\",\"type\":\"bytes\"}],\"name\":\"ValidatorAlreadyExistsWithData\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ValidatorDoesNotExist\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ZeroAddressNotAllowed\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"previousAdmin\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"newAdmin\",\"type\":\"address\"}],\"name\":\"AdminChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"beacon\",\"type\":\"address\"}],\"name\":\"BeaconUpgraded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"validatorCount\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"networkFeeIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"index\",\"type\":\"uint64\"},{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"indexed\":false,\"internalType\":\"structISSVNetworkCore.Cluster\",\"name\":\"cluster\",\"type\":\"tuple\"}],\"name\":\"ClusterDeposited\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"validatorCount\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"networkFeeIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"index\",\"type\":\"uint64\"},{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"indexed\":false,\"internalType\":\"structISSVNetworkCore.Cluster\",\"name\":\"cluster\",\"type\":\"tuple\"}],\"name\":\"ClusterLiquidated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"validatorCount\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"networkFeeIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"index\",\"type\":\"uint64\"},{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"indexed\":false,\"internalType\":\"structISSVNetworkCore.Cluster\",\"name\":\"cluster\",\"type\":\"tuple\"}],\"name\":\"ClusterReactivated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"validatorCount\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"networkFeeIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"index\",\"type\":\"uint64\"},{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"indexed\":false,\"internalType\":\"structISSVNetworkCore.Cluster\",\"name\":\"cluster\",\"type\":\"tuple\"}],\"name\":\"ClusterWithdrawn\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"value\",\"type\":\"uint64\"}],\"name\":\"DeclareOperatorFeePeriodUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"value\",\"type\":\"uint64\"}],\"name\":\"ExecuteOperatorFeePeriodUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"recipientAddress\",\"type\":\"address\"}],\"name\":\"FeeRecipientAddressUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"version\",\"type\":\"uint8\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"value\",\"type\":\"uint64\"}],\"name\":\"LiquidationThresholdPeriodUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"MinimumLiquidationCollateralUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"enumSSVModules\",\"name\":\"moduleId\",\"type\":\"uint8\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"moduleAddress\",\"type\":\"address\"}],\"name\":\"ModuleUpgraded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"}],\"name\":\"NetworkEarningsWithdrawn\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"oldFee\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"newFee\",\"type\":\"uint256\"}],\"name\":\"NetworkFeeUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint64\",\"name\":\"operatorId\",\"type\":\"uint64\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"publicKey\",\"type\":\"bytes\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"fee\",\"type\":\"uint256\"}],\"name\":\"OperatorAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint64\",\"name\":\"operatorId\",\"type\":\"uint64\"}],\"name\":\"OperatorFeeDeclarationCancelled\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint64\",\"name\":\"operatorId\",\"type\":\"uint64\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"blockNumber\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"fee\",\"type\":\"uint256\"}],\"name\":\"OperatorFeeDeclared\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint64\",\"name\":\"operatorId\",\"type\":\"uint64\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"blockNumber\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"fee\",\"type\":\"uint256\"}],\"name\":\"OperatorFeeExecuted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"value\",\"type\":\"uint64\"}],\"name\":\"OperatorFeeIncreaseLimitUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"maxFee\",\"type\":\"uint64\"}],\"name\":\"OperatorMaximumFeeUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"indexed\":false,\"internalType\":\"address[]\",\"name\":\"whitelistAddresses\",\"type\":\"address[]\"}],\"name\":\"OperatorMultipleWhitelistRemoved\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"indexed\":false,\"internalType\":\"address[]\",\"name\":\"whitelistAddresses\",\"type\":\"address[]\"}],\"name\":\"OperatorMultipleWhitelistUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"toPrivate\",\"type\":\"bool\"}],\"name\":\"OperatorPrivacyStatusUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint64\",\"name\":\"operatorId\",\"type\":\"uint64\"}],\"name\":\"OperatorRemoved\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"whitelistingContract\",\"type\":\"address\"}],\"name\":\"OperatorWhitelistingContractUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint64\",\"name\":\"operatorId\",\"type\":\"uint64\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"OperatorWithdrawn\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferStarted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"implementation\",\"type\":\"address\"}],\"name\":\"Upgraded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"publicKey\",\"type\":\"bytes\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"shares\",\"type\":\"bytes\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"validatorCount\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"networkFeeIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"index\",\"type\":\"uint64\"},{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"indexed\":false,\"internalType\":\"structISSVNetworkCore.Cluster\",\"name\":\"cluster\",\"type\":\"tuple\"}],\"name\":\"ValidatorAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"publicKey\",\"type\":\"bytes\"}],\"name\":\"ValidatorExited\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"publicKey\",\"type\":\"bytes\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"validatorCount\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"networkFeeIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"index\",\"type\":\"uint64\"},{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"indexed\":false,\"internalType\":\"structISSVNetworkCore.Cluster\",\"name\":\"cluster\",\"type\":\"tuple\"}],\"name\":\"ValidatorRemoved\",\"type\":\"event\"},{\"stateMutability\":\"nonpayable\",\"type\":\"fallback\"},{\"inputs\":[],\"name\":\"acceptOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes[]\",\"name\":\"publicKeys\",\"type\":\"bytes[]\"},{\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"}],\"name\":\"bulkExitValidator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes[]\",\"name\":\"publicKeys\",\"type\":\"bytes[]\"},{\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"internalType\":\"bytes[]\",\"name\":\"sharesData\",\"type\":\"bytes[]\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"validatorCount\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"networkFeeIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"index\",\"type\":\"uint64\"},{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"internalType\":\"structISSVNetworkCore.Cluster\",\"name\":\"cluster\",\"type\":\"tuple\"}],\"name\":\"bulkRegisterValidator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes[]\",\"name\":\"publicKeys\",\"type\":\"bytes[]\"},{\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"validatorCount\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"networkFeeIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"index\",\"type\":\"uint64\"},{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"internalType\":\"structISSVNetworkCore.Cluster\",\"name\":\"cluster\",\"type\":\"tuple\"}],\"name\":\"bulkRemoveValidator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"operatorId\",\"type\":\"uint64\"}],\"name\":\"cancelDeclaredOperatorFee\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"operatorId\",\"type\":\"uint64\"},{\"internalType\":\"uint256\",\"name\":\"fee\",\"type\":\"uint256\"}],\"name\":\"declareOperatorFee\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"clusterOwner\",\"type\":\"address\"},{\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"validatorCount\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"networkFeeIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"index\",\"type\":\"uint64\"},{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"internalType\":\"structISSVNetworkCore.Cluster\",\"name\":\"cluster\",\"type\":\"tuple\"}],\"name\":\"deposit\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"operatorId\",\"type\":\"uint64\"}],\"name\":\"executeOperatorFee\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"publicKey\",\"type\":\"bytes\"},{\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"}],\"name\":\"exitValidator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getVersion\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"version\",\"type\":\"string\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"contractIERC20\",\"name\":\"token_\",\"type\":\"address\"},{\"internalType\":\"contractISSVOperators\",\"name\":\"ssvOperators_\",\"type\":\"address\"},{\"internalType\":\"contractISSVClusters\",\"name\":\"ssvClusters_\",\"type\":\"address\"},{\"internalType\":\"contractISSVDAO\",\"name\":\"ssvDAO_\",\"type\":\"address\"},{\"internalType\":\"contractISSVViews\",\"name\":\"ssvViews_\",\"type\":\"address\"},{\"internalType\":\"uint64\",\"name\":\"minimumBlocksBeforeLiquidation_\",\"type\":\"uint64\"},{\"internalType\":\"uint256\",\"name\":\"minimumLiquidationCollateral_\",\"type\":\"uint256\"},{\"internalType\":\"uint32\",\"name\":\"validatorsPerOperatorLimit_\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"declareOperatorFeePeriod_\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"executeOperatorFeePeriod_\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"operatorMaxFeeIncrease_\",\"type\":\"uint64\"}],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"clusterOwner\",\"type\":\"address\"},{\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"validatorCount\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"networkFeeIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"index\",\"type\":\"uint64\"},{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"internalType\":\"structISSVNetworkCore.Cluster\",\"name\":\"cluster\",\"type\":\"tuple\"}],\"name\":\"liquidate\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"pendingOwner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"proxiableUUID\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"validatorCount\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"networkFeeIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"index\",\"type\":\"uint64\"},{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"internalType\":\"structISSVNetworkCore.Cluster\",\"name\":\"cluster\",\"type\":\"tuple\"}],\"name\":\"reactivate\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"operatorId\",\"type\":\"uint64\"},{\"internalType\":\"uint256\",\"name\":\"fee\",\"type\":\"uint256\"}],\"name\":\"reduceOperatorFee\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"publicKey\",\"type\":\"bytes\"},{\"internalType\":\"uint256\",\"name\":\"fee\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"setPrivate\",\"type\":\"bool\"}],\"name\":\"registerOperator\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"id\",\"type\":\"uint64\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"publicKey\",\"type\":\"bytes\"},{\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"internalType\":\"bytes\",\"name\":\"sharesData\",\"type\":\"bytes\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"validatorCount\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"networkFeeIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"index\",\"type\":\"uint64\"},{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"internalType\":\"structISSVNetworkCore.Cluster\",\"name\":\"cluster\",\"type\":\"tuple\"}],\"name\":\"registerValidator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"operatorId\",\"type\":\"uint64\"}],\"name\":\"removeOperator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"}],\"name\":\"removeOperatorsWhitelistingContract\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"internalType\":\"address[]\",\"name\":\"whitelistAddresses\",\"type\":\"address[]\"}],\"name\":\"removeOperatorsWhitelists\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"publicKey\",\"type\":\"bytes\"},{\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"validatorCount\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"networkFeeIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"index\",\"type\":\"uint64\"},{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"internalType\":\"structISSVNetworkCore.Cluster\",\"name\":\"cluster\",\"type\":\"tuple\"}],\"name\":\"removeValidator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"recipientAddress\",\"type\":\"address\"}],\"name\":\"setFeeRecipientAddress\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"}],\"name\":\"setOperatorsPrivateUnchecked\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"}],\"name\":\"setOperatorsPublicUnchecked\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"internalType\":\"contractISSVWhitelistingContract\",\"name\":\"whitelistingContract\",\"type\":\"address\"}],\"name\":\"setOperatorsWhitelistingContract\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"internalType\":\"address[]\",\"name\":\"whitelistAddresses\",\"type\":\"address[]\"}],\"name\":\"setOperatorsWhitelists\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"timeInSeconds\",\"type\":\"uint64\"}],\"name\":\"updateDeclareOperatorFeePeriod\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"timeInSeconds\",\"type\":\"uint64\"}],\"name\":\"updateExecuteOperatorFeePeriod\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"blocks\",\"type\":\"uint64\"}],\"name\":\"updateLiquidationThresholdPeriod\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"maxFee\",\"type\":\"uint64\"}],\"name\":\"updateMaximumOperatorFee\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"updateMinimumLiquidationCollateral\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"enumSSVModules\",\"name\":\"moduleId\",\"type\":\"uint8\"},{\"internalType\":\"address\",\"name\":\"moduleAddress\",\"type\":\"address\"}],\"name\":\"updateModule\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"fee\",\"type\":\"uint256\"}],\"name\":\"updateNetworkFee\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"percentage\",\"type\":\"uint64\"}],\"name\":\"updateOperatorFeeIncreaseLimit\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newImplementation\",\"type\":\"address\"}],\"name\":\"upgradeTo\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newImplementation\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"upgradeToAndCall\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64[]\",\"name\":\"operatorIds\",\"type\":\"uint64[]\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"validatorCount\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"networkFeeIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"index\",\"type\":\"uint64\"},{\"internalType\":\"bool\",\"name\":\"active\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"internalType\":\"structISSVNetworkCore.Cluster\",\"name\":\"cluster\",\"type\":\"tuple\"}],\"name\":\"withdraw\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"operatorId\",\"type\":\"uint64\"}],\"name\":\"withdrawAllOperatorEarnings\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"withdrawNetworkEarnings\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"operatorId\",\"type\":\"uint64\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"withdrawOperatorEarnings\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
 }
 
 // SsvNetworkABI is the input ABI used to generate the binding from.
@@ -188,51 +188,6 @@ func (_SsvNetwork *SsvNetworkTransactorRaw) Transact(opts *bind.TransactOpts, me
 	return _SsvNetwork.Contract.contract.Transact(opts, method, params...)
 }
 
-// GetRegisterAuth is a free data retrieval call binding the contract method 0x7398ca6c.
-//
-// Solidity: function getRegisterAuth(address userAddress) view returns(bool authOperators, bool authValidators)
-func (_SsvNetwork *SsvNetworkCaller) GetRegisterAuth(opts *bind.CallOpts, userAddress common.Address) (struct {
-	AuthOperators  bool
-	AuthValidators bool
-}, error) {
-	var out []interface{}
-	err := _SsvNetwork.contract.Call(opts, &out, "getRegisterAuth", userAddress)
-
-	outstruct := new(struct {
-		AuthOperators  bool
-		AuthValidators bool
-	})
-	if err != nil {
-		return *outstruct, err
-	}
-
-	outstruct.AuthOperators = *abi.ConvertType(out[0], new(bool)).(*bool)
-	outstruct.AuthValidators = *abi.ConvertType(out[1], new(bool)).(*bool)
-
-	return *outstruct, err
-
-}
-
-// GetRegisterAuth is a free data retrieval call binding the contract method 0x7398ca6c.
-//
-// Solidity: function getRegisterAuth(address userAddress) view returns(bool authOperators, bool authValidators)
-func (_SsvNetwork *SsvNetworkSession) GetRegisterAuth(userAddress common.Address) (struct {
-	AuthOperators  bool
-	AuthValidators bool
-}, error) {
-	return _SsvNetwork.Contract.GetRegisterAuth(&_SsvNetwork.CallOpts, userAddress)
-}
-
-// GetRegisterAuth is a free data retrieval call binding the contract method 0x7398ca6c.
-//
-// Solidity: function getRegisterAuth(address userAddress) view returns(bool authOperators, bool authValidators)
-func (_SsvNetwork *SsvNetworkCallerSession) GetRegisterAuth(userAddress common.Address) (struct {
-	AuthOperators  bool
-	AuthValidators bool
-}, error) {
-	return _SsvNetwork.Contract.GetRegisterAuth(&_SsvNetwork.CallOpts, userAddress)
-}
-
 // GetVersion is a free data retrieval call binding the contract method 0x0d8e6e2c.
 //
 // Solidity: function getVersion() pure returns(string version)
@@ -378,6 +333,69 @@ func (_SsvNetwork *SsvNetworkTransactorSession) AcceptOwnership() (*types.Transa
 	return _SsvNetwork.Contract.AcceptOwnership(&_SsvNetwork.TransactOpts)
 }
 
+// BulkExitValidator is a paid mutator transaction binding the contract method 0x32afd02f.
+//
+// Solidity: function bulkExitValidator(bytes[] publicKeys, uint64[] operatorIds) returns()
+func (_SsvNetwork *SsvNetworkTransactor) BulkExitValidator(opts *bind.TransactOpts, publicKeys [][]byte, operatorIds []uint64) (*types.Transaction, error) {
+	return _SsvNetwork.contract.Transact(opts, "bulkExitValidator", publicKeys, operatorIds)
+}
+
+// BulkExitValidator is a paid mutator transaction binding the contract method 0x32afd02f.
+//
+// Solidity: function bulkExitValidator(bytes[] publicKeys, uint64[] operatorIds) returns()
+func (_SsvNetwork *SsvNetworkSession) BulkExitValidator(publicKeys [][]byte, operatorIds []uint64) (*types.Transaction, error) {
+	return _SsvNetwork.Contract.BulkExitValidator(&_SsvNetwork.TransactOpts, publicKeys, operatorIds)
+}
+
+// BulkExitValidator is a paid mutator transaction binding the contract method 0x32afd02f.
+//
+// Solidity: function bulkExitValidator(bytes[] publicKeys, uint64[] operatorIds) returns()
+func (_SsvNetwork *SsvNetworkTransactorSession) BulkExitValidator(publicKeys [][]byte, operatorIds []uint64) (*types.Transaction, error) {
+	return _SsvNetwork.Contract.BulkExitValidator(&_SsvNetwork.TransactOpts, publicKeys, operatorIds)
+}
+
+// BulkRegisterValidator is a paid mutator transaction binding the contract method 0x22f18bf5.
+//
+// Solidity: function bulkRegisterValidator(bytes[] publicKeys, uint64[] operatorIds, bytes[] sharesData, uint256 amount, (uint32,uint64,uint64,bool,uint256) cluster) returns()
+func (_SsvNetwork *SsvNetworkTransactor) BulkRegisterValidator(opts *bind.TransactOpts, publicKeys [][]byte, operatorIds []uint64, sharesData [][]byte, amount *big.Int, cluster ISSVNetworkCoreCluster) (*types.Transaction, error) {
+	return _SsvNetwork.contract.Transact(opts, "bulkRegisterValidator", publicKeys, operatorIds, sharesData, amount, cluster)
+}
+
+// BulkRegisterValidator is a paid mutator transaction binding the contract method 0x22f18bf5.
+//
+// Solidity: function bulkRegisterValidator(bytes[] publicKeys, uint64[] operatorIds, bytes[] sharesData, uint256 amount, (uint32,uint64,uint64,bool,uint256) cluster) returns()
+func (_SsvNetwork *SsvNetworkSession) BulkRegisterValidator(publicKeys [][]byte, operatorIds []uint64, sharesData [][]byte, amount *big.Int, cluster ISSVNetworkCoreCluster) (*types.Transaction, error) {
+	return _SsvNetwork.Contract.BulkRegisterValidator(&_SsvNetwork.TransactOpts, publicKeys, operatorIds, sharesData, amount, cluster)
+}
+
+// BulkRegisterValidator is a paid mutator transaction binding the contract method 0x22f18bf5.
+//
+// Solidity: function bulkRegisterValidator(bytes[] publicKeys, uint64[] operatorIds, bytes[] sharesData, uint256 amount, (uint32,uint64,uint64,bool,uint256) cluster) returns()
+func (_SsvNetwork *SsvNetworkTransactorSession) BulkRegisterValidator(publicKeys [][]byte, operatorIds []uint64, sharesData [][]byte, amount *big.Int, cluster ISSVNetworkCoreCluster) (*types.Transaction, error) {
+	return _SsvNetwork.Contract.BulkRegisterValidator(&_SsvNetwork.TransactOpts, publicKeys, operatorIds, sharesData, amount, cluster)
+}
+
+// BulkRemoveValidator is a paid mutator transaction binding the contract method 0x5aed1142.
+//
+// Solidity: function bulkRemoveValidator(bytes[] publicKeys, uint64[] operatorIds, (uint32,uint64,uint64,bool,uint256) cluster) returns()
+func (_SsvNetwork *SsvNetworkTransactor) BulkRemoveValidator(opts *bind.TransactOpts, publicKeys [][]byte, operatorIds []uint64, cluster ISSVNetworkCoreCluster) (*types.Transaction, error) {
+	return _SsvNetwork.contract.Transact(opts, "bulkRemoveValidator", publicKeys, operatorIds, cluster)
+}
+
+// BulkRemoveValidator is a paid mutator transaction binding the contract method 0x5aed1142.
+//
+// Solidity: function bulkRemoveValidator(bytes[] publicKeys, uint64[] operatorIds, (uint32,uint64,uint64,bool,uint256) cluster) returns()
+func (_SsvNetwork *SsvNetworkSession) BulkRemoveValidator(publicKeys [][]byte, operatorIds []uint64, cluster ISSVNetworkCoreCluster) (*types.Transaction, error) {
+	return _SsvNetwork.Contract.BulkRemoveValidator(&_SsvNetwork.TransactOpts, publicKeys, operatorIds, cluster)
+}
+
+// BulkRemoveValidator is a paid mutator transaction binding the contract method 0x5aed1142.
+//
+// Solidity: function bulkRemoveValidator(bytes[] publicKeys, uint64[] operatorIds, (uint32,uint64,uint64,bool,uint256) cluster) returns()
+func (_SsvNetwork *SsvNetworkTransactorSession) BulkRemoveValidator(publicKeys [][]byte, operatorIds []uint64, cluster ISSVNetworkCoreCluster) (*types.Transaction, error) {
+	return _SsvNetwork.Contract.BulkRemoveValidator(&_SsvNetwork.TransactOpts, publicKeys, operatorIds, cluster)
+}
+
 // CancelDeclaredOperatorFee is a paid mutator transaction binding the contract method 0x23d68a6d.
 //
 // Solidity: function cancelDeclaredOperatorFee(uint64 operatorId) returns()
@@ -460,6 +478,27 @@ func (_SsvNetwork *SsvNetworkSession) ExecuteOperatorFee(operatorId uint64) (*ty
 // Solidity: function executeOperatorFee(uint64 operatorId) returns()
 func (_SsvNetwork *SsvNetworkTransactorSession) ExecuteOperatorFee(operatorId uint64) (*types.Transaction, error) {
 	return _SsvNetwork.Contract.ExecuteOperatorFee(&_SsvNetwork.TransactOpts, operatorId)
+}
+
+// ExitValidator is a paid mutator transaction binding the contract method 0x3877322b.
+//
+// Solidity: function exitValidator(bytes publicKey, uint64[] operatorIds) returns()
+func (_SsvNetwork *SsvNetworkTransactor) ExitValidator(opts *bind.TransactOpts, publicKey []byte, operatorIds []uint64) (*types.Transaction, error) {
+	return _SsvNetwork.contract.Transact(opts, "exitValidator", publicKey, operatorIds)
+}
+
+// ExitValidator is a paid mutator transaction binding the contract method 0x3877322b.
+//
+// Solidity: function exitValidator(bytes publicKey, uint64[] operatorIds) returns()
+func (_SsvNetwork *SsvNetworkSession) ExitValidator(publicKey []byte, operatorIds []uint64) (*types.Transaction, error) {
+	return _SsvNetwork.Contract.ExitValidator(&_SsvNetwork.TransactOpts, publicKey, operatorIds)
+}
+
+// ExitValidator is a paid mutator transaction binding the contract method 0x3877322b.
+//
+// Solidity: function exitValidator(bytes publicKey, uint64[] operatorIds) returns()
+func (_SsvNetwork *SsvNetworkTransactorSession) ExitValidator(publicKey []byte, operatorIds []uint64) (*types.Transaction, error) {
+	return _SsvNetwork.Contract.ExitValidator(&_SsvNetwork.TransactOpts, publicKey, operatorIds)
 }
 
 // Initialize is a paid mutator transaction binding the contract method 0xc626c3c6.
@@ -546,25 +585,25 @@ func (_SsvNetwork *SsvNetworkTransactorSession) ReduceOperatorFee(operatorId uin
 	return _SsvNetwork.Contract.ReduceOperatorFee(&_SsvNetwork.TransactOpts, operatorId, fee)
 }
 
-// RegisterOperator is a paid mutator transaction binding the contract method 0xff212c5c.
+// RegisterOperator is a paid mutator transaction binding the contract method 0xc9bbc9fa.
 //
-// Solidity: function registerOperator(bytes publicKey, uint256 fee) returns(uint64 id)
-func (_SsvNetwork *SsvNetworkTransactor) RegisterOperator(opts *bind.TransactOpts, publicKey []byte, fee *big.Int) (*types.Transaction, error) {
-	return _SsvNetwork.contract.Transact(opts, "registerOperator", publicKey, fee)
+// Solidity: function registerOperator(bytes publicKey, uint256 fee, bool setPrivate) returns(uint64 id)
+func (_SsvNetwork *SsvNetworkTransactor) RegisterOperator(opts *bind.TransactOpts, publicKey []byte, fee *big.Int, setPrivate bool) (*types.Transaction, error) {
+	return _SsvNetwork.contract.Transact(opts, "registerOperator", publicKey, fee, setPrivate)
 }
 
-// RegisterOperator is a paid mutator transaction binding the contract method 0xff212c5c.
+// RegisterOperator is a paid mutator transaction binding the contract method 0xc9bbc9fa.
 //
-// Solidity: function registerOperator(bytes publicKey, uint256 fee) returns(uint64 id)
-func (_SsvNetwork *SsvNetworkSession) RegisterOperator(publicKey []byte, fee *big.Int) (*types.Transaction, error) {
-	return _SsvNetwork.Contract.RegisterOperator(&_SsvNetwork.TransactOpts, publicKey, fee)
+// Solidity: function registerOperator(bytes publicKey, uint256 fee, bool setPrivate) returns(uint64 id)
+func (_SsvNetwork *SsvNetworkSession) RegisterOperator(publicKey []byte, fee *big.Int, setPrivate bool) (*types.Transaction, error) {
+	return _SsvNetwork.Contract.RegisterOperator(&_SsvNetwork.TransactOpts, publicKey, fee, setPrivate)
 }
 
-// RegisterOperator is a paid mutator transaction binding the contract method 0xff212c5c.
+// RegisterOperator is a paid mutator transaction binding the contract method 0xc9bbc9fa.
 //
-// Solidity: function registerOperator(bytes publicKey, uint256 fee) returns(uint64 id)
-func (_SsvNetwork *SsvNetworkTransactorSession) RegisterOperator(publicKey []byte, fee *big.Int) (*types.Transaction, error) {
-	return _SsvNetwork.Contract.RegisterOperator(&_SsvNetwork.TransactOpts, publicKey, fee)
+// Solidity: function registerOperator(bytes publicKey, uint256 fee, bool setPrivate) returns(uint64 id)
+func (_SsvNetwork *SsvNetworkTransactorSession) RegisterOperator(publicKey []byte, fee *big.Int, setPrivate bool) (*types.Transaction, error) {
+	return _SsvNetwork.Contract.RegisterOperator(&_SsvNetwork.TransactOpts, publicKey, fee, setPrivate)
 }
 
 // RegisterValidator is a paid mutator transaction binding the contract method 0x06e8fb9c.
@@ -607,6 +646,48 @@ func (_SsvNetwork *SsvNetworkSession) RemoveOperator(operatorId uint64) (*types.
 // Solidity: function removeOperator(uint64 operatorId) returns()
 func (_SsvNetwork *SsvNetworkTransactorSession) RemoveOperator(operatorId uint64) (*types.Transaction, error) {
 	return _SsvNetwork.Contract.RemoveOperator(&_SsvNetwork.TransactOpts, operatorId)
+}
+
+// RemoveOperatorsWhitelistingContract is a paid mutator transaction binding the contract method 0x6a31cf1d.
+//
+// Solidity: function removeOperatorsWhitelistingContract(uint64[] operatorIds) returns()
+func (_SsvNetwork *SsvNetworkTransactor) RemoveOperatorsWhitelistingContract(opts *bind.TransactOpts, operatorIds []uint64) (*types.Transaction, error) {
+	return _SsvNetwork.contract.Transact(opts, "removeOperatorsWhitelistingContract", operatorIds)
+}
+
+// RemoveOperatorsWhitelistingContract is a paid mutator transaction binding the contract method 0x6a31cf1d.
+//
+// Solidity: function removeOperatorsWhitelistingContract(uint64[] operatorIds) returns()
+func (_SsvNetwork *SsvNetworkSession) RemoveOperatorsWhitelistingContract(operatorIds []uint64) (*types.Transaction, error) {
+	return _SsvNetwork.Contract.RemoveOperatorsWhitelistingContract(&_SsvNetwork.TransactOpts, operatorIds)
+}
+
+// RemoveOperatorsWhitelistingContract is a paid mutator transaction binding the contract method 0x6a31cf1d.
+//
+// Solidity: function removeOperatorsWhitelistingContract(uint64[] operatorIds) returns()
+func (_SsvNetwork *SsvNetworkTransactorSession) RemoveOperatorsWhitelistingContract(operatorIds []uint64) (*types.Transaction, error) {
+	return _SsvNetwork.Contract.RemoveOperatorsWhitelistingContract(&_SsvNetwork.TransactOpts, operatorIds)
+}
+
+// RemoveOperatorsWhitelists is a paid mutator transaction binding the contract method 0x4b2fd45e.
+//
+// Solidity: function removeOperatorsWhitelists(uint64[] operatorIds, address[] whitelistAddresses) returns()
+func (_SsvNetwork *SsvNetworkTransactor) RemoveOperatorsWhitelists(opts *bind.TransactOpts, operatorIds []uint64, whitelistAddresses []common.Address) (*types.Transaction, error) {
+	return _SsvNetwork.contract.Transact(opts, "removeOperatorsWhitelists", operatorIds, whitelistAddresses)
+}
+
+// RemoveOperatorsWhitelists is a paid mutator transaction binding the contract method 0x4b2fd45e.
+//
+// Solidity: function removeOperatorsWhitelists(uint64[] operatorIds, address[] whitelistAddresses) returns()
+func (_SsvNetwork *SsvNetworkSession) RemoveOperatorsWhitelists(operatorIds []uint64, whitelistAddresses []common.Address) (*types.Transaction, error) {
+	return _SsvNetwork.Contract.RemoveOperatorsWhitelists(&_SsvNetwork.TransactOpts, operatorIds, whitelistAddresses)
+}
+
+// RemoveOperatorsWhitelists is a paid mutator transaction binding the contract method 0x4b2fd45e.
+//
+// Solidity: function removeOperatorsWhitelists(uint64[] operatorIds, address[] whitelistAddresses) returns()
+func (_SsvNetwork *SsvNetworkTransactorSession) RemoveOperatorsWhitelists(operatorIds []uint64, whitelistAddresses []common.Address) (*types.Transaction, error) {
+	return _SsvNetwork.Contract.RemoveOperatorsWhitelists(&_SsvNetwork.TransactOpts, operatorIds, whitelistAddresses)
 }
 
 // RemoveValidator is a paid mutator transaction binding the contract method 0x12b3fc19.
@@ -672,46 +753,88 @@ func (_SsvNetwork *SsvNetworkTransactorSession) SetFeeRecipientAddress(recipient
 	return _SsvNetwork.Contract.SetFeeRecipientAddress(&_SsvNetwork.TransactOpts, recipientAddress)
 }
 
-// SetOperatorWhitelist is a paid mutator transaction binding the contract method 0xc90a7eab.
+// SetOperatorsPrivateUnchecked is a paid mutator transaction binding the contract method 0x822124c1.
 //
-// Solidity: function setOperatorWhitelist(uint64 operatorId, address whitelisted) returns()
-func (_SsvNetwork *SsvNetworkTransactor) SetOperatorWhitelist(opts *bind.TransactOpts, operatorId uint64, whitelisted common.Address) (*types.Transaction, error) {
-	return _SsvNetwork.contract.Transact(opts, "setOperatorWhitelist", operatorId, whitelisted)
+// Solidity: function setOperatorsPrivateUnchecked(uint64[] operatorIds) returns()
+func (_SsvNetwork *SsvNetworkTransactor) SetOperatorsPrivateUnchecked(opts *bind.TransactOpts, operatorIds []uint64) (*types.Transaction, error) {
+	return _SsvNetwork.contract.Transact(opts, "setOperatorsPrivateUnchecked", operatorIds)
 }
 
-// SetOperatorWhitelist is a paid mutator transaction binding the contract method 0xc90a7eab.
+// SetOperatorsPrivateUnchecked is a paid mutator transaction binding the contract method 0x822124c1.
 //
-// Solidity: function setOperatorWhitelist(uint64 operatorId, address whitelisted) returns()
-func (_SsvNetwork *SsvNetworkSession) SetOperatorWhitelist(operatorId uint64, whitelisted common.Address) (*types.Transaction, error) {
-	return _SsvNetwork.Contract.SetOperatorWhitelist(&_SsvNetwork.TransactOpts, operatorId, whitelisted)
+// Solidity: function setOperatorsPrivateUnchecked(uint64[] operatorIds) returns()
+func (_SsvNetwork *SsvNetworkSession) SetOperatorsPrivateUnchecked(operatorIds []uint64) (*types.Transaction, error) {
+	return _SsvNetwork.Contract.SetOperatorsPrivateUnchecked(&_SsvNetwork.TransactOpts, operatorIds)
 }
 
-// SetOperatorWhitelist is a paid mutator transaction binding the contract method 0xc90a7eab.
+// SetOperatorsPrivateUnchecked is a paid mutator transaction binding the contract method 0x822124c1.
 //
-// Solidity: function setOperatorWhitelist(uint64 operatorId, address whitelisted) returns()
-func (_SsvNetwork *SsvNetworkTransactorSession) SetOperatorWhitelist(operatorId uint64, whitelisted common.Address) (*types.Transaction, error) {
-	return _SsvNetwork.Contract.SetOperatorWhitelist(&_SsvNetwork.TransactOpts, operatorId, whitelisted)
+// Solidity: function setOperatorsPrivateUnchecked(uint64[] operatorIds) returns()
+func (_SsvNetwork *SsvNetworkTransactorSession) SetOperatorsPrivateUnchecked(operatorIds []uint64) (*types.Transaction, error) {
+	return _SsvNetwork.Contract.SetOperatorsPrivateUnchecked(&_SsvNetwork.TransactOpts, operatorIds)
 }
 
-// SetRegisterAuth is a paid mutator transaction binding the contract method 0x3ed00469.
+// SetOperatorsPublicUnchecked is a paid mutator transaction binding the contract method 0x4ad00e54.
 //
-// Solidity: function setRegisterAuth(address userAddress, bool authOperator, bool authValidator) returns()
-func (_SsvNetwork *SsvNetworkTransactor) SetRegisterAuth(opts *bind.TransactOpts, userAddress common.Address, authOperator bool, authValidator bool) (*types.Transaction, error) {
-	return _SsvNetwork.contract.Transact(opts, "setRegisterAuth", userAddress, authOperator, authValidator)
+// Solidity: function setOperatorsPublicUnchecked(uint64[] operatorIds) returns()
+func (_SsvNetwork *SsvNetworkTransactor) SetOperatorsPublicUnchecked(opts *bind.TransactOpts, operatorIds []uint64) (*types.Transaction, error) {
+	return _SsvNetwork.contract.Transact(opts, "setOperatorsPublicUnchecked", operatorIds)
 }
 
-// SetRegisterAuth is a paid mutator transaction binding the contract method 0x3ed00469.
+// SetOperatorsPublicUnchecked is a paid mutator transaction binding the contract method 0x4ad00e54.
 //
-// Solidity: function setRegisterAuth(address userAddress, bool authOperator, bool authValidator) returns()
-func (_SsvNetwork *SsvNetworkSession) SetRegisterAuth(userAddress common.Address, authOperator bool, authValidator bool) (*types.Transaction, error) {
-	return _SsvNetwork.Contract.SetRegisterAuth(&_SsvNetwork.TransactOpts, userAddress, authOperator, authValidator)
+// Solidity: function setOperatorsPublicUnchecked(uint64[] operatorIds) returns()
+func (_SsvNetwork *SsvNetworkSession) SetOperatorsPublicUnchecked(operatorIds []uint64) (*types.Transaction, error) {
+	return _SsvNetwork.Contract.SetOperatorsPublicUnchecked(&_SsvNetwork.TransactOpts, operatorIds)
 }
 
-// SetRegisterAuth is a paid mutator transaction binding the contract method 0x3ed00469.
+// SetOperatorsPublicUnchecked is a paid mutator transaction binding the contract method 0x4ad00e54.
 //
-// Solidity: function setRegisterAuth(address userAddress, bool authOperator, bool authValidator) returns()
-func (_SsvNetwork *SsvNetworkTransactorSession) SetRegisterAuth(userAddress common.Address, authOperator bool, authValidator bool) (*types.Transaction, error) {
-	return _SsvNetwork.Contract.SetRegisterAuth(&_SsvNetwork.TransactOpts, userAddress, authOperator, authValidator)
+// Solidity: function setOperatorsPublicUnchecked(uint64[] operatorIds) returns()
+func (_SsvNetwork *SsvNetworkTransactorSession) SetOperatorsPublicUnchecked(operatorIds []uint64) (*types.Transaction, error) {
+	return _SsvNetwork.Contract.SetOperatorsPublicUnchecked(&_SsvNetwork.TransactOpts, operatorIds)
+}
+
+// SetOperatorsWhitelistingContract is a paid mutator transaction binding the contract method 0x7dc24d52.
+//
+// Solidity: function setOperatorsWhitelistingContract(uint64[] operatorIds, address whitelistingContract) returns()
+func (_SsvNetwork *SsvNetworkTransactor) SetOperatorsWhitelistingContract(opts *bind.TransactOpts, operatorIds []uint64, whitelistingContract common.Address) (*types.Transaction, error) {
+	return _SsvNetwork.contract.Transact(opts, "setOperatorsWhitelistingContract", operatorIds, whitelistingContract)
+}
+
+// SetOperatorsWhitelistingContract is a paid mutator transaction binding the contract method 0x7dc24d52.
+//
+// Solidity: function setOperatorsWhitelistingContract(uint64[] operatorIds, address whitelistingContract) returns()
+func (_SsvNetwork *SsvNetworkSession) SetOperatorsWhitelistingContract(operatorIds []uint64, whitelistingContract common.Address) (*types.Transaction, error) {
+	return _SsvNetwork.Contract.SetOperatorsWhitelistingContract(&_SsvNetwork.TransactOpts, operatorIds, whitelistingContract)
+}
+
+// SetOperatorsWhitelistingContract is a paid mutator transaction binding the contract method 0x7dc24d52.
+//
+// Solidity: function setOperatorsWhitelistingContract(uint64[] operatorIds, address whitelistingContract) returns()
+func (_SsvNetwork *SsvNetworkTransactorSession) SetOperatorsWhitelistingContract(operatorIds []uint64, whitelistingContract common.Address) (*types.Transaction, error) {
+	return _SsvNetwork.Contract.SetOperatorsWhitelistingContract(&_SsvNetwork.TransactOpts, operatorIds, whitelistingContract)
+}
+
+// SetOperatorsWhitelists is a paid mutator transaction binding the contract method 0x5d06ecb4.
+//
+// Solidity: function setOperatorsWhitelists(uint64[] operatorIds, address[] whitelistAddresses) returns()
+func (_SsvNetwork *SsvNetworkTransactor) SetOperatorsWhitelists(opts *bind.TransactOpts, operatorIds []uint64, whitelistAddresses []common.Address) (*types.Transaction, error) {
+	return _SsvNetwork.contract.Transact(opts, "setOperatorsWhitelists", operatorIds, whitelistAddresses)
+}
+
+// SetOperatorsWhitelists is a paid mutator transaction binding the contract method 0x5d06ecb4.
+//
+// Solidity: function setOperatorsWhitelists(uint64[] operatorIds, address[] whitelistAddresses) returns()
+func (_SsvNetwork *SsvNetworkSession) SetOperatorsWhitelists(operatorIds []uint64, whitelistAddresses []common.Address) (*types.Transaction, error) {
+	return _SsvNetwork.Contract.SetOperatorsWhitelists(&_SsvNetwork.TransactOpts, operatorIds, whitelistAddresses)
+}
+
+// SetOperatorsWhitelists is a paid mutator transaction binding the contract method 0x5d06ecb4.
+//
+// Solidity: function setOperatorsWhitelists(uint64[] operatorIds, address[] whitelistAddresses) returns()
+func (_SsvNetwork *SsvNetworkTransactorSession) SetOperatorsWhitelists(operatorIds []uint64, whitelistAddresses []common.Address) (*types.Transaction, error) {
+	return _SsvNetwork.Contract.SetOperatorsWhitelists(&_SsvNetwork.TransactOpts, operatorIds, whitelistAddresses)
 }
 
 // TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
@@ -796,6 +919,27 @@ func (_SsvNetwork *SsvNetworkSession) UpdateLiquidationThresholdPeriod(blocks ui
 // Solidity: function updateLiquidationThresholdPeriod(uint64 blocks) returns()
 func (_SsvNetwork *SsvNetworkTransactorSession) UpdateLiquidationThresholdPeriod(blocks uint64) (*types.Transaction, error) {
 	return _SsvNetwork.Contract.UpdateLiquidationThresholdPeriod(&_SsvNetwork.TransactOpts, blocks)
+}
+
+// UpdateMaximumOperatorFee is a paid mutator transaction binding the contract method 0xe39c6744.
+//
+// Solidity: function updateMaximumOperatorFee(uint64 maxFee) returns()
+func (_SsvNetwork *SsvNetworkTransactor) UpdateMaximumOperatorFee(opts *bind.TransactOpts, maxFee uint64) (*types.Transaction, error) {
+	return _SsvNetwork.contract.Transact(opts, "updateMaximumOperatorFee", maxFee)
+}
+
+// UpdateMaximumOperatorFee is a paid mutator transaction binding the contract method 0xe39c6744.
+//
+// Solidity: function updateMaximumOperatorFee(uint64 maxFee) returns()
+func (_SsvNetwork *SsvNetworkSession) UpdateMaximumOperatorFee(maxFee uint64) (*types.Transaction, error) {
+	return _SsvNetwork.Contract.UpdateMaximumOperatorFee(&_SsvNetwork.TransactOpts, maxFee)
+}
+
+// UpdateMaximumOperatorFee is a paid mutator transaction binding the contract method 0xe39c6744.
+//
+// Solidity: function updateMaximumOperatorFee(uint64 maxFee) returns()
+func (_SsvNetwork *SsvNetworkTransactorSession) UpdateMaximumOperatorFee(maxFee uint64) (*types.Transaction, error) {
+	return _SsvNetwork.Contract.UpdateMaximumOperatorFee(&_SsvNetwork.TransactOpts, maxFee)
 }
 
 // UpdateMinimumLiquidationCollateral is a paid mutator transaction binding the contract method 0xb4c9c408.
@@ -2709,6 +2853,151 @@ func (_SsvNetwork *SsvNetworkFilterer) ParseMinimumLiquidationCollateralUpdated(
 	return event, nil
 }
 
+// SsvNetworkModuleUpgradedIterator is returned from FilterModuleUpgraded and is used to iterate over the raw logs and unpacked data for ModuleUpgraded events raised by the SsvNetwork contract.
+type SsvNetworkModuleUpgradedIterator struct {
+	Event *SsvNetworkModuleUpgraded // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *SsvNetworkModuleUpgradedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(SsvNetworkModuleUpgraded)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(SsvNetworkModuleUpgraded)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *SsvNetworkModuleUpgradedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *SsvNetworkModuleUpgradedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// SsvNetworkModuleUpgraded represents a ModuleUpgraded event raised by the SsvNetwork contract.
+type SsvNetworkModuleUpgraded struct {
+	ModuleId      uint8
+	ModuleAddress common.Address
+	Raw           types.Log // Blockchain specific contextual infos
+}
+
+// FilterModuleUpgraded is a free log retrieval operation binding the contract event 0xfdf54bf052398eb41c923eb1bd596351c5e72b99959d1ca529a7f13c0a2503d7.
+//
+// Solidity: event ModuleUpgraded(uint8 indexed moduleId, address moduleAddress)
+func (_SsvNetwork *SsvNetworkFilterer) FilterModuleUpgraded(opts *bind.FilterOpts, moduleId []uint8) (*SsvNetworkModuleUpgradedIterator, error) {
+
+	var moduleIdRule []interface{}
+	for _, moduleIdItem := range moduleId {
+		moduleIdRule = append(moduleIdRule, moduleIdItem)
+	}
+
+	logs, sub, err := _SsvNetwork.contract.FilterLogs(opts, "ModuleUpgraded", moduleIdRule)
+	if err != nil {
+		return nil, err
+	}
+	return &SsvNetworkModuleUpgradedIterator{contract: _SsvNetwork.contract, event: "ModuleUpgraded", logs: logs, sub: sub}, nil
+}
+
+// WatchModuleUpgraded is a free log subscription operation binding the contract event 0xfdf54bf052398eb41c923eb1bd596351c5e72b99959d1ca529a7f13c0a2503d7.
+//
+// Solidity: event ModuleUpgraded(uint8 indexed moduleId, address moduleAddress)
+func (_SsvNetwork *SsvNetworkFilterer) WatchModuleUpgraded(opts *bind.WatchOpts, sink chan<- *SsvNetworkModuleUpgraded, moduleId []uint8) (event.Subscription, error) {
+
+	var moduleIdRule []interface{}
+	for _, moduleIdItem := range moduleId {
+		moduleIdRule = append(moduleIdRule, moduleIdItem)
+	}
+
+	logs, sub, err := _SsvNetwork.contract.WatchLogs(opts, "ModuleUpgraded", moduleIdRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(SsvNetworkModuleUpgraded)
+				if err := _SsvNetwork.contract.UnpackLog(event, "ModuleUpgraded", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseModuleUpgraded is a log parse operation binding the contract event 0xfdf54bf052398eb41c923eb1bd596351c5e72b99959d1ca529a7f13c0a2503d7.
+//
+// Solidity: event ModuleUpgraded(uint8 indexed moduleId, address moduleAddress)
+func (_SsvNetwork *SsvNetworkFilterer) ParseModuleUpgraded(log types.Log) (*SsvNetworkModuleUpgraded, error) {
+	event := new(SsvNetworkModuleUpgraded)
+	if err := _SsvNetwork.contract.UnpackLog(event, "ModuleUpgraded", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
 // SsvNetworkNetworkEarningsWithdrawnIterator is returned from FilterNetworkEarningsWithdrawn and is used to iterate over the raw logs and unpacked data for NetworkEarningsWithdrawn events raised by the SsvNetwork contract.
 type SsvNetworkNetworkEarningsWithdrawnIterator struct {
 	Event *SsvNetworkNetworkEarningsWithdrawn // Event containing the contract specifics and raw log
@@ -3731,6 +4020,545 @@ func (_SsvNetwork *SsvNetworkFilterer) ParseOperatorFeeIncreaseLimitUpdated(log 
 	return event, nil
 }
 
+// SsvNetworkOperatorMaximumFeeUpdatedIterator is returned from FilterOperatorMaximumFeeUpdated and is used to iterate over the raw logs and unpacked data for OperatorMaximumFeeUpdated events raised by the SsvNetwork contract.
+type SsvNetworkOperatorMaximumFeeUpdatedIterator struct {
+	Event *SsvNetworkOperatorMaximumFeeUpdated // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *SsvNetworkOperatorMaximumFeeUpdatedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(SsvNetworkOperatorMaximumFeeUpdated)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(SsvNetworkOperatorMaximumFeeUpdated)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *SsvNetworkOperatorMaximumFeeUpdatedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *SsvNetworkOperatorMaximumFeeUpdatedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// SsvNetworkOperatorMaximumFeeUpdated represents a OperatorMaximumFeeUpdated event raised by the SsvNetwork contract.
+type SsvNetworkOperatorMaximumFeeUpdated struct {
+	MaxFee uint64
+	Raw    types.Log // Blockchain specific contextual infos
+}
+
+// FilterOperatorMaximumFeeUpdated is a free log retrieval operation binding the contract event 0x38552bed8df52ac76c5de6da688eafcda7d7b070f6c987f391a07dd69986d783.
+//
+// Solidity: event OperatorMaximumFeeUpdated(uint64 maxFee)
+func (_SsvNetwork *SsvNetworkFilterer) FilterOperatorMaximumFeeUpdated(opts *bind.FilterOpts) (*SsvNetworkOperatorMaximumFeeUpdatedIterator, error) {
+
+	logs, sub, err := _SsvNetwork.contract.FilterLogs(opts, "OperatorMaximumFeeUpdated")
+	if err != nil {
+		return nil, err
+	}
+	return &SsvNetworkOperatorMaximumFeeUpdatedIterator{contract: _SsvNetwork.contract, event: "OperatorMaximumFeeUpdated", logs: logs, sub: sub}, nil
+}
+
+// WatchOperatorMaximumFeeUpdated is a free log subscription operation binding the contract event 0x38552bed8df52ac76c5de6da688eafcda7d7b070f6c987f391a07dd69986d783.
+//
+// Solidity: event OperatorMaximumFeeUpdated(uint64 maxFee)
+func (_SsvNetwork *SsvNetworkFilterer) WatchOperatorMaximumFeeUpdated(opts *bind.WatchOpts, sink chan<- *SsvNetworkOperatorMaximumFeeUpdated) (event.Subscription, error) {
+
+	logs, sub, err := _SsvNetwork.contract.WatchLogs(opts, "OperatorMaximumFeeUpdated")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(SsvNetworkOperatorMaximumFeeUpdated)
+				if err := _SsvNetwork.contract.UnpackLog(event, "OperatorMaximumFeeUpdated", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseOperatorMaximumFeeUpdated is a log parse operation binding the contract event 0x38552bed8df52ac76c5de6da688eafcda7d7b070f6c987f391a07dd69986d783.
+//
+// Solidity: event OperatorMaximumFeeUpdated(uint64 maxFee)
+func (_SsvNetwork *SsvNetworkFilterer) ParseOperatorMaximumFeeUpdated(log types.Log) (*SsvNetworkOperatorMaximumFeeUpdated, error) {
+	event := new(SsvNetworkOperatorMaximumFeeUpdated)
+	if err := _SsvNetwork.contract.UnpackLog(event, "OperatorMaximumFeeUpdated", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// SsvNetworkOperatorMultipleWhitelistRemovedIterator is returned from FilterOperatorMultipleWhitelistRemoved and is used to iterate over the raw logs and unpacked data for OperatorMultipleWhitelistRemoved events raised by the SsvNetwork contract.
+type SsvNetworkOperatorMultipleWhitelistRemovedIterator struct {
+	Event *SsvNetworkOperatorMultipleWhitelistRemoved // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *SsvNetworkOperatorMultipleWhitelistRemovedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(SsvNetworkOperatorMultipleWhitelistRemoved)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(SsvNetworkOperatorMultipleWhitelistRemoved)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *SsvNetworkOperatorMultipleWhitelistRemovedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *SsvNetworkOperatorMultipleWhitelistRemovedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// SsvNetworkOperatorMultipleWhitelistRemoved represents a OperatorMultipleWhitelistRemoved event raised by the SsvNetwork contract.
+type SsvNetworkOperatorMultipleWhitelistRemoved struct {
+	OperatorIds        []uint64
+	WhitelistAddresses []common.Address
+	Raw                types.Log // Blockchain specific contextual infos
+}
+
+// FilterOperatorMultipleWhitelistRemoved is a free log retrieval operation binding the contract event 0x589a71ef5bb37432c8ce279a4afc32783592f1764c6fcb07e3c437e80c80ab2e.
+//
+// Solidity: event OperatorMultipleWhitelistRemoved(uint64[] operatorIds, address[] whitelistAddresses)
+func (_SsvNetwork *SsvNetworkFilterer) FilterOperatorMultipleWhitelistRemoved(opts *bind.FilterOpts) (*SsvNetworkOperatorMultipleWhitelistRemovedIterator, error) {
+
+	logs, sub, err := _SsvNetwork.contract.FilterLogs(opts, "OperatorMultipleWhitelistRemoved")
+	if err != nil {
+		return nil, err
+	}
+	return &SsvNetworkOperatorMultipleWhitelistRemovedIterator{contract: _SsvNetwork.contract, event: "OperatorMultipleWhitelistRemoved", logs: logs, sub: sub}, nil
+}
+
+// WatchOperatorMultipleWhitelistRemoved is a free log subscription operation binding the contract event 0x589a71ef5bb37432c8ce279a4afc32783592f1764c6fcb07e3c437e80c80ab2e.
+//
+// Solidity: event OperatorMultipleWhitelistRemoved(uint64[] operatorIds, address[] whitelistAddresses)
+func (_SsvNetwork *SsvNetworkFilterer) WatchOperatorMultipleWhitelistRemoved(opts *bind.WatchOpts, sink chan<- *SsvNetworkOperatorMultipleWhitelistRemoved) (event.Subscription, error) {
+
+	logs, sub, err := _SsvNetwork.contract.WatchLogs(opts, "OperatorMultipleWhitelistRemoved")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(SsvNetworkOperatorMultipleWhitelistRemoved)
+				if err := _SsvNetwork.contract.UnpackLog(event, "OperatorMultipleWhitelistRemoved", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseOperatorMultipleWhitelistRemoved is a log parse operation binding the contract event 0x589a71ef5bb37432c8ce279a4afc32783592f1764c6fcb07e3c437e80c80ab2e.
+//
+// Solidity: event OperatorMultipleWhitelistRemoved(uint64[] operatorIds, address[] whitelistAddresses)
+func (_SsvNetwork *SsvNetworkFilterer) ParseOperatorMultipleWhitelistRemoved(log types.Log) (*SsvNetworkOperatorMultipleWhitelistRemoved, error) {
+	event := new(SsvNetworkOperatorMultipleWhitelistRemoved)
+	if err := _SsvNetwork.contract.UnpackLog(event, "OperatorMultipleWhitelistRemoved", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// SsvNetworkOperatorMultipleWhitelistUpdatedIterator is returned from FilterOperatorMultipleWhitelistUpdated and is used to iterate over the raw logs and unpacked data for OperatorMultipleWhitelistUpdated events raised by the SsvNetwork contract.
+type SsvNetworkOperatorMultipleWhitelistUpdatedIterator struct {
+	Event *SsvNetworkOperatorMultipleWhitelistUpdated // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *SsvNetworkOperatorMultipleWhitelistUpdatedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(SsvNetworkOperatorMultipleWhitelistUpdated)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(SsvNetworkOperatorMultipleWhitelistUpdated)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *SsvNetworkOperatorMultipleWhitelistUpdatedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *SsvNetworkOperatorMultipleWhitelistUpdatedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// SsvNetworkOperatorMultipleWhitelistUpdated represents a OperatorMultipleWhitelistUpdated event raised by the SsvNetwork contract.
+type SsvNetworkOperatorMultipleWhitelistUpdated struct {
+	OperatorIds        []uint64
+	WhitelistAddresses []common.Address
+	Raw                types.Log // Blockchain specific contextual infos
+}
+
+// FilterOperatorMultipleWhitelistUpdated is a free log retrieval operation binding the contract event 0x3d5869fa1ed68d6b7b5e2a1f44df8e1e7edd8ea7a6cc240e45c72e2eb3523962.
+//
+// Solidity: event OperatorMultipleWhitelistUpdated(uint64[] operatorIds, address[] whitelistAddresses)
+func (_SsvNetwork *SsvNetworkFilterer) FilterOperatorMultipleWhitelistUpdated(opts *bind.FilterOpts) (*SsvNetworkOperatorMultipleWhitelistUpdatedIterator, error) {
+
+	logs, sub, err := _SsvNetwork.contract.FilterLogs(opts, "OperatorMultipleWhitelistUpdated")
+	if err != nil {
+		return nil, err
+	}
+	return &SsvNetworkOperatorMultipleWhitelistUpdatedIterator{contract: _SsvNetwork.contract, event: "OperatorMultipleWhitelistUpdated", logs: logs, sub: sub}, nil
+}
+
+// WatchOperatorMultipleWhitelistUpdated is a free log subscription operation binding the contract event 0x3d5869fa1ed68d6b7b5e2a1f44df8e1e7edd8ea7a6cc240e45c72e2eb3523962.
+//
+// Solidity: event OperatorMultipleWhitelistUpdated(uint64[] operatorIds, address[] whitelistAddresses)
+func (_SsvNetwork *SsvNetworkFilterer) WatchOperatorMultipleWhitelistUpdated(opts *bind.WatchOpts, sink chan<- *SsvNetworkOperatorMultipleWhitelistUpdated) (event.Subscription, error) {
+
+	logs, sub, err := _SsvNetwork.contract.WatchLogs(opts, "OperatorMultipleWhitelistUpdated")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(SsvNetworkOperatorMultipleWhitelistUpdated)
+				if err := _SsvNetwork.contract.UnpackLog(event, "OperatorMultipleWhitelistUpdated", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseOperatorMultipleWhitelistUpdated is a log parse operation binding the contract event 0x3d5869fa1ed68d6b7b5e2a1f44df8e1e7edd8ea7a6cc240e45c72e2eb3523962.
+//
+// Solidity: event OperatorMultipleWhitelistUpdated(uint64[] operatorIds, address[] whitelistAddresses)
+func (_SsvNetwork *SsvNetworkFilterer) ParseOperatorMultipleWhitelistUpdated(log types.Log) (*SsvNetworkOperatorMultipleWhitelistUpdated, error) {
+	event := new(SsvNetworkOperatorMultipleWhitelistUpdated)
+	if err := _SsvNetwork.contract.UnpackLog(event, "OperatorMultipleWhitelistUpdated", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// SsvNetworkOperatorPrivacyStatusUpdatedIterator is returned from FilterOperatorPrivacyStatusUpdated and is used to iterate over the raw logs and unpacked data for OperatorPrivacyStatusUpdated events raised by the SsvNetwork contract.
+type SsvNetworkOperatorPrivacyStatusUpdatedIterator struct {
+	Event *SsvNetworkOperatorPrivacyStatusUpdated // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *SsvNetworkOperatorPrivacyStatusUpdatedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(SsvNetworkOperatorPrivacyStatusUpdated)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(SsvNetworkOperatorPrivacyStatusUpdated)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *SsvNetworkOperatorPrivacyStatusUpdatedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *SsvNetworkOperatorPrivacyStatusUpdatedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// SsvNetworkOperatorPrivacyStatusUpdated represents a OperatorPrivacyStatusUpdated event raised by the SsvNetwork contract.
+type SsvNetworkOperatorPrivacyStatusUpdated struct {
+	OperatorIds []uint64
+	ToPrivate   bool
+	Raw         types.Log // Blockchain specific contextual infos
+}
+
+// FilterOperatorPrivacyStatusUpdated is a free log retrieval operation binding the contract event 0x7cae2703330c3f53308fb0fe3a9143f335997ba7e059b9ac8e4417ed8fbddbd3.
+//
+// Solidity: event OperatorPrivacyStatusUpdated(uint64[] operatorIds, bool toPrivate)
+func (_SsvNetwork *SsvNetworkFilterer) FilterOperatorPrivacyStatusUpdated(opts *bind.FilterOpts) (*SsvNetworkOperatorPrivacyStatusUpdatedIterator, error) {
+
+	logs, sub, err := _SsvNetwork.contract.FilterLogs(opts, "OperatorPrivacyStatusUpdated")
+	if err != nil {
+		return nil, err
+	}
+	return &SsvNetworkOperatorPrivacyStatusUpdatedIterator{contract: _SsvNetwork.contract, event: "OperatorPrivacyStatusUpdated", logs: logs, sub: sub}, nil
+}
+
+// WatchOperatorPrivacyStatusUpdated is a free log subscription operation binding the contract event 0x7cae2703330c3f53308fb0fe3a9143f335997ba7e059b9ac8e4417ed8fbddbd3.
+//
+// Solidity: event OperatorPrivacyStatusUpdated(uint64[] operatorIds, bool toPrivate)
+func (_SsvNetwork *SsvNetworkFilterer) WatchOperatorPrivacyStatusUpdated(opts *bind.WatchOpts, sink chan<- *SsvNetworkOperatorPrivacyStatusUpdated) (event.Subscription, error) {
+
+	logs, sub, err := _SsvNetwork.contract.WatchLogs(opts, "OperatorPrivacyStatusUpdated")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(SsvNetworkOperatorPrivacyStatusUpdated)
+				if err := _SsvNetwork.contract.UnpackLog(event, "OperatorPrivacyStatusUpdated", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseOperatorPrivacyStatusUpdated is a log parse operation binding the contract event 0x7cae2703330c3f53308fb0fe3a9143f335997ba7e059b9ac8e4417ed8fbddbd3.
+//
+// Solidity: event OperatorPrivacyStatusUpdated(uint64[] operatorIds, bool toPrivate)
+func (_SsvNetwork *SsvNetworkFilterer) ParseOperatorPrivacyStatusUpdated(log types.Log) (*SsvNetworkOperatorPrivacyStatusUpdated, error) {
+	event := new(SsvNetworkOperatorPrivacyStatusUpdated)
+	if err := _SsvNetwork.contract.UnpackLog(event, "OperatorPrivacyStatusUpdated", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
 // SsvNetworkOperatorRemovedIterator is returned from FilterOperatorRemoved and is used to iterate over the raw logs and unpacked data for OperatorRemoved events raised by the SsvNetwork contract.
 type SsvNetworkOperatorRemovedIterator struct {
 	Event *SsvNetworkOperatorRemoved // Event containing the contract specifics and raw log
@@ -3875,9 +4703,9 @@ func (_SsvNetwork *SsvNetworkFilterer) ParseOperatorRemoved(log types.Log) (*Ssv
 	return event, nil
 }
 
-// SsvNetworkOperatorWhitelistUpdatedIterator is returned from FilterOperatorWhitelistUpdated and is used to iterate over the raw logs and unpacked data for OperatorWhitelistUpdated events raised by the SsvNetwork contract.
-type SsvNetworkOperatorWhitelistUpdatedIterator struct {
-	Event *SsvNetworkOperatorWhitelistUpdated // Event containing the contract specifics and raw log
+// SsvNetworkOperatorWhitelistingContractUpdatedIterator is returned from FilterOperatorWhitelistingContractUpdated and is used to iterate over the raw logs and unpacked data for OperatorWhitelistingContractUpdated events raised by the SsvNetwork contract.
+type SsvNetworkOperatorWhitelistingContractUpdatedIterator struct {
+	Event *SsvNetworkOperatorWhitelistingContractUpdated // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -3891,7 +4719,7 @@ type SsvNetworkOperatorWhitelistUpdatedIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *SsvNetworkOperatorWhitelistUpdatedIterator) Next() bool {
+func (it *SsvNetworkOperatorWhitelistingContractUpdatedIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -3900,7 +4728,7 @@ func (it *SsvNetworkOperatorWhitelistUpdatedIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(SsvNetworkOperatorWhitelistUpdated)
+			it.Event = new(SsvNetworkOperatorWhitelistingContractUpdated)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -3915,7 +4743,7 @@ func (it *SsvNetworkOperatorWhitelistUpdatedIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(SsvNetworkOperatorWhitelistUpdated)
+		it.Event = new(SsvNetworkOperatorWhitelistingContractUpdated)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -3931,52 +4759,42 @@ func (it *SsvNetworkOperatorWhitelistUpdatedIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *SsvNetworkOperatorWhitelistUpdatedIterator) Error() error {
+func (it *SsvNetworkOperatorWhitelistingContractUpdatedIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *SsvNetworkOperatorWhitelistUpdatedIterator) Close() error {
+func (it *SsvNetworkOperatorWhitelistingContractUpdatedIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// SsvNetworkOperatorWhitelistUpdated represents a OperatorWhitelistUpdated event raised by the SsvNetwork contract.
-type SsvNetworkOperatorWhitelistUpdated struct {
-	OperatorId  uint64
-	Whitelisted common.Address
-	Raw         types.Log // Blockchain specific contextual infos
+// SsvNetworkOperatorWhitelistingContractUpdated represents a OperatorWhitelistingContractUpdated event raised by the SsvNetwork contract.
+type SsvNetworkOperatorWhitelistingContractUpdated struct {
+	OperatorIds          []uint64
+	WhitelistingContract common.Address
+	Raw                  types.Log // Blockchain specific contextual infos
 }
 
-// FilterOperatorWhitelistUpdated is a free log retrieval operation binding the contract event 0x29f72634ccb172103f8c542da23de7f6cf9bce724c5bb91bd6f3a516b14c63fe.
+// FilterOperatorWhitelistingContractUpdated is a free log retrieval operation binding the contract event 0xf41d8ca981ff900f6db7f71d7e2ae866eae8e4327d23e5c692c13a6c43b39c3d.
 //
-// Solidity: event OperatorWhitelistUpdated(uint64 indexed operatorId, address whitelisted)
-func (_SsvNetwork *SsvNetworkFilterer) FilterOperatorWhitelistUpdated(opts *bind.FilterOpts, operatorId []uint64) (*SsvNetworkOperatorWhitelistUpdatedIterator, error) {
+// Solidity: event OperatorWhitelistingContractUpdated(uint64[] operatorIds, address whitelistingContract)
+func (_SsvNetwork *SsvNetworkFilterer) FilterOperatorWhitelistingContractUpdated(opts *bind.FilterOpts) (*SsvNetworkOperatorWhitelistingContractUpdatedIterator, error) {
 
-	var operatorIdRule []interface{}
-	for _, operatorIdItem := range operatorId {
-		operatorIdRule = append(operatorIdRule, operatorIdItem)
-	}
-
-	logs, sub, err := _SsvNetwork.contract.FilterLogs(opts, "OperatorWhitelistUpdated", operatorIdRule)
+	logs, sub, err := _SsvNetwork.contract.FilterLogs(opts, "OperatorWhitelistingContractUpdated")
 	if err != nil {
 		return nil, err
 	}
-	return &SsvNetworkOperatorWhitelistUpdatedIterator{contract: _SsvNetwork.contract, event: "OperatorWhitelistUpdated", logs: logs, sub: sub}, nil
+	return &SsvNetworkOperatorWhitelistingContractUpdatedIterator{contract: _SsvNetwork.contract, event: "OperatorWhitelistingContractUpdated", logs: logs, sub: sub}, nil
 }
 
-// WatchOperatorWhitelistUpdated is a free log subscription operation binding the contract event 0x29f72634ccb172103f8c542da23de7f6cf9bce724c5bb91bd6f3a516b14c63fe.
+// WatchOperatorWhitelistingContractUpdated is a free log subscription operation binding the contract event 0xf41d8ca981ff900f6db7f71d7e2ae866eae8e4327d23e5c692c13a6c43b39c3d.
 //
-// Solidity: event OperatorWhitelistUpdated(uint64 indexed operatorId, address whitelisted)
-func (_SsvNetwork *SsvNetworkFilterer) WatchOperatorWhitelistUpdated(opts *bind.WatchOpts, sink chan<- *SsvNetworkOperatorWhitelistUpdated, operatorId []uint64) (event.Subscription, error) {
+// Solidity: event OperatorWhitelistingContractUpdated(uint64[] operatorIds, address whitelistingContract)
+func (_SsvNetwork *SsvNetworkFilterer) WatchOperatorWhitelistingContractUpdated(opts *bind.WatchOpts, sink chan<- *SsvNetworkOperatorWhitelistingContractUpdated) (event.Subscription, error) {
 
-	var operatorIdRule []interface{}
-	for _, operatorIdItem := range operatorId {
-		operatorIdRule = append(operatorIdRule, operatorIdItem)
-	}
-
-	logs, sub, err := _SsvNetwork.contract.WatchLogs(opts, "OperatorWhitelistUpdated", operatorIdRule)
+	logs, sub, err := _SsvNetwork.contract.WatchLogs(opts, "OperatorWhitelistingContractUpdated")
 	if err != nil {
 		return nil, err
 	}
@@ -3986,8 +4804,8 @@ func (_SsvNetwork *SsvNetworkFilterer) WatchOperatorWhitelistUpdated(opts *bind.
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(SsvNetworkOperatorWhitelistUpdated)
-				if err := _SsvNetwork.contract.UnpackLog(event, "OperatorWhitelistUpdated", log); err != nil {
+				event := new(SsvNetworkOperatorWhitelistingContractUpdated)
+				if err := _SsvNetwork.contract.UnpackLog(event, "OperatorWhitelistingContractUpdated", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -4008,12 +4826,12 @@ func (_SsvNetwork *SsvNetworkFilterer) WatchOperatorWhitelistUpdated(opts *bind.
 	}), nil
 }
 
-// ParseOperatorWhitelistUpdated is a log parse operation binding the contract event 0x29f72634ccb172103f8c542da23de7f6cf9bce724c5bb91bd6f3a516b14c63fe.
+// ParseOperatorWhitelistingContractUpdated is a log parse operation binding the contract event 0xf41d8ca981ff900f6db7f71d7e2ae866eae8e4327d23e5c692c13a6c43b39c3d.
 //
-// Solidity: event OperatorWhitelistUpdated(uint64 indexed operatorId, address whitelisted)
-func (_SsvNetwork *SsvNetworkFilterer) ParseOperatorWhitelistUpdated(log types.Log) (*SsvNetworkOperatorWhitelistUpdated, error) {
-	event := new(SsvNetworkOperatorWhitelistUpdated)
-	if err := _SsvNetwork.contract.UnpackLog(event, "OperatorWhitelistUpdated", log); err != nil {
+// Solidity: event OperatorWhitelistingContractUpdated(uint64[] operatorIds, address whitelistingContract)
+func (_SsvNetwork *SsvNetworkFilterer) ParseOperatorWhitelistingContractUpdated(log types.Log) (*SsvNetworkOperatorWhitelistingContractUpdated, error) {
+	event := new(SsvNetworkOperatorWhitelistingContractUpdated)
+	if err := _SsvNetwork.contract.UnpackLog(event, "OperatorWhitelistingContractUpdated", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
@@ -4766,6 +5584,152 @@ func (_SsvNetwork *SsvNetworkFilterer) WatchValidatorAdded(opts *bind.WatchOpts,
 func (_SsvNetwork *SsvNetworkFilterer) ParseValidatorAdded(log types.Log) (*SsvNetworkValidatorAdded, error) {
 	event := new(SsvNetworkValidatorAdded)
 	if err := _SsvNetwork.contract.UnpackLog(event, "ValidatorAdded", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// SsvNetworkValidatorExitedIterator is returned from FilterValidatorExited and is used to iterate over the raw logs and unpacked data for ValidatorExited events raised by the SsvNetwork contract.
+type SsvNetworkValidatorExitedIterator struct {
+	Event *SsvNetworkValidatorExited // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *SsvNetworkValidatorExitedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(SsvNetworkValidatorExited)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(SsvNetworkValidatorExited)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *SsvNetworkValidatorExitedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *SsvNetworkValidatorExitedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// SsvNetworkValidatorExited represents a ValidatorExited event raised by the SsvNetwork contract.
+type SsvNetworkValidatorExited struct {
+	Owner       common.Address
+	OperatorIds []uint64
+	PublicKey   []byte
+	Raw         types.Log // Blockchain specific contextual infos
+}
+
+// FilterValidatorExited is a free log retrieval operation binding the contract event 0xb4b20ffb2eb1f020be3df600b2287914f50c07003526d3a9d89a9dd12351828c.
+//
+// Solidity: event ValidatorExited(address indexed owner, uint64[] operatorIds, bytes publicKey)
+func (_SsvNetwork *SsvNetworkFilterer) FilterValidatorExited(opts *bind.FilterOpts, owner []common.Address) (*SsvNetworkValidatorExitedIterator, error) {
+
+	var ownerRule []interface{}
+	for _, ownerItem := range owner {
+		ownerRule = append(ownerRule, ownerItem)
+	}
+
+	logs, sub, err := _SsvNetwork.contract.FilterLogs(opts, "ValidatorExited", ownerRule)
+	if err != nil {
+		return nil, err
+	}
+	return &SsvNetworkValidatorExitedIterator{contract: _SsvNetwork.contract, event: "ValidatorExited", logs: logs, sub: sub}, nil
+}
+
+// WatchValidatorExited is a free log subscription operation binding the contract event 0xb4b20ffb2eb1f020be3df600b2287914f50c07003526d3a9d89a9dd12351828c.
+//
+// Solidity: event ValidatorExited(address indexed owner, uint64[] operatorIds, bytes publicKey)
+func (_SsvNetwork *SsvNetworkFilterer) WatchValidatorExited(opts *bind.WatchOpts, sink chan<- *SsvNetworkValidatorExited, owner []common.Address) (event.Subscription, error) {
+
+	var ownerRule []interface{}
+	for _, ownerItem := range owner {
+		ownerRule = append(ownerRule, ownerItem)
+	}
+
+	logs, sub, err := _SsvNetwork.contract.WatchLogs(opts, "ValidatorExited", ownerRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(SsvNetworkValidatorExited)
+				if err := _SsvNetwork.contract.UnpackLog(event, "ValidatorExited", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseValidatorExited is a log parse operation binding the contract event 0xb4b20ffb2eb1f020be3df600b2287914f50c07003526d3a9d89a9dd12351828c.
+//
+// Solidity: event ValidatorExited(address indexed owner, uint64[] operatorIds, bytes publicKey)
+func (_SsvNetwork *SsvNetworkFilterer) ParseValidatorExited(log types.Log) (*SsvNetworkValidatorExited, error) {
+	event := new(SsvNetworkValidatorExited)
+	if err := _SsvNetwork.contract.UnpackLog(event, "ValidatorExited", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
