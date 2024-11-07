@@ -118,7 +118,7 @@ func (task *Task) fetchNewClusterAndSave() error {
 	return nil
 }
 
-func (task *Task) selectLocalClusterForRegister() ([]*Cluster, error) {
+func (task *Task) selectLocalClusterForRegister(isFirst bool) ([]*Cluster, error) {
 	preSelectOperators, err := task.preSelectOperators()
 	if err != nil {
 		return nil, err
@@ -128,9 +128,11 @@ func (task *Task) selectLocalClusterForRegister() ([]*Cluster, error) {
 	clusterSelected := make([]*Cluster, 0)
 Clusters:
 	for _, c := range task.clusters {
-		// skip clusters with zero validators
-		if len(c.managingValidators) == 0 {
-			continue
+		if isFirst {
+			// skip clusters with zero validators
+			if len(c.managingValidators) == 0 {
+				continue
+			}
 		}
 		for _, opId := range c.operatorIds {
 			operator, exist := task.targetOperators[opId]
@@ -164,7 +166,7 @@ Clusters:
 }
 
 func (task *Task) selectClusterForRegister() (*Cluster, error) {
-	clusterSelectedFirst, err := task.selectLocalClusterForRegister()
+	clusterSelectedFirst, err := task.selectLocalClusterForRegister(true)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +178,7 @@ func (task *Task) selectClusterForRegister() (*Cluster, error) {
 		}
 	}
 
-	clusterSelectedFinal, err := task.selectLocalClusterForRegister()
+	clusterSelectedFinal, err := task.selectLocalClusterForRegister(false)
 	if err != nil {
 		return nil, err
 	}

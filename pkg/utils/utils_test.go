@@ -42,7 +42,7 @@ func TestGetOperatorFromApi(t *testing.T) {
 
 func TestGetOperatorFromGraph(t *testing.T) {
 
-	for operator := range []uint64{695, 119, 90, 849, 82, 749, 805, 626, 806, 459, 48, 474, 356} {
+	for operator := range []uint64{695, 82, 749, 626, 459, 48, 474, 356, 1133, 1131, 117, 159} {
 		o, err := utils.GetOperatorFromGraph("mainnet", uint64(operator))
 		if err != nil {
 			t.Log(err)
