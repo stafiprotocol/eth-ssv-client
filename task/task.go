@@ -139,6 +139,7 @@ type Task struct {
 
 	nextKeyIndex                int
 	dealedEth1Block             uint64 // for offchain state
+	balanceUpdateEth1Block      uint64
 	validatorsPerOperatorLimit  uint64
 	ValidatorsPerSuperNodeLimit uint64
 	ValidatorsLimitByGas        uint64 // gas = 162917*n+268921
@@ -445,13 +446,14 @@ func (task *Task) Start() error {
 		task.updateSsvOffchainState,
 		task.updateValStatus,
 		task.updateOperatorStatus,
-		task.checkAndStake, //stafi
-		task.checkAndDeposit,
-		task.checkAndSetFeeRecipient, // ssv
-		task.checkAndWithdrawOnSSV,
-		task.checkAndReactiveOnSSV,
-		task.checkAndOnboardOnSSV,
-		task.checkAndOffboardOnSSV,
+		task.checkClusterOnSSV,
+		// task.checkAndStake, //stafi
+		// task.checkAndDeposit,
+		// task.checkAndSetFeeRecipient, // ssv
+		// task.checkAndWithdrawOnSSV,
+		// task.checkAndReactiveOnSSV,
+		// task.checkAndOnboardOnSSV,
+		// task.checkAndOffboardOnSSV,
 	)
 
 	utils.SafeGo(task.ejectorService)

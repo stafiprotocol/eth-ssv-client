@@ -241,6 +241,8 @@ func (task *Task) updateSsvOffchainState() (retErr error) {
 		}).Debug("clusterInfo")
 
 	}
+
+	task.balanceUpdateEth1Block = task.dealedEth1Block
 	return nil
 }
 
