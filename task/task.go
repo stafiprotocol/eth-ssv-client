@@ -444,19 +444,46 @@ func (task *Task) Start() error {
 
 		break
 	}
+	logrus.Info("cluster and validator state sync success")
 
+	for {
+		err := task.sendTxs()
+		if err != nil {
+
+			retry := 0
+			for {
+				if retry > 60 {
+					return fmt.Errorf("init state reach retry limit, err: %s", err.Error())
+				}
+				err = task.updateSsvOffchainState()
+				if err != nil {
+					retry++
+					logrus.Errorf("updateSsvOffchainState err: %s", err.Error())
+					time.Sleep(time.Second)
+					continue
+				}
+				break
+			}
+
+			continue
+		}
+		break
+	}
+
+	return nil
+}
+
+func (task *Task) sendTxs() error {
 	txOpts := task.connectionOfSsvAccount.TxOpts()
-	nonce, err := task.connectionOfSsvAccount.Eth1Client().NonceAt(context.Background(), txOpts.From, nil)
+	startNonce, err := task.connectionOfSsvAccount.Eth1Client().NonceAt(context.Background(), txOpts.From, nil)
 	if err != nil {
 		return err
 	}
 	txNumber := uint64(0)
-	txOpts.Nonce = big.NewInt(int64(nonce))
 
-	logrus.Info("cluster and validator state sync success")
-	logrus.Info("waiting for balance update of address: %s", task.connectionOfSsvAccount.TxOpts().From.String())
+	logrus.Info("waiting for balance update of address: %s", txOpts.From.String())
 	for {
-		balance, err := task.connectionOfSsvAccount.Eth1Client().BalanceAt(context.Background(), task.connectionOfSsvAccount.TxOpts().From, nil)
+		balance, err := task.connectionOfSsvAccount.Eth1Client().BalanceAt(context.Background(), txOpts.From, nil)
 		if err != nil {
 			logrus.Warnf("get balance failed, err: %s", err.Error())
 			continue
@@ -487,19 +514,19 @@ func (task *Task) Start() error {
 				publickeys = append(publickeys, validator.privateKey.PublicKey().Marshal())
 			}
 
-			txOpts.Nonce = new(big.Int).Add(txOpts.Nonce, big.NewInt(int64(txNumber)))
+			txOpts.Nonce = big.NewInt(int64(txNumber + startNonce))
 			removeTx, err := task.ssvNetworkContract.BulkRemoveValidator(
 				txOpts, publickeys, cluster.operatorIds, ssv_network.ISSVNetworkCoreCluster(*cluster.latestCluster))
 			if err != nil {
 				return errors.Wrap(err, "ssvNetworkContract.RemoveValidator")
 			}
+			txNumber++
 			lastTx = removeTx.Hash()
 			logrus.WithFields(logrus.Fields{
 				"txHash":      removeTx.Hash(),
 				"operaterIds": cluster.operatorIds,
 				"val number":  len(cluster.managingValidators),
 			}).Info("offboard-tx")
-			txNumber++
 		}
 	}
 	if lastTx.String() != (common.Hash{}).String() {
@@ -510,7 +537,7 @@ func (task *Task) Start() error {
 		}
 	}
 
-	retry = 0
+	retry := 0
 	for {
 		if retry > 60 {
 			return fmt.Errorf("init state reach retry limit, err: %s", err.Error())
@@ -529,69 +556,51 @@ func (task *Task) Start() error {
 	for _, cluster := range task.clusters {
 		if cluster.balance.IsPositive() {
 
-			txOpts.Nonce = new(big.Int).Add(txOpts.Nonce, big.NewInt(int64(txNumber)))
+			txOpts.Nonce = big.NewInt(int64(txNumber + startNonce))
 			withdrawTx, err := task.ssvNetworkContract.Withdraw(
 				txOpts, cluster.operatorIds, cluster.balance.BigInt(), ssv_network.ISSVNetworkCoreCluster(*cluster.latestCluster))
 			if err != nil {
-				return errors.Wrap(err, "ssvNetworkContract.RemoveValidator")
+				return errors.Wrap(err, "ssvNetworkContract.Withdraw")
 			}
-			lastTx = withdrawTx.Hash()
+			txNumber++
 
 			logrus.WithFields(logrus.Fields{
 				"txHash":      withdrawTx.Hash(),
 				"operaterIds": cluster.operatorIds,
 				"balance":     cluster.balance.String(),
 			}).Info("withdraw-tx")
+			logrus.Info("waiting withdraw-tx execute")
 
-			txNumber++
+			err = task.waitTxOk(withdrawTx.Hash())
+			if err != nil {
+				return err
+			}
+
+			// send ssv token
+			ssvBalanceRes, err := task.ssvTokenContract.BalanceOf(nil, txOpts.From)
+			if err != nil {
+				return fmt.Errorf("ssvTokenContract.BalanceOf failed: %s", err.Error())
+			}
+			if ssvBalanceRes.Uint64() > 0 {
+				txOpts.Nonce = big.NewInt(int64(txNumber + startNonce))
+				transferTx, err := task.ssvTokenContract.Transfer(txOpts, task.ssvReceiveAddress, ssvBalanceRes)
+				if err != nil {
+					return errors.Wrap(err, "ssvTokenContract.Transfer")
+				}
+				txNumber++
+
+				logrus.WithFields(logrus.Fields{
+					"txHash":  transferTx.Hash(),
+					"balance": ssvBalanceRes.String(),
+				}).Info("transfer-ssv-tx")
+
+			}
 		}
-	}
-
-	if lastTx.String() != (common.Hash{}).String() {
-		logrus.Info("waiting withdraw-tx execute")
-		err := task.waitTxOk(lastTx)
-		if err != nil {
-			return err
-		}
-	}
-
-	retry = 0
-	for {
-		if retry > 60 {
-			return fmt.Errorf("init state reach retry limit, err: %s", err.Error())
-		}
-		err = task.updateSsvOffchainState()
-		if err != nil {
-			retry++
-			logrus.Errorf("updateSsvOffchainState err: %s", err.Error())
-			time.Sleep(time.Second)
-			continue
-		}
-		break
-	}
-
-	// send ssv token
-	ssvBalanceRes, err := task.ssvTokenContract.BalanceOf(nil, task.connectionOfSsvAccount.TxOpts().From)
-	if err != nil {
-		return fmt.Errorf("ssvTokenContract.BalanceOf failed: %s", err.Error())
-	}
-	if ssvBalanceRes.Uint64() > 0 {
-		txOpts.Nonce = new(big.Int).Add(txOpts.Nonce, big.NewInt(int64(txNumber)))
-		transferTx, err := task.ssvTokenContract.Transfer(txOpts, task.ssvReceiveAddress, ssvBalanceRes)
-		if err != nil {
-			return errors.Wrap(err, "ssvNetworkContract.RemoveValidator")
-		}
-
-		logrus.WithFields(logrus.Fields{
-			"txHash":  transferTx.Hash(),
-			"balance": ssvBalanceRes.String(),
-		}).Info("transfer-ssv-tx")
-
 	}
 
 	return nil
-}
 
+}
 func (task *Task) Stop() {
 	close(task.stop)
 }

@@ -345,10 +345,10 @@ func WaitTxOkCommon(client *ethclient.Client, txHash common.Hash) (blockNumber u
 			continue
 		} else {
 			if pending {
-				logrus.WithFields(logrus.Fields{
-					"hash":    txHash.String(),
-					"pending": pending,
-				}).Warn("TransactionByHash")
+				// logrus.WithFields(logrus.Fields{
+				// 	"hash":    txHash.String(),
+				// 	"pending": pending,
+				// }).Warn("TransactionByHash")
 
 				time.Sleep(RetryInterval)
 				retry++

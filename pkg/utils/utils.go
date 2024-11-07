@@ -28,8 +28,8 @@ var location *time.Location
 var dayLayout = "20060102"
 
 const (
-	RetryLimit    = 200
-	RetryInterval = 6 * time.Second
+	RetryLimit    = 2000
+	RetryInterval = 100 * time.Millisecond
 )
 
 func init() {
