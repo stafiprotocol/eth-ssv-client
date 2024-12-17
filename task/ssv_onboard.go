@@ -146,6 +146,14 @@ func (task *Task) checkAndOnboardOnSSV() error {
 			return err
 		}
 
+		logrus.WithFields(logrus.Fields{
+			"registerNonce":    task.latestRegistrationNonce,
+			"operaterIds":      cluster.operatorIds,
+			"clusterBalance":   cluster.balance,
+			"pubkey":           hex.EncodeToString(val.privateKey.PublicKey().Marshal()),
+			"ssvDepositAmount": needDepositAmount.String(),
+		}).Debug("will-onboard-info")
+
 		if ssvAccountBalance.Cmp(needDepositAmount) < 0 {
 			utils.ShutdownRequestChannel <- struct{}{}
 			return fmt.Errorf("ssv balance not enough, will shutdown. balance: %s, need: %s", ssvAccountBalance.String(), needDepositAmount.String())
