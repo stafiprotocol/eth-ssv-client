@@ -26,6 +26,24 @@ func (task *Task) updateOperatorStatus() error {
 
 	logrus.Debugf("validatorsPerOperatorLimit %d", task.validatorsPerOperatorLimit)
 
+	operatorIds := make([]uint64, 0)
+	for _, cluster := range task.clusters {
+		if len(cluster.managingValidators) > 0 {
+			for _, opId := range cluster.operatorIds {
+				if _, exist := task.targetOperators[opId]; !exist {
+					operatorIds = append(operatorIds, opId)
+				}
+			}
+		}
+	}
+
+	var operatorsMap map[uint64]*utils.Operator
+	if len(operatorIds) > 0 {
+		operatorsMap, err = utils.BatchGetOperatorFromGraph(task.theGraphApiKey, operatorIds)
+		if err != nil {
+			return err
+		}
+	}
 	// append using operators to target operators
 	for _, cluster := range task.clusters {
 		if len(cluster.managingValidators) > 0 {
@@ -38,9 +56,9 @@ func (task *Task) updateOperatorStatus() error {
 					}
 
 					// fetch active status from api
-					rspOperator, err := utils.MustGetOperatorDetail(task.ssvApiNetwork, opId)
-					if err != nil {
-						return err
+					rspOperator, exist := operatorsMap[opId]
+					if !exist {
+						return fmt.Errorf("operator: %d not exist", opId)
 					}
 					isActive := false
 					if rspOperator.Active {
@@ -79,6 +97,10 @@ func (task *Task) updateOperatorStatus() error {
 	if err != nil {
 		return err
 	}
+	targetOperatorsMap, err := utils.BatchGetOperatorFromGraph(task.theGraphApiKey, opIds)
+	if err != nil {
+		return err
+	}
 
 	for _, op := range task.targetOperators {
 		rspOperatorOnChain, exist := rspOperatorsOnChain[op.Id]
@@ -87,9 +109,9 @@ func (task *Task) updateOperatorStatus() error {
 		}
 
 		// get active status from api
-		rspOperator, err := utils.MustGetOperatorDetail(task.ssvApiNetwork, op.Id)
-		if err != nil {
-			return err
+		rspOperator, exist := targetOperatorsMap[op.Id]
+		if !exist {
+			return fmt.Errorf("operator: %d not exist", op.Id)
 		}
 
 		if rspOperator.Active {

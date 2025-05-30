@@ -101,6 +101,7 @@ type Task struct {
 	poolReservedBalance *big.Int
 	seed                []byte
 	postUptimeUrl       string
+	theGraphApiKey      string
 	targetOperatorIds   []uint64
 	operatorPubkeys     map[uint64]string
 
@@ -203,6 +204,9 @@ func NewTask(cfg *config.Config, seed []byte, superNodeKeyPair, ssvKeyPair *secp
 	if len(cfg.TargetOperators) < minNumberOfTargetOperators {
 		return nil, fmt.Errorf("target operators number %d less than %d", len(cfg.TargetOperators), minNumberOfTargetOperators)
 	}
+	if len(cfg.TheGraphApiKey) == 0 {
+		return nil, fmt.Errorf("TheGraphApiKey empty")
+	}
 
 	gasLimitDeci, err := decimal.NewFromString(cfg.GasLimit)
 	if err != nil {
@@ -271,6 +275,7 @@ func NewTask(cfg *config.Config, seed []byte, superNodeKeyPair, ssvKeyPair *secp
 		targetOperatorIds:    cfg.TargetOperators,
 		ValidatorsLimitByGas: validatorsLimitByGas,
 		operatorPubkeys:      opPubkes,
+		theGraphApiKey:       cfg.TheGraphApiKey,
 
 		storageContractAddress:         common.HexToAddress(cfg.Contracts.StorageContractAddress),
 		ssvNetworkContractAddress:      common.HexToAddress(cfg.Contracts.SsvNetworkAddress),
@@ -366,6 +371,10 @@ func (task *Task) Start() error {
 	task.multicaler = caller
 
 	// check target operator id
+	operators, err := utils.BatchGetOperatorFromGraph(task.theGraphApiKey, task.targetOperatorIds)
+	if err != nil {
+		return err
+	}
 	for _, opId := range task.targetOperatorIds {
 		if _, exist := task.targetOperators[opId]; exist {
 			return fmt.Errorf("duplicate operator id: %d", opId)
@@ -384,10 +393,9 @@ func (task *Task) Start() error {
 			return fmt.Errorf("target operator %d is private", opId)
 		}
 
-		// fetch acitve status from api
-		rspOperator, err := utils.MustGetOperatorDetail(task.ssvApiNetwork, opId)
-		if err != nil {
-			return err
+		rspOperator, exist := operators[opId]
+		if !exist {
+			return fmt.Errorf("operator: %d not exist", opId)
 		}
 
 		if !rspOperator.Active {

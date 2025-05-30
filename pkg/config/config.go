@@ -19,6 +19,7 @@ type Config struct {
 	GasLimit            string
 	MaxGasPrice         string
 	PoolReservedBalance string
+	TheGraphApiKey      string
 
 	TargetOperators []uint64
 

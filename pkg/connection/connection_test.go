@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"math/big"
 	"sort"
-	"strings"
 	"testing"
 
 	// "github.com/ethereum/go-ethereum/common"
@@ -15,7 +14,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stafiprotocol/eth-ssv-client/pkg/connection"
 	"github.com/stafiprotocol/eth-ssv-client/pkg/connection/beacon"
-	"github.com/stafiprotocol/eth-ssv-client/pkg/connection/beacon/client"
 	"github.com/stafiprotocol/eth-ssv-client/pkg/connection/types"
 	"github.com/stafiprotocol/eth-ssv-client/pkg/utils"
 )
@@ -107,28 +105,29 @@ func TestBlockDetail(t *testing.T) {
 
 	logrus.SetLevel(logrus.DebugLevel)
 	// c, err := shared.NewConnection("https://rpc.zhejiang.ethpandaops.io", "https://beacon.zhejiang.ethpandaops.io", nil, nil, nil)
-	c, err := connection.NewConnection("https://mainnet.infura.io/v3/4d058381a4d64d31b00a4e15df3ddb94", "https://beacon-lighthouse.stafi.io", nil, nil, nil)
+	// c, err := connection.NewConnection("https://mainnet.infura.io/v3/4d058381a4d64d31b00a4e15df3ddb94", "https://beacon-lighthouse.stafi.io", nil, nil, nil)
+	c, err := connection.NewConnection("https://eth.llamarpc.com", "https://beacon-lighthouse.stafi.io", nil, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	r, err := c.Eth2Client().SyncCommitteeRewards(6190497)
-	if err != nil {
-		if err != nil {
-			switch {
-			case strings.Contains(err.Error(), client.ErrBlockNotFound.Error()):
-				// block not exit, should return
-				t.Log("not exit")
-			case strings.Contains(err.Error(), client.ErrSlotPreSyncCommittees.Error()):
-				// skip err
-				t.Log("skip")
-			default:
-				t.Log(err)
-			}
-		}
-		t.Fatal(err)
-	}
-	t.Log(r)
-	return
+	// r, err := c.Eth2Client().SyncCommitteeRewards(6190497)
+	// if err != nil {
+	// 	if err != nil {
+	// 		switch {
+	// 		case strings.Contains(err.Error(), client.ErrBlockNotFound.Error()):
+	// 			// block not exit, should return
+	// 			t.Log("not exit")
+	// 		case strings.Contains(err.Error(), client.ErrSlotPreSyncCommittees.Error()):
+	// 			// skip err
+	// 			t.Log("skip")
+	// 		default:
+	// 			t.Log(err)
+	// 		}
+	// 	}
+	// 	t.Fatal(err)
+	// }
+	// t.Log(r)
+	// return
 
 	// beaconBlock, _, err := c.Eth2Client().GetBeaconBlock(5668634)
 	// if err != nil {
@@ -143,7 +142,7 @@ func TestBlockDetail(t *testing.T) {
 	// }
 	// t.Log(re.Status)
 	// return
-	epoch := uint64(158000)
+	// epoch := uint64(158000)
 	// arewards, err := c.Eth2Client().AttestationRewardsWithVals(epoch, []string{"295761", "38488"})
 	// if err != nil {
 	// 	t.Fatal(err)
@@ -153,33 +152,33 @@ func TestBlockDetail(t *testing.T) {
 	// }
 	// return
 
-	vals := []uint64{104143, 104525}
-	rewards, err := c.GetRewardsForEpochWithValidators(epoch, vals)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log(len(rewards))
-	for _, val := range vals {
-		t.Logf("%+v", rewards[val])
-	}
-	return
+	// vals := []uint64{104143, 104525}
+	// rewards, err := c.GetRewardsForEpochWithValidators(epoch, vals)
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
+	// t.Log(len(rewards))
+	// for _, val := range vals {
+	// 	t.Logf("%+v", rewards[val])
+	// }
+	// return
 
-	balance, err := c.Eth2Client().Balance(77999, 61730)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log(balance)
-	return
+	// balance, err := c.Eth2Client().Balance(77999, 61730)
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
+	// t.Log(balance)
+	// return
 
-	head, err := c.Eth2BeaconHead()
-	if err != nil {
-		t.Fatal(err)
-	}
+	// head, err := c.Eth2BeaconHead()
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
 
 	pubkey, _ := types.HexToValidatorPubkey("93ce5068db907b2e5055dbb7805a3a3d7c56c9e82d010e864403e10a61235db4795949f01302dc2ad2b6225963599ed5")
 	status, err := c.Eth2Client().GetValidatorStatus(pubkey, &beacon.ValidatorStatusOptions{
 		Epoch: new(uint64),
-		Slot:  &head.Slot,
+		Slot:  nil,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -195,14 +194,14 @@ func TestBlockDetail(t *testing.T) {
 
 	}
 
-	beaconBlock, _, err := c.Eth2Client().GetBeaconBlock(199214)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Logf("%+v", beaconBlock.Withdrawals)
-	config, err := c.Eth2Client().GetEth2Config()
-	timestamp := utils.StartTimestampOfEpoch(config, 10383)
-	t.Log(timestamp)
+	// beaconBlock, _, err := c.Eth2Client().GetBeaconBlock(199214)
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
+	// t.Logf("%+v", beaconBlock.Withdrawals)
+	// config, err := c.Eth2Client().GetEth2Config()
+	// timestamp := utils.StartTimestampOfEpoch(config, 10383)
+	// t.Log(timestamp)
 
 }
 

@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
-	"time"
 )
 
 func GetAllSsvOperatorsFromApi(network string) ([]OperatorFromApi, error) {
@@ -150,91 +150,75 @@ func GetOperatorFromApi(network string, id uint64) (*Operator, error) {
 	return &Operator{Active: active}, nil
 }
 
-func MustGetOperatorDetail(network string, id uint64) (*Operator, error) {
-	retry := 0
-	var operatorDetail *Operator
-	var err error
-	for {
-		if retry > RetryLimit {
-			return nil, fmt.Errorf("GetOperatorDetail reach retry limit")
-		}
-		operatorDetail, err = GetOperatorFromGraph(network, id)
-		if err != nil {
-			if strings.Contains(err.Error(), "404") {
-				return nil, fmt.Errorf("get operator failed, id: %d 404 err: %s", id, err.Error())
-			}
+const graphURL = "https://gateway.thegraph.com/api/subgraphs/id/7V45fKPugp9psQjgrGsfif98gWzCyC6ChN7CW98VyQnr"
 
-			time.Sleep(RetryInterval)
-			retry++
-			continue
-		}
-		break
-	}
-
-	return operatorDetail, nil
+type OperatorRsp struct {
+	ID             string `json:"id"`
+	Fee            string `json:"fee"`
+	Removed        bool   `json:"removed"`
+	TotalWithdrawn string `json:"totalWithdrawn"`
+	IsPrivate      bool   `json:"isPrivate"`
 }
 
-const mainnetGraphUrl = "https://api.studio.thegraph.com/query/71118/ssv-network-ethereum/version/latest"
-const holeskyGraphUrl = "https://api.studio.thegraph.com/query/71118/ssv-network-holesky/version/latest"
-
-// {
-// 	operators(where: {operatorId_in:["596","598","10","9"]}){
-// 	  operatorId
-// 	  active
-// 	}
-// }
-
-type RspSsvOperatorFromGraph struct {
+type graphResponse struct {
 	Data struct {
-		Operator struct {
-			Removed        bool   `json:"removed"`
-			Fee            string `json:"fee"`
-			IsPrivate      bool   `json:"isPrivate"`
-			TotalWithdrawn string `json:"totalWithdrawn"`
-		} `json:"operator"`
+		Operators []OperatorRsp `json:"operators"`
 	} `json:"data"`
-	Message string
 }
 
-type query struct {
-	Query string `json:"query"`
-}
+func BatchGetOperatorFromGraph(apiKey string, ids []uint64) (map[uint64]*Operator, error) {
+	idList := make([]string, len(ids))
+	for i, id := range ids {
+		idList[i] = fmt.Sprintf("\"%d\"", id)
+	}
 
-func GetOperatorFromGraph(network string, id uint64) (*Operator, error) {
-	graphUrl := ""
-	switch network {
-	case "mainnet":
-		graphUrl = mainnetGraphUrl
-	case "prater":
-		graphUrl = holeskyGraphUrl
-	default:
-		return nil, fmt.Errorf("network not support")
-	}
-	q := query{Query: fmt.Sprintf("{  operator(id: \"%d\") {    fee    removed    totalWithdrawn    isPrivate  }}", id)}
-	queryBts, err := json.Marshal(q)
-	if err != nil {
-		return nil, err
-	}
-	rsp, err := http.Post(graphUrl, "application/json", bytes.NewReader(queryBts))
-	if err != nil {
-		return nil, err
-	}
-	defer rsp.Body.Close()
-	if rsp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("status err %d", rsp.StatusCode)
-	}
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	if err != nil {
-		return nil, err
-	}
-	if len(bodyBytes) == 0 {
-		return nil, fmt.Errorf("bodyBytes zero err")
-	}
-	operator := RspSsvOperatorFromGraph{}
-	err = json.Unmarshal(bodyBytes, &operator)
-	if err != nil {
-		return nil, err
-	}
-	return &Operator{Active: !operator.Data.Operator.Removed}, nil
+	joinedIDs := strings.Join(idList, ", ")
 
+	query := fmt.Sprintf(`{ operators(where: { id_in: [%s] }) { id fee removed totalWithdrawn isPrivate } }`, joinedIDs)
+
+	payload := map[string]interface{}{
+		"query":         query,
+		"operationName": "Subgraphs",
+		"variables":     map[string]interface{}{},
+	}
+	payloadBytes, _ := json.Marshal(payload)
+
+	req, err := http.NewRequest("POST", graphURL, bytes.NewReader(payloadBytes))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("non-200 response: %s", bodyBytes)
+	}
+
+	var res graphResponse
+	if err := json.Unmarshal(bodyBytes, &res); err != nil {
+		return nil, err
+	}
+
+	if len(res.Data.Operators) != len(ids) {
+		return nil, fmt.Errorf("operator count mismatch: some IDs may not exist or were removed, req: %s, res: %s",
+			query, string(bodyBytes))
+	}
+
+	operators := make(map[uint64]*Operator)
+	for _, op := range res.Data.Operators {
+		idUint, err := strconv.ParseUint(op.ID, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("invalid operator ID format: %v, v: %s", err, op.ID)
+		}
+		operators[idUint] = &Operator{Active: !op.Removed}
+	}
+
+	return operators, nil
 }

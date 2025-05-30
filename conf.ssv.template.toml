@@ -8,6 +8,7 @@ keystorePath = "./keys"
 maxGasPrice = "60000000000"                                     #wei
 targetOperators = [8, 9]
 poolReservedBalance = "20000000000000000000"
+theGraphApiKey = "xxx"
 
 [contracts]
 storageContractAddress = "0x5d3bb8F3BdeFF819709f82Da915Bc97f9969c861"
