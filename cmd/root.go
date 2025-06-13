@@ -14,6 +14,7 @@ var (
 const (
 	flagKeystorePath  = "keystore_path"
 	flagLogLevel      = "log_level"
+	flagAccount       = "account"
 	flagConfigPath    = "config"
 	flagOperatorsPath = "operators"
 	flagViewMode      = "view_mode"
@@ -40,6 +41,7 @@ func NewRootCmd() *cobra.Command {
 
 	rootCmd.AddCommand(
 		importAccountCmd(),
+		exportAccountCmd(),
 		importMnemonicCmd(),
 		startSsvCmd(),
 		fetchOperatorsCmd(),
